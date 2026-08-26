@@ -1,0 +1,18 @@
+spring:
+  config:
+    import:
+      - optional:file:../.env[.properties]
+  application:
+    name: auth-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/auth_db
+    username: ${USERNAME_DATABASE}
+    password: ${PASSWORD_DATABASE}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+app:
+  jwt:
+    private-key: ${JWT_PRIVATE_KEY}
+    public-key: ${JWT_PUBLIC_KEY}
+    access-token-expiration-minutes: 15
+    refresh-token-expiration-days: 7
