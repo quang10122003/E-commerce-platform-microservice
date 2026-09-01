@@ -1,4 +1,4 @@
-package com.example.auth_service.entity;
+package com.example.auth_service.adapter.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,7 +10,7 @@ import lombok.Data;
 @Entity
 @Table(name = "roles")
 @Data
-public class Role {
+public class RoleEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

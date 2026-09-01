@@ -1,4 +1,4 @@
-package com.example.auth_service.entity;
+package com.example.auth_service.adapter.entity;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -35,7 +35,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class User implements UserDetails {
+public class UserEntity implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,16 +44,15 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     String email;
 
-    @Column(name = "password_hash", columnDefinition = "TEXT")
+    @Column(name = "password", columnDefinition = "TEXT")
     String password;
 
     @Column(name = "full_name", nullable = false)
     String fullName;
 
-
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
-    Set<Role> roles;
+    @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+    Set<RoleEntity> roles;
 
     @Column(name = "is_locked")
     boolean isLocked;
@@ -68,15 +67,16 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if(roles == null  || roles.isEmpty()){
+        if (roles == null || roles.isEmpty()) {
             return Set.of();
         }
-        return roles.stream().filter((role) -> role != null && role.getName() != null && !role.getName().isBlank() ).map((role)->{
-            String name = role.getName();
-            String roleName = name.startsWith("ROLE_") ? name : "ROLE_" + name;
-            return new SimpleGrantedAuthority(roleName);
-            
-        }).collect(Collectors.toSet());
+        return roles.stream().filter((role) -> role != null && role.getName() != null && !role.getName().isBlank())
+                .map((role) -> {
+                    String name = role.getName();
+                    String roleName = name.startsWith("ROLE_") ? name : "ROLE_" + name;
+                    return new SimpleGrantedAuthority(roleName);
+
+                }).collect(Collectors.toSet());
     }
 
     @Override
@@ -85,7 +85,13 @@ public class User implements UserDetails {
     }
 
     @Override
-    public boolean isAccountNonExpired(){
+    public boolean isAccountNonExpired() {
+        return !isLocked;
+    }
+
+    // Chặn đăng nhập nếu tài khoản đang bị khóa
+    @Override
+    public boolean isAccountNonLocked() {
         return !isLocked;
     }
 

@@ -1,6 +1,8 @@
 spring:
   config:
     import:
+      # Nạp biến môi trường từ .env ở cả root project và thư mục cha của module
+      - optional:file:.env[.properties]
       - optional:file:../.env[.properties]
   application:
     name: auth-service

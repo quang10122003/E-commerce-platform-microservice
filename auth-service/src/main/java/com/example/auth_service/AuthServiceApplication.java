@@ -3,7 +3,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
-@SpringBootApplication
+// Quét cả module common để Spring thấy bean dùng chung như JwtVerifier
+@SpringBootApplication(scanBasePackages = "com.example")
 public class AuthServiceApplication {
 
 	public static void main(String[] args) {
