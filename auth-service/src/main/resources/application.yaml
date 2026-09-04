@@ -11,6 +11,16 @@ spring:
     username: ${USERNAME_DATABASE}
     password: ${PASSWORD_DATABASE}
     driver-class-name: com.mysql.cj.jdbc.Driver
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.JsonSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        delivery.timeout.ms: 120000
+        linger.ms: 5
 
 server:
   port: 8081
@@ -35,3 +45,8 @@ app:
     public-key: ${JWT_PUBLIC_KEY}
     access-token-expiration-minutes: 15
     refresh-token-expiration-days: 7
+  kafka:
+    topic:
+      auth-events: auth-service.events
+    publisher:
+      fixed-delay-ms: 10000

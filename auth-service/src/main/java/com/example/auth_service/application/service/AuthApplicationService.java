@@ -1,25 +1,32 @@
 package com.example.auth_service.application.service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.auth_service.application.DTO.repone.AuthResponse;
 import com.example.auth_service.application.DTO.repone.AuthenticatedUser;
+import com.example.auth_service.application.DTO.event.UserRegisteredEventDto;
 import com.example.auth_service.application.DTO.request.LoginRequest;
 import com.example.auth_service.application.DTO.request.RegisterRquest;
 import com.example.auth_service.application.error.AuthError;
 import com.example.auth_service.application.port.in.LoginUseCase;
 import com.example.auth_service.application.port.in.RegisterUseCase;
 import com.example.auth_service.application.port.out.AuthenticationManagerPort;
+import com.example.auth_service.application.port.out.OutboxEventPort;
 import com.example.auth_service.application.port.out.RoleRepositoryPort;
 import com.example.auth_service.application.port.out.TokenServicePort;
 import com.example.auth_service.application.port.out.UserRepositoryPort;
+import com.example.auth_service.domain.model.OutboxEvent;
 import com.example.auth_service.domain.model.Role;
 import com.example.auth_service.domain.model.User;
+import com.example.auth_service.domain.until.EventType;
 import com.example.auth_service.domain.until.RoleEnum;
 import com.example.common.exception.ApplicationException;
-import com.example.common.response.ApiResponse;
 import com.example.common.untill.ValidationUtils;
 
 import lombok.AccessLevel;
@@ -38,6 +45,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase {
     ValidationUtils validationUtils;
     RoleRepositoryPort roleRepositoryPort;
     UserRepositoryPort userRepositoryPort;
+    OutboxEventPort outboxEventPort;
 
     @Override
     public AuthResponse login(LoginRequest request) {
@@ -67,6 +75,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase {
     }
 
     @Override
+    @Transactional
     public AuthResponse register(RegisterRquest request) {
         String normalizedEmail = validationUtils.normalizeEmail(request.getEmail());
         String password = request.getPassword();
@@ -85,6 +94,22 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase {
             User newUser = User.create(normalizedEmail, password, fullName, Set.of(role));
             usersave = userRepositoryPort.save(newUser);
         }
+        // tạo id cho event outBox
+        UUID eventId = UUID.randomUUID();
+        EventType eventType = EventType.USER_REGISTERED;
+        outboxEventPort.save(new OutboxEvent(
+                eventId,
+                "User",
+                String.valueOf(usersave.getId()),
+                eventType,
+                new UserRegisteredEventDto(
+                        eventId,
+                        eventType.getValue(),
+                        usersave.getId(),
+                        usersave.getEmail(),
+                        usersave.getFullName(),
+                        LocalDateTime.now())));
+                        
         String accessToken = tokenServicePort.generateAccessToken(usersave);
         String refreshToken = tokenServicePort.generateRefreshToken(usersave);
 
