@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: discovery-server
+
+server:
+  port: 8761
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+  server:
+    # Giảm thời gian giữ instance đã tắt trong môi trường phát triển.
+    enable-self-preservation: false
+    eviction-interval-timer-in-ms: 5000

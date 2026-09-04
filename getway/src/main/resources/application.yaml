@@ -1,0 +1,53 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: getway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            # Auth Service
+            - id: auth-service
+              uri: lb://auth-service
+              predicates:
+                - Path=/api/auth/**
+              filters:
+                - name: ApiResponse
+
+        # # Order Service
+        # - id: order-service
+        #   uri: lb://order-service
+        #   predicates:
+        #     - Path=/api/orders/**
+
+        # # Product Service
+        # - id: product-service
+        #   uri: lb://product-service
+        #   predicates:
+        #     - Path=/api/products/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+    register-with-eureka: true
+    fetch-registry: true
+    healthcheck:
+      enabled: true
+
+  instance:
+    prefer-ip-address: true
+    # Rút ngắn thời gian chờ để Eureka bỏ instance đã tắt nhanh hơn.
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+# management:
+#   endpoints:
+#     web:
+#       exposure:
+#         include: health,info

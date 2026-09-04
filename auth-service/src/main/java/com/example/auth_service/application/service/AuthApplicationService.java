@@ -24,10 +24,12 @@ import com.example.common.untill.ValidationUtils;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.experimental.FieldDefaults;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
+@Slf4j
 public class AuthApplicationService implements LoginUseCase, RegisterUseCase {
     AuthenticationManagerPort authenticationManagerPort;
 
@@ -52,8 +54,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase {
         String accectToken = tokenServicePort.generateAccessToken(user);
 
         String refreshToken = tokenServicePort.generateRefreshToken(user);
-        // logger.info("Đăng nhập thành công cho user: {} (id: {})", user.getEmail(),
-        // user.getId());
+        log.info("Đăng nhập thành công, userId={}, email={}", user.getId(), user.getEmail());
         return AuthResponse.builder()
                 .userId(user.getId())
                 .accessToken(accectToken)
@@ -87,7 +88,10 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase {
         String accessToken = tokenServicePort.generateAccessToken(usersave);
         String refreshToken = tokenServicePort.generateRefreshToken(usersave);
 
-        // logger.info("Đăng ký thành công cho user: {}", email);
+        log.info(
+                "Đăng ký thành công, userId={}, email={}",
+                usersave.getId(),
+                usersave.getEmail());
 
         return AuthResponse.builder()
                 .userId(usersave.getId())
