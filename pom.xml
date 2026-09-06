@@ -23,6 +23,7 @@
 		<module>auth-service</module>
 		<module>discovery-server</module>
 		<module>getway</module>
+		<module>notification-service</module>
 	</modules>
 
 	<properties>
