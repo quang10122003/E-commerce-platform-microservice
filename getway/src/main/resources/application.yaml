@@ -2,8 +2,19 @@ server:
   port: 8080
 
 spring:
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:../.env[.properties]
+
   application:
     name: getway
+
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 2s
 
   cloud:
     gateway:
@@ -45,6 +56,10 @@ eureka:
     # Rút ngắn thời gian chờ để Eureka bỏ instance đã tắt nhanh hơn.
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
+
+app:
+  jwt:
+    public-key: ${JWT_PUBLIC_KEY}
 
 # management:
 #   endpoints:

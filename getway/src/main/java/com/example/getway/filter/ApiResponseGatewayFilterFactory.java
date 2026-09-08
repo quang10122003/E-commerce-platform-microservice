@@ -32,6 +32,7 @@ public class ApiResponseGatewayFilterFactory
 
     @Override
     public GatewayFilter apply(Config config) {
+        // tapk filter để getway sử dụng
         ModifyResponseBodyGatewayFilterFactory.Config rewriteConfig =
                 new ModifyResponseBodyGatewayFilterFactory.Config();
 
