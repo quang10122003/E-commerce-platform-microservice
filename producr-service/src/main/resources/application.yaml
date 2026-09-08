@@ -1,22 +1,20 @@
-server:
-  port: 8082
 spring:
+  application:
+    name: producr-service
   config:
     import:
       # Nạp biến môi trường từ .env ở cả root project và thư mục cha của module
       - optional:file:.env[.properties]
       - optional:file:../.env[.properties]
-  application:
-    name: notification-service
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    consumer:
-      group-id: notification-service
-      auto-offset-reset: earliest
-      enable-auto-commit: true
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      
+  datasource:
+    url: jdbc:mysql://localhost:3306/product_service_db
+    username: ${USERNAME_DATABASE}
+    password: ${PASSWORD_DATABASE}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+server:
+  port: 8083
+
 eureka:
   client:
     register-with-eureka: true
@@ -30,11 +28,7 @@ eureka:
     # Rút ngắn thời gian chờ để Eureka bỏ instance đã tắt nhanh hơn.
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
+
 app:
-  kafka:
-    topic:
-      auth-events: auth-service.events
-  mail:
-    welcome-sender: welcome@daoxuanquang.dev
-  resend:
-    resend_key: ${RESEND_KEY}
+  jwt:
+    public-key: ${JWT_PUBLIC_KEY}
