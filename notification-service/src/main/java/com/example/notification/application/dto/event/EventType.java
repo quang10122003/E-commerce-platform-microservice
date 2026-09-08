@@ -2,6 +2,7 @@ package com.example.notification.application.dto.event;
 
 import java.util.Arrays;
 
+// các kiểu envevt
 public enum EventType {
 
     USER_REGISTERED("UserRegistered");

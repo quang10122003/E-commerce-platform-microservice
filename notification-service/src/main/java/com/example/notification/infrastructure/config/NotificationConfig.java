@@ -10,6 +10,12 @@ import com.example.notification.application.dto.template.UserRegisteredEmailTemp
 @Configuration
 public class NotificationConfig {
 
+    // Khởi tạo template email tại tầng infrastructure để application không phụ thuộc Spring.
+    @Bean
+    UserRegisteredEmailTemplate userRegisteredEmailTemplate(MailSenderProperties mailSenderProperties) {
+        return new UserRegisteredEmailTemplate(mailSenderProperties);
+    }
+
     // Tạo application service với các dependency qua port và template.
     @Bean
     NotificationApplicationService notificationApplicationService(

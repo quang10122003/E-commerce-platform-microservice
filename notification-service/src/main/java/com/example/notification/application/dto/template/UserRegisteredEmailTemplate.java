@@ -2,7 +2,6 @@ package com.example.notification.application.dto.template;
 
 import java.util.List;
 
-import org.springframework.stereotype.Component;
 
 import com.example.notification.application.dto.event.UserRegisteredEvent;
 import com.example.notification.application.dto.request.EmailMessage;
@@ -11,7 +10,6 @@ import com.example.notification.infrastructure.config.MailSenderProperties;
 
 import lombok.RequiredArgsConstructor;
 
-@Component
 @RequiredArgsConstructor
 // tempale tạo EmailMessage  Dto cho case UserRegistered
 public class UserRegisteredEmailTemplate
