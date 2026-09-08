@@ -45,15 +45,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             Claims claims = jwtVerifier.extractAllClaims(token);
 
             String email = claims.getSubject();
-            Boolean isLocked = claims.get("isLocked", Boolean.class);
-
             // Chặn tài khoản đã bị khóa ngay từ JWT
-            if (Boolean.TRUE.equals(isLocked)) {
-                SecurityContextHolder.clearContext();
-                filterChain.doFilter(request, response);
-                return;
-            }
-
             List<String> roles = claims.get("roles", List.class);
 
             List<GrantedAuthority> authorities = roles == null

@@ -7,6 +7,6 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class ApiErrorDto {
-    String code;
-    String message;
+    private final String code;
+    private final String message;
 }
