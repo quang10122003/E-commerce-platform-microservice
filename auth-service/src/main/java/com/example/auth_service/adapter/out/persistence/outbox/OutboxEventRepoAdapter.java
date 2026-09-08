@@ -1,10 +1,9 @@
-package com.example.auth_service.adapter.out;
+package com.example.auth_service.adapter.out.persistence.outbox;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,9 +18,9 @@ import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
-public class OutboxEventPersistenceAdapter implements OutboxEventPort {
+public class OutboxEventRepoAdapter implements OutboxEventPort {
 
-    private final OutboxEventRepoJpa outboxEventRepoJpa;
+    private final OutboxEventRepoJpaJpa outboxEventRepoJpaJpa;
     private final OutboxEventMapper outboxEventMapper;
     private final JsonUtils jsonUtils;
 
@@ -29,13 +28,13 @@ public class OutboxEventPersistenceAdapter implements OutboxEventPort {
     public void save(OutboxEvent event) {
         String payload = jsonUtils.toJson(event.payload());
         // đẩy lên outbox 
-        outboxEventRepoJpa.save(outboxEventMapper.toEntity(event, payload));
+        outboxEventRepoJpaJpa.save(outboxEventMapper.toEntity(event, payload));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<OutboxEventDto> findPending() {
-        return outboxEventRepoJpa.findByStatusOrderByCreatedAtAsc(
+        return outboxEventRepoJpaJpa.findByStatusOrderByCreatedAtAsc(
                         OutboxEventEntity.Status.PENDING)
                 .stream()
                 .map(outboxEventMapper::toDto)
@@ -45,7 +44,7 @@ public class OutboxEventPersistenceAdapter implements OutboxEventPort {
     @Override
     @Transactional
     public void markPublished(UUID eventId) {
-        outboxEventRepoJpa.findByEventId(eventId.toString()).ifPresent(event -> {
+        outboxEventRepoJpaJpa.findByEventId(eventId.toString()).ifPresent(event -> {
             event.setStatus(OutboxEventEntity.Status.PUBLISHED);
             event.setPublishedAt(LocalDateTime.now());
             event.setErrorMessage(null);
@@ -55,7 +54,7 @@ public class OutboxEventPersistenceAdapter implements OutboxEventPort {
     @Override
     @Transactional
     public void markFailed(UUID eventId, String errorMessage) {
-        outboxEventRepoJpa.findByEventId(eventId.toString()).ifPresent(event -> {
+        outboxEventRepoJpaJpa.findByEventId(eventId.toString()).ifPresent(event -> {
             int retryCount = event.getRetryCount() + 1;
             event.setRetryCount(retryCount);
             event.setErrorMessage(errorMessage);

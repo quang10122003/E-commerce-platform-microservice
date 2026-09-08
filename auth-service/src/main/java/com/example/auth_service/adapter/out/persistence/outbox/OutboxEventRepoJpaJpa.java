@@ -1,14 +1,13 @@
-package com.example.auth_service.adapter.out;
+package com.example.auth_service.adapter.out.persistence.outbox;
 
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.auth_service.adapter.entity.OutboxEventEntity;
 
-public interface OutboxEventRepoJpa extends JpaRepository<OutboxEventEntity, Long> {
+public interface OutboxEventRepoJpaJpa extends JpaRepository<OutboxEventEntity, Long> {
 
     // Lấy event theo thứ tự 
     List<OutboxEventEntity> findByStatusOrderByCreatedAtAsc(

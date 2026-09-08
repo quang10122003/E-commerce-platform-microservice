@@ -1,6 +1,6 @@
 package com.example.auth_service.infrastructure.sercurity;
 
-import com.example.auth_service.adapter.out.UserRepoJpa;
+import com.example.auth_service.adapter.out.persistence.user.UserRepoJpa;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

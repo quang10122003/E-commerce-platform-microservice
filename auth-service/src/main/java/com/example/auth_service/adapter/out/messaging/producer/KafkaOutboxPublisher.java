@@ -1,8 +1,10 @@
-package com.example.auth_service.adapter.out;
+package com.example.auth_service.adapter.out.messaging.producer;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,9 +33,20 @@ public class KafkaOutboxPublisher {
     // Poll lấy event đang Pending theo định kì push kafka 
     @Scheduled(fixedDelayString = "${app.kafka.publisher.fixed-delay-ms:5000}")
     public void publishPendingEvents() {
-        List<OutboxEventDto> events = outboxEventPort.findPending();
-        System.out.println(" lấy đc"+events.size());
-        events.forEach(this::publish);
+        String previousRequestId = MDC.get("request_id");
+        MDC.put("request_id", "scheduler-" + UUID.randomUUID());
+        try {
+            List<OutboxEventDto> events = outboxEventPort.findPending();
+            log.debug("Bắt đầu phát hành outbox event: số lượng={}", events.size());
+            events.forEach(this::publish);
+        } finally {
+            // Khôi phục MDC để không làm nhiễm request tiếp theo trên cùng thread.
+            if (previousRequestId == null) {
+                MDC.remove("request_id");
+            } else {
+                MDC.put("request_id", previousRequestId);
+            }
+        }
     }
 
     // Chỉ đánh dấu PUBLISHED sau khi Kafka xác nhận gửi thành công.
@@ -44,7 +57,8 @@ public class KafkaOutboxPublisher {
                     .get(10, TimeUnit.SECONDS);
             outboxEventPort.markPublished(event.eventId());
         } catch (Exception exception) {
-            log.error("Publish outbox thất bại, eventId={}", event.eventId(), exception);
+            log.error("Phát hành outbox event thất bại: event_id={}, topic={}",
+                    event.eventId(), authEventsTopic, exception);
             outboxEventPort.markFailed(event.eventId(), exception.getMessage());
         }
     }

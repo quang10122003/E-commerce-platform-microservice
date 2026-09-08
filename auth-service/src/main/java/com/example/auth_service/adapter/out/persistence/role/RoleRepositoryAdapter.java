@@ -1,4 +1,4 @@
-package com.example.auth_service.adapter.out;
+package com.example.auth_service.adapter.out.persistence.role;
 
 import java.util.Optional;
 

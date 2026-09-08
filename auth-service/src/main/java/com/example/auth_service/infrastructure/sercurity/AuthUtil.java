@@ -1,7 +1,9 @@
 package com.example.auth_service.infrastructure.sercurity;
 
+import com.example.auth_service.domain.until.TypeToken;
 import io.jsonwebtoken.*;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
 import java.security.PrivateKey;
@@ -22,6 +24,7 @@ import com.example.common.security.JwtVerifier;
 
 @Component
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Getter
 public class AuthUtil {
 
     PrivateKey privateKey;
@@ -41,11 +44,11 @@ public class AuthUtil {
     }
 
     public String generateAccessToken(User user) {
-        return generateToken(user, "access", accessTokenExpirationMillis);
+        return generateToken(user, TypeToken.ACCESS_TOKEN.getName(), accessTokenExpirationMillis);
     }
 
     public String generateRefreshToken(User user) {
-        return generateToken(user, "refresh", refreshTokenExpirationMillis);
+        return generateToken(user, TypeToken.REFRESH_TOKEN.getName(), refreshTokenExpirationMillis);
     }
 
     private String generateToken(User user, String tokenType, long expirationMillis) {
@@ -62,7 +65,6 @@ public class AuthUtil {
                         "userId", user.getId(),
                         "roles", roleNames,
                         "fullName", user.getFullName(),
-                        "isLocked", user.isLocked(),
                         "tokenType", tokenType))
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusMillis(expirationMillis)))
@@ -79,11 +81,11 @@ public class AuthUtil {
     }
 
     public boolean isAccessTokenValid(String token, UserDetails userDetails) {
-        return isTokenValid(token, userDetails, "access");
+        return isTokenValid(token, userDetails, TypeToken.ACCESS_TOKEN.getName());
     }
 
     public boolean isRefreshTokenValid(String token, UserDetails userDetails) {
-        return isTokenValid(token, userDetails, "refresh");
+        return isTokenValid(token, userDetails, TypeToken.REFRESH_TOKEN.getName());
     }
 
     // check token hớp lệ hay ko

@@ -6,6 +6,11 @@ spring:
       - optional:file:../.env[.properties]
   application:
     name: auth-service
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 2s
   datasource:
     url: jdbc:mysql://localhost:3306/auth_db
     username: ${USERNAME_DATABASE}

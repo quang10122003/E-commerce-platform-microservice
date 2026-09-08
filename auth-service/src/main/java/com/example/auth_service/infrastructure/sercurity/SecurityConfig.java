@@ -29,7 +29,9 @@ public class SecurityConfig {
     // Danh sách endpoint mở cho đăng ký và đăng nhập
     static String[] PUBLIC_ENDPOINTS = {
             "/api/auth/register",
-            "/api/auth/login"
+            "/api/auth/login",
+            "/api/auth/refresh_token",
+
     };
 
     // Cấu hình bảo mật cho auth-service
