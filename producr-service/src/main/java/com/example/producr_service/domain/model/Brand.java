@@ -11,19 +11,12 @@ public class Brand {
 
     private final Long id;
     private final String name;
-    private String logoUrl;
-
     public Brand(Long id, String name, String logoUrl) {
         if (name == null || name.isBlank()) {
             throw new BusinessException(DomainProductError.BRAND_NAME_REQUIRED);
         }
         this.id = id;
         this.name = name;
-        this.logoUrl = logoUrl;
-    }
-
-    public void updateLogo(String logoUrl) {
-        this.logoUrl = logoUrl;
     }
 
     @Override
