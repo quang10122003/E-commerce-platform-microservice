@@ -15,7 +15,7 @@ import lombok.experimental.FieldDefaults;
 @Component 
 @RequiredArgsConstructor 
 @FieldDefaults (level = AccessLevel.PRIVATE,makeFinal = true)
-public class KafkaLister {
+public class AuthConsumer {
     SendEmailUserRegisteredUseCase emailUserRegisteredUseCase;
     ObjectMapper objectMapper;
 

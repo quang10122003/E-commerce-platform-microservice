@@ -36,4 +36,5 @@ public final class ValidationUtils {
     public static boolean hasText(String value) {
         return normalize(value) != null;
     }
+
 }

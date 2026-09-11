@@ -1,13 +1,8 @@
 package com.example.auth_service.infrastructure.config;
 
-import com.example.auth_service.application.port.in.LogoutUserCase;
 import com.example.auth_service.application.port.out.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.transaction.support.TransactionTemplate;
-
-import com.example.auth_service.application.port.in.LoginUseCase;
-import com.example.auth_service.application.port.in.RegisterUseCase;
 import com.example.auth_service.application.service.AuthApplicationService;
 
 @Configuration

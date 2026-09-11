@@ -57,7 +57,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
                 request.getPassword());
 
         User user = authenticatedUser.getUser();
-        assertUserNotLocked(user);
+        user.assertUserNotLocked();
 
         String accectToken = tokenServicePort.generateAccessToken(user);
 
@@ -77,53 +77,22 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
 
     @Override
     public AuthResponse register(RegisterRquest request) {
-        String normalizedEmail = ValidationUtils.normalizeEmail(request.getEmail());
-        String password = request.getPassword();
-        String fullName = ValidationUtils.normalize(request.getFullName());
-
-        Role role = roleRepositoryPort.findByName(RoleEnum.User.getName())
-                .orElseThrow(() -> new BusinessException(AuthError.ROLE_NOT_FOUND));
-
-        Optional<User> userOptional = userRepositoryPort.findByEmail(normalizedEmail);
-        User usersave;
-        // tk đã tồn tại
-        if (userOptional.isPresent()) {
-            throw new BusinessException(AuthError.EMAIL_ALREADY_REGISTERED);
-        } else {
-            // tk chưa tồn tại tạo tk
-            String hashPassword  = authenticationManagerPort.encodePassword(password);
-            User newUser = User.create(normalizedEmail, hashPassword, fullName, Set.of(role));
-            usersave = userRepositoryPort.save(newUser);
-        }
-        // tạo id cho event outBox
-        UUID eventId = UUID.randomUUID();
-        EventType eventType = EventType.USER_REGISTERED;
-        outboxEventPort.save(new OutboxEvent(
-                eventId,
-                "User",
-                String.valueOf(usersave.getId()),
-                eventType,
-                new UserRegisteredEventDto(
-                        eventId,
-                        eventType.getValue(),
-                        usersave.getId(),
-                        usersave.getEmail(),
-                        usersave.getFullName(),
-                        LocalDateTime.now())));
+        User user = createNewUser(request);
+        publishUserRegisteredEvent(user);
                         
-        String accessToken = tokenServicePort.generateAccessToken(usersave);
-        String refreshToken = tokenServicePort.generateRefreshToken(usersave);
+        String accessToken = tokenServicePort.generateAccessToken(user);
+        String refreshToken = tokenServicePort.generateRefreshToken(user);
 
-        log.info("Đăng ký tài khoản thành công: user_id={}", usersave.getId());
+        log.info("Đăng ký tài khoản thành công: user_id={}", user.getId());
 
         return AuthResponse.builder()
-                .userId(usersave.getId())
+                .userId(user.getId())
                 .accessToken(
                         accessToken)
                 .refreshToken(refreshToken)
-                .email(usersave.getEmail())
-                .fullName(usersave.getFullName())
-                .role(usersave.getRoles().stream().map(Role::getName).collect(
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRoles().stream().map(Role::getName).collect(
                         Collectors.toSet()))
                 .build();
 
@@ -137,11 +106,13 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
         User user = userRepositoryPort.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND));
         // check tài khoản bị khóa hay k
-        assertUserNotLocked(user);
+        user.assertUserNotLocked();
         // check token hợp lệ vs user hay k
         if(!tokenServicePort.isRefreshTokenValid(refreshTokenRequest,user)){
            throw  new BusinessException(AuthError.REFRESH_TOKEN_INVALID);
         }
+        Duration ttlRefreshToken = tokenServicePort.getRefreshTokenTtl();
+        accessControlCachePort.blacklistToken(request.refreshToken(),ttlRefreshToken);
 
         String accessToken = tokenServicePort.generateAccessToken(user);
         String refreshToken = tokenServicePort.generateRefreshToken(user);
@@ -159,13 +130,18 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
         String email = tokenServicePort.getEmailFromToken(token);
 
         User user = userRepositoryPort.findByEmail(email).orElseThrow(()-> new BusinessException(AuthError.USER_NOT_FOUND));
-        assertUserNotLocked(user);
+        user.assertUserNotLocked();
         boolean isValid = tokenServicePort.isAccessTokenValid(token,user);
 
         // Ghi nhận kết quả kiểm tra token để hỗ trợ truy vết request mà không lộ token.
         log.debug("Kiểm tra access token: user_id={}, hợp lệ={}", user.getId(), isValid);
 
-        return AccessTokenValidationResponse.builder().validateToken(isValid).build();
+        return AccessTokenValidationResponse.builder()
+                .userId(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()))
+                .build();
 
     }
 
@@ -174,21 +150,43 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
         String accessToken = logoutRequest.accessToken();
         String refreshToken = logoutRequest.refreshToken();
 
-        Duration ttlAccessToken = tokenServicePort.getAccessTokenTtl();
-        Duration ttlRefreshToken = tokenServicePort.getRefreshTokenTtl();
-
-        accessControlCachePort.blacklistToken(accessToken,ttlAccessToken);
-        accessControlCachePort.blacklistToken(refreshToken,ttlRefreshToken);
+        revokeAccessToken(logoutRequest.accessToken());
+        revokeRefreshToken(logoutRequest.refreshToken());
 
     }
 
-    // Kiểm tra tài khoản có bị khóa hay không trước khi cấp token.
-    private void assertUserNotLocked(User user) {
-        if (user.isLocked()) {
-            throw new BusinessException(AuthError.USER_LOCKED);
+
+    private void publishUserRegisteredEvent(User user) {
+        UUID eventId = UUID.randomUUID();
+        EventType eventType = EventType.USER_REGISTERED;
+        outboxEventPort.save(new OutboxEvent(
+                eventId, "User", String.valueOf(user.getId()), eventType,
+                new UserRegisteredEventDto(eventId, eventType.getValue(),
+                        user.getId(), user.getEmail(), user.getFullName(), LocalDateTime.now())));
+    }
+
+    // core tạo user mới cho đăng ký
+    private User createNewUser(RegisterRquest request) {
+        String email = ValidationUtils.normalizeEmail(request.getEmail());
+        if (userRepositoryPort.findByEmail(email).isPresent()) {
+            throw new BusinessException(AuthError.EMAIL_ALREADY_REGISTERED);
         }
+        Role role = roleRepositoryPort.findByName(RoleEnum.User.getName())
+                .orElseThrow(() -> new BusinessException(AuthError.ROLE_NOT_FOUND));
+        String hashedPassword = authenticationManagerPort.encodePassword(request.getPassword());
+        String fullName = ValidationUtils.normalize(request.getFullName());
+        User newUser = User.create(email, hashedPassword, fullName, Set.of(role));
+        return userRepositoryPort.save(newUser);
     }
 
+    // thêm accessToken vào blick list cache
+    private void revokeAccessToken(String accessToken) {
+        accessControlCachePort.blacklistToken(accessToken, tokenServicePort.getAccessTokenTtl());
+    }
+    // thêm refreshToken vào blick list cache
+    private void revokeRefreshToken(String refreshToken) {
+        accessControlCachePort.blacklistToken(refreshToken, tokenServicePort.getRefreshTokenTtl());
+    }
 
 
 }

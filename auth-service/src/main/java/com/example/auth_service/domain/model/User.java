@@ -3,6 +3,8 @@ package com.example.auth_service.domain.model;
 import java.time.Instant;
 import java.util.Set;
 
+import com.example.auth_service.application.error.AuthError;
+import com.example.common.exception.BusinessException;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,6 +41,13 @@ public class User {
 
     public boolean canLogin() {
         return !locked;
+    }
+
+    // Kiểm tra tài khoản có bị khóa hay không
+    public void assertUserNotLocked() {
+        if (this.isLocked()) {
+            throw new BusinessException(AuthError.USER_LOCKED);
+        }
     }
     
 }

@@ -51,7 +51,9 @@ public class AuthController {
         return ResponseEntity.ok(checktokenUseCase.CheckToken(authorizationHeader));
     }
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(LogoutRequest request){
+    public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequest request){
+        // Thu hồi access token và refresh token bằng cách ghi chúng vào Redis blacklist.
+        logoutUserCase.logout(request);
         return  ResponseEntity.noContent().build();
     }
 }
