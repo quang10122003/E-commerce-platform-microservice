@@ -1,8 +1,10 @@
-package com.shop.productservice.domain.model;
+package com.example.producr_service.domain.model;
 
 import com.example.producr_service.domain.model.Money;
 import com.example.producr_service.domain.model.ProductAttribute;
 import com.example.producr_service.domain.model.ProductVariant;
+import com.example.common.exception.BusinessException;
+import com.example.producr_service.domain.error.DomainProductError;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -36,10 +38,10 @@ public class Product {
     public Product(Long id, Long categoryId, Long brandId, String name,
                    String description, String imageUrl) {
         if (categoryId == null) {
-            throw new IllegalArgumentException("San pham phai thuoc 1 danh muc");
+            throw new BusinessException(DomainProductError.PRODUCT_CATEGORY_REQUIRED);
         }
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Ten san pham khong duoc rong");
+            throw new BusinessException(DomainProductError.PRODUCT_NAME_REQUIRED);
         }
         this.id = id;
         this.categoryId = categoryId;
@@ -83,7 +85,7 @@ public class Product {
 
     public void updateBasicInfo(String name, String description, String imageUrl) {
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Ten san pham khong duoc rong");
+            throw new BusinessException(DomainProductError.PRODUCT_NAME_REQUIRED);
         }
         this.name = name;
         this.description = description;
@@ -96,26 +98,22 @@ public class Product {
 
     public void moveToCategory(Long categoryId) {
         if (categoryId == null) {
-            throw new IllegalArgumentException("San pham phai thuoc 1 danh muc");
+            throw new BusinessException(DomainProductError.PRODUCT_CATEGORY_REQUIRED);
         }
         this.categoryId = categoryId;
     }
 
-    /**
-     * Tim variant khop DU CA TAP gia tri thuoc tinh khach chon
-     * (vi du: khach chon Do + M -> tra ve dung 1 variant, hoac rong
-     * neu khong co to hop nao khop). Tuong duong logic o cau SQL
-     */
-    public Optional<ProductVariant> findVariantByAttributeValues(Set<Long> attributeValueIds) {
+    // tìm product_variant phuf hợp với attributeValues
+    public Optional<ProductVariant> findVariantByAttributeValues(Set<AttributeValue> attributeValues) {
         return variants.stream()
-                .filter(v -> v.matchesAllAttributeValues(attributeValueIds))
+                .filter(v -> v.matchesAllAttributeValues(attributeValues))
                 .findFirst();
     }
 
     /** Khoang gia hien thi tren the card - "150.000d" hoac "Tu 150.000d". */
     public PriceRange getPriceRange() {
         if (variants.isEmpty()) {
-            throw new IllegalStateException("San pham chua co variant nao");
+            throw new BusinessException(DomainProductError.PRODUCT_VARIANTS_REQUIRED);
         }
         Money min = variants.getFirst().getPrice();
         Money max = variants.getFirst().getPrice();

@@ -1,7 +1,7 @@
 package com.example.producr_service.application.registry;
 
 import com.example.producr_service.application.strategy.interfaces.IBucketUploadStrategy;
-import com.example.producr_service.domain.until.StorageBucket;
+import com.example.producr_service.application.port.out.storage.StorageBucket;
 
 import java.util.List;
 import java.util.Map;
@@ -26,3 +26,4 @@ public class BucketStrategyRegistry {
         return strategy;
     }
 }
+

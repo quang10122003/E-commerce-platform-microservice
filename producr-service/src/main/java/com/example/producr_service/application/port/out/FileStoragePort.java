@@ -1,7 +1,7 @@
 package com.example.producr_service.application.port.out;
 
-import com.example.producr_service.domain.until.PreparedUpload;
-import com.example.producr_service.domain.until.StorageBucket;
+import com.example.producr_service.application.port.out.storage.PreparedUpload;
+import com.example.producr_service.application.port.out.storage.StorageBucket;
 
 import java.util.List;
 
@@ -16,3 +16,4 @@ public interface FileStoragePort {
     // Xóa nhiều object trong cùng một bucket.
     void delete(StorageBucket bucket, List<String> objectPaths);
 }
+

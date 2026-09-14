@@ -5,28 +5,73 @@ import com.example.common.error.ErrorCode;
 public enum DomainProductError implements ErrorCode {
     CATEGORY_NAME_REQUIRED(
             "CATEGORY_NAME_REQUIRED",
-            "Ten danh muc khong duoc rong",
+            "Tên danh mục không được để trống",
             400
     ),
     BRAND_NAME_REQUIRED(
             "BRAND_NAME_REQUIRED",
-                    "Ten brand muc khong duoc rong",
-                    400
+            "Tên thương hiệu không được để trống",
+            400
     ),
     PRODUCT_ATTRIBUTE_NAME_REQUIRED(
             "PRODUCT_ATTRIBUTE_NAME_REQUIRED",
-                    "Ten ATTRIBUTE san pham muc khong duoc rong",
-                    400
+            "Tên thuộc tính sản phẩm không được để trống",
+            400
     ),
     ATTRIBUTE_VALUE_NAME_REQUIRED(
             "ATTRIBUTE_VALUE_NAME_REQUIRED",
-                    "Ten ATTRIBUTE_VALUE_NAME san pham muc khong duoc rong",
-                    400
+            "Tên giá trị thuộc tính không được để trống",
+            400
+    ),
+    PRODUCT_CATEGORY_REQUIRED(
+            "PRODUCT_CATEGORY_REQUIRED",
+            "Sản phẩm phải thuộc một danh mục",
+            400
+    ),
+    PRODUCT_NAME_REQUIRED(
+            "PRODUCT_NAME_REQUIRED",
+            "Tên sản phẩm không được để trống",
+            400
+    ),
+    PRODUCT_VARIANTS_REQUIRED(
+            "PRODUCT_VARIANTS_REQUIRED",
+            "Sản phẩm chưa có biến thể",
+            400
+    ),
+    SKU_REQUIRED(
+            "SKU_REQUIRED",
+            "SKU không được để trống",
+            400
+    ),
+    STOCK_QUANTITY_NEGATIVE(
+            "STOCK_QUANTITY_NEGATIVE",
+            "Tồn kho không được âm",
+            400
+    ),
+    STOCK_DECREASE_QUANTITY_INVALID(
+            "STOCK_DECREASE_QUANTITY_INVALID",
+            "Số lượng trừ kho phải lớn hơn 0",
+            400
+    ),
+    STOCK_INSUFFICIENT(
+            "STOCK_INSUFFICIENT",
+            "Không đủ tồn kho để trừ",
+            409
+    ),
+    STOCK_INCREASE_QUANTITY_INVALID(
+            "STOCK_INCREASE_QUANTITY_INVALID",
+            "Số lượng nhập kho phải lớn hơn 0",
+            400
+    ),
+    IMAGE_URL_REQUIRED(
+            "IMAGE_URL_REQUIRED",
+            "Đường dẫn ảnh không được để trống",
+            400
     ),
     MONEY_AMOUNT_NEGATIVE(
             "MONEY_AMOUNT_NEGATIVE",
-                    "Money amount cannot be negative",
-                    400
+            "Số tiền không được âm",
+            400
     );
 
 

@@ -2,8 +2,11 @@ package com.example.producr_service.adapter.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,13 +17,17 @@ import java.util.Set;
 
 @Entity
 @Table(name = "product_variants")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class ProductVariantEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     // FK products_id - ON DELETE CASCADE o DB
@@ -41,6 +48,7 @@ public class ProductVariantEntity {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "variant", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<VariantImageEntity> images = new ArrayList<>();
 
     @ManyToMany
@@ -49,6 +57,7 @@ public class ProductVariantEntity {
             joinColumns = @JoinColumn(name = "product_variants_id"),
             inverseJoinColumns = @JoinColumn(name = "attribute_values_id")
     )
+    @Builder.Default
     private Set<AttributeValueEntity> attributeValues = new HashSet<>();
 
 

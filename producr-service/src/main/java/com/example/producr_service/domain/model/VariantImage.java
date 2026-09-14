@@ -1,6 +1,13 @@
 package com.example.producr_service.domain.model;
-import java.util.Objects;
 
+import com.example.common.exception.BusinessException;
+import com.example.producr_service.domain.error.DomainProductError;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+import java.util.Objects;
+@Getter
+@AllArgsConstructor
 public class VariantImage {
 
     private final Long id;
@@ -9,23 +16,11 @@ public class VariantImage {
 
     public VariantImage(Long id, String imageUrl, boolean primary, int sortOrder) {
         if (imageUrl == null || imageUrl.isBlank()) {
-            throw new IllegalArgumentException("Duong dan anh khong duoc rong");
+            throw new BusinessException(DomainProductError.IMAGE_URL_REQUIRED);
         }
         this.id = id;
         this.imageUrl = imageUrl;
         this.primary = primary;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public boolean isPrimary() {
-        return primary;
     }
 
     public void markAsPrimary() {

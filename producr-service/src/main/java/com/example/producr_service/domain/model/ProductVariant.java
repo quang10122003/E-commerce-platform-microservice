@@ -1,7 +1,7 @@
 package com.example.producr_service.domain.model;
 
-import com.example.producr_service.domain.model.Money;
-import com.example.producr_service.domain.model.VariantImage;
+import com.example.common.exception.BusinessException;
+import com.example.producr_service.domain.error.DomainProductError;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -11,29 +11,26 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * Ung voi bang product_variants.
- * Quan he nhieu-nhieu voi AttributeValue (qua bang noi
- * variant_attribute_values) duoc bieu dien don gian bang 1 Set<Long>
- * chua id cua cac AttributeValue - domain khong can biet ve su ton tai
- * cua "bang noi", do la chi tiet ky thuat cua tang persistence.
- */
-@Getter
+
 public class ProductVariant {
 
+    @Getter
     private final Long id;
+    @Getter
     private final String sku;
+    @Getter
     private Money price;
+    @Getter
     private int stockQuantity;
-    private final Set<Long> attributeValueIds = new HashSet<>();
+    private final Set<AttributeValue> attributeValues = new HashSet<>();
     private final List<VariantImage> images = new ArrayList<>();
 
     public ProductVariant(Long id, String sku, Money price, int stockQuantity) {
         if (sku == null || sku.isBlank()) {
-            throw new IllegalArgumentException("SKU khong duoc rong");
+            throw new BusinessException(DomainProductError.SKU_REQUIRED);
         }
         if (stockQuantity < 0) {
-            throw new IllegalArgumentException("Ton kho khong duoc am");
+            throw new BusinessException(DomainProductError.STOCK_QUANTITY_NEGATIVE);
         }
         this.id = id;
         this.sku = sku;
@@ -41,29 +38,27 @@ public class ProductVariant {
         this.stockQuantity = stockQuantity;
     }
 
-
-    public Set<Long> getAttributeValueIds() {
-        return Collections.unmodifiableSet(attributeValueIds);
+    public Set<AttributeValue> getAttributeValues() {
+        return Collections.unmodifiableSet(attributeValues);
     }
 
     public List<VariantImage> getImages() {
         return Collections.unmodifiableList(images);
     }
 
-    public void linkAttributeValue(Long attributeValueId) {
-        attributeValueIds.add(attributeValueId);
+    public void linkAttributeValue(AttributeValue value) {
+        attributeValues.add(value);
     }
 
     public void addImage(VariantImage image) {
         images.add(image);
     }
 
-    /**
-     * Kiem tra variant nay co khop DU CA TAP gia tri thuoc tinh duoc yeu cau
-     * hay khong.
-     */
-    public boolean matchesAllAttributeValues(Set<Long> requiredValueIds) {
-        return this.attributeValueIds.containsAll(requiredValueIds);
+
+
+    // check product_varinat có đủ atrirbute value yêu cầu k
+    public boolean matchesAllAttributeValues(Set<AttributeValue> requiredValues) {
+        return this.attributeValues.containsAll(requiredValues);
     }
 
     public boolean isInStock() {
@@ -72,17 +67,17 @@ public class ProductVariant {
 
     public void decreaseStock(int quantity) {
         if (quantity <= 0) {
-            throw new IllegalArgumentException("So luong tru kho phai > 0");
+            throw new BusinessException(DomainProductError.STOCK_DECREASE_QUANTITY_INVALID);
         }
         if (quantity > stockQuantity) {
-            throw new IllegalStateException("Khong du ton kho de tru");
+            throw new BusinessException(DomainProductError.STOCK_INSUFFICIENT);
         }
         this.stockQuantity -= quantity;
     }
 
     public void increaseStock(int quantity) {
         if (quantity <= 0) {
-            throw new IllegalArgumentException("So luong nhap kho phai > 0");
+            throw new BusinessException(DomainProductError.STOCK_INCREASE_QUANTITY_INVALID);
         }
         this.stockQuantity += quantity;
     }
@@ -101,8 +96,7 @@ public class ProductVariant {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ProductVariant)) return false;
-        ProductVariant that = (ProductVariant) o;
+        if (!(o instanceof ProductVariant that)) return false;
         return Objects.equals(id, that.id);
     }
 

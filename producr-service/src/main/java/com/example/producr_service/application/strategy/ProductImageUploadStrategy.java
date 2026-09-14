@@ -2,9 +2,9 @@ package com.example.producr_service.application.strategy;
 
 import com.example.common.untill.FileUntils;
 import com.example.producr_service.application.strategy.interfaces.IBucketUploadStrategy;
-import com.example.producr_service.domain.until.PreparedUpload;
-import com.example.producr_service.domain.until.StorageBucket;
-import com.example.producr_service.domain.until.UploadFileCommand;
+import com.example.producr_service.application.port.out.storage.PreparedUpload;
+import com.example.producr_service.application.port.out.storage.StorageBucket;
+import com.example.producr_service.application.dto.request.UploadFileCommand;
 
 import java.util.UUID;
 
@@ -30,3 +30,4 @@ public class ProductImageUploadStrategy  implements IBucketUploadStrategy {
         );
     }
 }
+

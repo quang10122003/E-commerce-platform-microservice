@@ -11,7 +11,7 @@ import java.util.Objects;
 public class AttributeValue {
 
     private final Long id;
-    private final String value;
+    private String value;
 
     public AttributeValue(Long id, String value) {
         if (value == null || value.isBlank()) {
@@ -21,16 +21,16 @@ public class AttributeValue {
         this.value = value;
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof AttributeValue that)) return false;
+        if (id == null || that.id == null) return false;
         return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return id == null ? System.identityHashCode(this) : Objects.hash(id);
     }
 }

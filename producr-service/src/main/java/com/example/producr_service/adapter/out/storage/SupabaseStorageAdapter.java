@@ -1,8 +1,8 @@
 package com.example.producr_service.adapter.out.storage;
 
 import com.example.producr_service.application.port.out.FileStoragePort;
-import com.example.producr_service.domain.until.PreparedUpload;
-import com.example.producr_service.domain.until.StorageBucket;
+import com.example.producr_service.application.port.out.storage.PreparedUpload;
+import com.example.producr_service.application.port.out.storage.StorageBucket;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -181,3 +181,4 @@ public class SupabaseStorageAdapter implements FileStoragePort {
         };
     }
 }
+
