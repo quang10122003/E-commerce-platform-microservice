@@ -23,17 +23,19 @@ spring:
               filters:
                 - name: ApiResponse
 
-        # # Order Service
+            # Product Service
+            - id: product-service
+              uri: lb://producr-service
+              predicates:
+                - Path=/api/v1/products/**
+              filters:
+                - name: ApiResponse
+
+        # Order Service
         # - id: order-service
         #   uri: lb://order-service
         #   predicates:
         #     - Path=/api/orders/**
-
-        # # Product Service
-        # - id: product-service
-        #   uri: lb://product-service
-        #   predicates:
-        #     - Path=/api/products/**
   data:
     redis:
       host: ${REDIS_HOST:localhost}
