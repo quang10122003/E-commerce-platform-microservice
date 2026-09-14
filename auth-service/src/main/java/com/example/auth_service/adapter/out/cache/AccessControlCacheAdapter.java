@@ -26,7 +26,7 @@ public class AccessControlCacheAdapter implements AccessControlCachePort {
             stringRedisTemplate.opsForValue().set(
                     AuthCacheKeys.blacklistJwt(jwt),
                     "1",
-                    ttl
+                ttl
             );
         } catch (DataAccessException ex) {
             log.error("Failed to blacklist JWT in Redis", ex);

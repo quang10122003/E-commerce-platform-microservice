@@ -11,9 +11,11 @@ import com.example.notification.application.port.in.SendEmailUserRegisteredUseCa
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
-@Component 
-@RequiredArgsConstructor 
+@Slf4j
+@Component
+@RequiredArgsConstructor
 @FieldDefaults (level = AccessLevel.PRIVATE,makeFinal = true)
 public class AuthConsumer {
     SendEmailUserRegisteredUseCase emailUserRegisteredUseCase;
@@ -27,10 +29,27 @@ public class AuthConsumer {
                     message,
                     UserRegisteredEvent.class);
 
+            log.info(
+                    "Nhận event đăng ký người dùng: event_id={}, event_type={}",
+                    event.eventId(),
+                    event.eventType()
+            );
+
             if (EventType.USER_REGISTERED.getValue().equals(event.eventType())) {
                 emailUserRegisteredUseCase.sendEmailUserRegisteredUse(event);
+                log.info(
+                        "Xử lý event đăng ký người dùng thành công: event_id={}",
+                        event.eventId()
+                );
+            } else {
+                log.warn(
+                        "Bỏ qua event không được hỗ trợ: event_id={}, event_type={}",
+                        event.eventId(),
+                        event.eventType()
+                );
             }
         } catch (Exception exception) {
+            log.error("Xử lý event đăng ký người dùng thất bại", exception);
             // Ném lỗi để Kafka có thể retry message thất bại.
             throw new IllegalStateException(
                     "Không thể xử lý UserRegisteredEvent",

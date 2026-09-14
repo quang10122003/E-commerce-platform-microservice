@@ -32,6 +32,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.experimental.FieldDefaults;
+import org.springframework.transaction.annotation.Transactional;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -46,6 +47,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
     OutboxEventPort outboxEventPort;
     AccessControlCachePort accessControlCachePort;
 
+    @Transactional(readOnly = true)
     @Override
     public AuthResponse login(LoginRequest request) {
 
@@ -74,12 +76,12 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
                 .build();
     }
 
-
+    @Transactional
     @Override
     public AuthResponse register(RegisterRquest request) {
         User user = createNewUser(request);
         publishUserRegisteredEvent(user);
-                        
+
         String accessToken = tokenServicePort.generateAccessToken(user);
         String refreshToken = tokenServicePort.generateRefreshToken(user);
 

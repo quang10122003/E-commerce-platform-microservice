@@ -27,9 +27,11 @@ public class EmailSenderAdapter implements EmailSenderPort {
                     .body(message)
                     .retrieve()
                     .toBodilessEntity();
-            log.info("gửi email {} cho email:{} thành công", message.subject(), message.to());
+            log.info("Gửi email thành công: subject={}, recipients={}", message.subject(), message.to().size());
         } catch (Exception e) {
-            log.error("gửi email {} cho email:{} thất bại", message.to(), message.to(), e);
+            log.error("Gửi email thất bại: subject={}, recipients={}", message.subject(), message.to().size(), e);
+            // Ném lại lỗi để application service và Kafka listener biết thao tác gửi thất bại.
+            throw new IllegalStateException("Không thể gửi email qua Resend", e);
         }
     }
     
