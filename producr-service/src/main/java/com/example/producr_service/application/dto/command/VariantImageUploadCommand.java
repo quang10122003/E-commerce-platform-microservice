@@ -1,4 +1,4 @@
-package com.example.producr_service.application.dto.request;
+package com.example.producr_service.application.dto.command;
 
 // Command upload một ảnh và vị trí variant/image mà ảnh đó được gắn vào.
 public record VariantImageUploadCommand(

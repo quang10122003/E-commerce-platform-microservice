@@ -51,6 +51,10 @@ public class ProductVariant {
     }
 
     public void addImage(VariantImage image) {
+        // Bảo vệ invariant: mỗi variant chỉ có tối đa một ảnh chính.
+        if (image.isPrimary() && images.stream().anyMatch(VariantImage::isPrimary)) {
+            throw new BusinessException(DomainProductError.VARIANT_MULTIPLE_PRIMARY_IMAGES);
+        }
         images.add(image);
     }
 

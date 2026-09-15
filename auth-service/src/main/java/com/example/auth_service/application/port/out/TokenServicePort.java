@@ -22,4 +22,6 @@ public interface TokenServicePort {
 
     // lấy thời gian hết hạn RefreshToken theo Duration
     Duration getRefreshTokenTtl();
+
+    Long getIdFromToken (String token);
 }

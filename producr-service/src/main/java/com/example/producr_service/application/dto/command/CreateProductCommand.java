@@ -1,4 +1,6 @@
-package com.example.producr_service.application.dto.request;
+package com.example.producr_service.application.dto.command;
+
+import com.example.producr_service.application.dto.request.CreateProductRequest;
 
 import java.util.List;
 

@@ -62,4 +62,9 @@ public class TokenServiceAdapter implements TokenServicePort {
         return Duration.ofMillis(authUtil.getRefreshTokenExpirationMillis());
     }
 
+    @Override
+    public Long  getIdFromToken(String token) {
+        return authUtil.extractUserId(token);
+    }
+
 }

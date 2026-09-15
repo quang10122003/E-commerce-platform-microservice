@@ -1,5 +1,6 @@
 package com.example.producr_service.application.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
@@ -22,8 +23,10 @@ public class CreateProductRequest {
     private String name;
 
     private String description;
-    private String imageUrl;
 
+    // URL do backend gán sau khi upload ảnh bìa, client không được truyền.
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private String imageUrl;
     // co the RONG neu san pham khong phan loai
     @Valid
     private List<AttributeRequest> attributes = new ArrayList<>();
@@ -80,7 +83,9 @@ public class CreateProductRequest {
     @Setter
     @Getter
     public static class VariantImageRequest {
-        
+
+        // URL do backend gán sau khi upload file variant, client không được truyền.
+        @JsonProperty(access = JsonProperty.Access.READ_ONLY)
         private String imageUrl;
 
         private boolean primary;

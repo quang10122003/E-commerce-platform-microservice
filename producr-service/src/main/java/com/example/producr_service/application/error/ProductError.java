@@ -17,6 +17,26 @@ public enum ProductError implements ErrorCode  {
             "INVALID_ATTRIBUTE_SELECTION",
             "Attribute selection is invalid",
             400
+    ),
+    INVALID_VARIANT_IMAGE_MAPPING(
+            "INVALID_VARIANT_IMAGE_MAPPING",
+            "Variant image mapping is invalid",
+            400
+    ),
+    INVALID_VARIANT_ATTRIBUTES(
+            "INVALID_VARIANT_ATTRIBUTES",
+            "Variant attributes are invalid",
+            400
+    ),
+    DUPLICATE_VARIANT_ATTRIBUTE_COMBINATION(
+            "DUPLICATE_VARIANT_ATTRIBUTE_COMBINATION",
+            "Variant attribute combination already exists",
+            400
+    ),
+    INVALID_IMAGE_FILE(
+            "INVALID_IMAGE_FILE",
+            "Image file is invalid",
+            400
     );
 
     private final String code;

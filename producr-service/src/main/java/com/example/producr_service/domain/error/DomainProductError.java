@@ -68,9 +68,19 @@ public enum DomainProductError implements ErrorCode {
             "Đường dẫn ảnh không được để trống",
             400
     ),
+    VARIANT_MULTIPLE_PRIMARY_IMAGES(
+            "VARIANT_MULTIPLE_PRIMARY_IMAGES",
+            "Variant can only have one primary image",
+            400
+    ),
     MONEY_AMOUNT_NEGATIVE(
             "MONEY_AMOUNT_NEGATIVE",
             "Số tiền không được âm",
+            400
+    ),
+    PRODUCT_USER_REQUIRED(
+            "PRODUCT_USER_REQUIRED",
+            "sản phẩm phải sở hữu bởi 1 user",
             400
     );
 

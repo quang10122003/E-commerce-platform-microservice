@@ -2,7 +2,6 @@ package com.example.producr_service.application.service;
 
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.application.dto.request.CreateProductRequest;
-import com.example.producr_service.application.dto.response.ProductResponse;
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.out.BrandRepositoryPort;
 import com.example.producr_service.application.port.out.CategoryRepoPort;
@@ -34,13 +33,13 @@ public class ProductService {
     BrandRepositoryPort brandRepositoryPort;
     @Transactional
     // Tạo và lưu aggregate Product từ request đã hoàn tất dữ liệu ảnh.
-    public ProductResponse createProduct(CreateProductRequest request) {
+    public Product createProduct(Long userId,CreateProductRequest request) {
 
         // check danh mục bạn brand tồn tại chưa
-        ValitionCatgoryAndBrand_Notexist(request.getCategoryId(),request.getBrandId());
+        validateCategoryAndBrandExist(request.getCategoryId(), request.getBrandId());
 
 
-        Product product = new Product(null, request.getCategoryId(), request.getBrandId(),
+        Product product = new Product(null,userId, request.getCategoryId(), request.getBrandId(),
                 request.getName(), request.getDescription(), request.getImageUrl());
 
         //list  TẤT CẢ các valuesOfThisAttribute lại, theo đúng thứ tự attribute
@@ -63,12 +62,12 @@ public class ProductService {
         }
 
         Set<String> skusUsedInThisRequest = new HashSet<>();
+        Set<Set<AttributeValue>> selectedCombinations = new HashSet<>();
 
         for (CreateProductRequest.VariantRequest vReq : request.getVariants()) {
 
-            List<AttributeValue> selectedValues = vReq.getAttributeSelections().stream()
-                    .map(sel -> resolveAttributeValue(valuesByIndex, sel))
-                    .collect(Collectors.toList());
+            List<AttributeValue> selectedValues = resolveSelectedAttributeValues(valuesByIndex, vReq);
+            validateUniqueAttributeCombination(selectedCombinations, selectedValues);
 
             String sku = generateUniqueSku(request.getName(), selectedValues, skusUsedInThisRequest);
             skusUsedInThisRequest.add(sku);
@@ -88,12 +87,7 @@ public class ProductService {
         }
 
         // Buoc 5 - luu toan bo aggregate trong 1 transaction
-        Product saved = productRepositoryPort.save(product);
-
-        // Buoc 6 - map Domain -> DTO NGAY TAI DAY, vi ProductResponse gio
-        // thuoc application layer (cung tang voi UseCase), khong con
-        // thuoc adapter nua - tra thang DTO, Controller khong can map lai
-        return ProductResponse.from(saved);
+        return productRepositoryPort.save(product);
     }
 
     private String generateUniqueSku(String productName, List<AttributeValue> selectedValues,
@@ -118,7 +112,7 @@ public class ProductService {
     }
 
     // check danh mục và brad tồn tại hay chưa
-    private void ValitionCatgoryAndBrand_Notexist(Long categoryId, Long brandId){
+    private void validateCategoryAndBrandExist(Long categoryId, Long brandId) {
         if (!categoryRepositoryPort.existsById(categoryId)) {
             throw new BusinessException(ProductError.CATEGORY_NOT_FOUND);
         }
@@ -143,6 +137,39 @@ public class ProductService {
             throw invalidAttributeSelection(attributeIndex, valueIndex);
         }
         return values.get(valueIndex);
+    }
+
+    // Resolve selection và bảo đảm mỗi thuộc tính được chọn đúng một lần.
+    private List<AttributeValue> resolveSelectedAttributeValues(
+            List<List<AttributeValue>> valuesByIndex,
+            CreateProductRequest.VariantRequest variantRequest
+    ) {
+        Set<Integer> selectedAttributeIndexes = new HashSet<>();
+        List<AttributeValue> selectedValues = new ArrayList<>();
+
+        for (CreateProductRequest.AttributeSelection selection : variantRequest.getAttributeSelections()) {
+            if (!selectedAttributeIndexes.add(selection.getAttributeIndex())) {
+                throw new BusinessException(ProductError.INVALID_VARIANT_ATTRIBUTES,
+                        "attributeIndex bi trung: " + selection.getAttributeIndex());
+            }
+            selectedValues.add(resolveAttributeValue(valuesByIndex, selection));
+        }
+
+        if (selectedAttributeIndexes.size() != valuesByIndex.size()) {
+            throw new BusinessException(ProductError.INVALID_VARIANT_ATTRIBUTES,
+                    "Variant phai chon day du tat ca thuoc tinh");
+        }
+        return selectedValues;
+    }
+
+    // Chặn hai variant có cùng tổ hợp giá trị thuộc tính.
+    private void validateUniqueAttributeCombination(
+            Set<Set<AttributeValue>> selectedCombinations,
+            List<AttributeValue> selectedValues
+    ) {
+        if (!selectedCombinations.add(Set.copyOf(selectedValues))) {
+            throw new BusinessException(ProductError.DUPLICATE_VARIANT_ATTRIBUTE_COMBINATION);
+        }
     }
 
     // Tạo BusinessException kèm attributeIndex và valueIndex không hợp lệ để phản hồi chỉ rõ lỗi trong request.

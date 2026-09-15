@@ -76,6 +76,10 @@ public class AuthUtil {
         return extractAllClaims(token).getSubject();
     }
 
+    public Long extractUserId(String token) {
+        return extractAllClaims(token).get("userId", Long.class);
+    }
+
     public String extractTokenType(String token) {
         return extractAllClaims(token).get("tokenType", String.class);
     }

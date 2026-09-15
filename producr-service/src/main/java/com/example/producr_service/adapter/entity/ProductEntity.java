@@ -27,6 +27,10 @@ public class ProductEntity {
     @EqualsAndHashCode.Include
     private Long id;
 
+    
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     // FK categories_id - NOT NULL, ON DELETE RESTRICT o DB
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categories_id", nullable = false)

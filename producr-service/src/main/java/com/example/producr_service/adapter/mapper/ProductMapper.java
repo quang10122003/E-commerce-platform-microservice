@@ -12,20 +12,10 @@ import java.util.Map;
 @Component
 public class ProductMapper {
 
-    /**
-     * Domain Product -> ProductEntity (dung khi TAO MOI hoac CAP NHAT).
-     *
-     * DIEM MAU CHOT: AttributeValue (domain) chua co id luc nay, nen
-     * KHONG the tra cuu AttributeValueEntity bang id. Thay vao do,
-     * dung 1 IdentityHashMap de "nho" xem 1 AttributeValue (domain)
-     * tuong ung voi AttributeValueEntity nao vua duoc tao trong CHINH
-     * lan chuyen doi nay - roi dung map do de link ProductVariantEntity
-     * dung entity object, JPA se tu INSERT vao bang variant_attribute_values
-     * khi save (Hibernate tu sap xep thu tu INSERT hop ly).
-     */
     public ProductEntity toEntity(Product product, CategoryEntity category, BrandEntity brand) {
         ProductEntity productEntity = ProductEntity.builder()
                 .id(product.getId())
+                .userId(product.getUserId())
                 .category(category)
                 .brand(brand)
                 .name(product.getName())
@@ -90,7 +80,7 @@ public class ProductMapper {
     /** ProductEntity (da co du id sau khi luu/doc tu DB) -> Product (domain). */
     public Product toDomain(ProductEntity productEntity) {
         Product product = new Product(
-                productEntity.getId(), productEntity.getCategory().getId(),
+                productEntity.getId(), productEntity.getUserId(),productEntity.getCategory().getId(),
                 productEntity.getBrand() != null ? productEntity.getBrand().getId() : null,
                 productEntity.getName(), productEntity.getDescription(), productEntity.getImageUrl()
         );

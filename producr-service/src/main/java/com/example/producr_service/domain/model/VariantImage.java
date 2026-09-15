@@ -2,19 +2,17 @@ package com.example.producr_service.domain.model;
 
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.domain.error.DomainProductError;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.Objects;
 @Getter
-@AllArgsConstructor
 public class VariantImage {
 
     private final Long id;
     private String imageUrl;
     private boolean primary;
 
-    public VariantImage(Long id, String imageUrl, boolean primary, int sortOrder) {
+    public VariantImage(Long id, String imageUrl, boolean primary) {
         if (imageUrl == null || imageUrl.isBlank()) {
             throw new BusinessException(DomainProductError.IMAGE_URL_REQUIRED);
         }

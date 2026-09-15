@@ -25,6 +25,7 @@ import java.util.Set;
 public class Product {
 
     private final Long id;
+    private final Long userId;
     private Long categoryId;
     private Long brandId; // co the null - san pham chua ro hang
     private String name;
@@ -35,15 +36,21 @@ public class Product {
     private final List<ProductAttribute> attributes = new ArrayList<>();
     private final List<ProductVariant> variants = new ArrayList<>();
 
-    public Product(Long id, Long categoryId, Long brandId, String name,
+    public Product(Long id,  Long userId, Long categoryId, Long brandId, String name,
                    String description, String imageUrl) {
+        if (userId == null) {
+            throw new BusinessException(DomainProductError.PRODUCT_USER_REQUIRED);
+        }
+
         if (categoryId == null) {
             throw new BusinessException(DomainProductError.PRODUCT_CATEGORY_REQUIRED);
         }
         if (name == null || name.isBlank()) {
             throw new BusinessException(DomainProductError.PRODUCT_NAME_REQUIRED);
         }
+
         this.id = id;
+        this.userId = userId;
         this.categoryId = categoryId;
         this.brandId = brandId;
         this.name = name;
