@@ -27,7 +27,7 @@ spring:
             - id: product-service
               uri: lb://producr-service
               predicates:
-                - Path=/api/v1/products/**
+                - Path=/api/products/**
               filters:
                 - name: ApiResponse
 

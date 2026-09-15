@@ -6,13 +6,13 @@ import com.example.common.exception.BusinessException;
 import com.example.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.multipart.MultipartException;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 @RestControllerAdvice
@@ -25,11 +25,9 @@ public class GlobalExceptionHandler {
         // Ghi mã lỗi nghiệp vụ để tra soát theo request_id trong MDC, không ghi stack trace lỗi dự kiến.
         log.warn("Request thất bại do lỗi nghiệp vụ: error_code={}, http_status={}",
                 errorCode.getCode(), errorCode.getHttpStatusCode());
-        // Dùng message từ exception để giữ lại chi tiết động như các chỉ số đầu vào.
-        String message = ex.getMessage();
-        ApiErrorDto detailedError = new ApiErrorDto(errorCode.getCode(), message);
+        ApiErrorDto errorDto = new ApiErrorDto(errorCode.getCode(), errorCode.getMessage());
         return ResponseEntity.status(errorCode.getHttpStatusCode())
-                .body(ApiResponse.error(message, detailedError));
+                .body(ApiResponse.error(errorCode.getMessage(), errorDto));
     }
 
     // Ghi nhận lỗi binding/validation xảy ra trước khi controller được gọi.
@@ -45,16 +43,6 @@ public class GlobalExceptionHandler {
         return badRequest("BAD_REQUEST", "Request không hợp lệ: " + ex.getMessage());
     }
 
-    // Ghi log đầy đủ lỗi chưa được phân loại nhưng không trả stack trace cho client.
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception ex) {
-        log.error("Lỗi không mong muốn khi xử lý request", ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(
-                        "Unexpected error occurred",
-                        new ApiErrorDto("INTERNAL_ERROR", "Unexpected error occurred")));
-    }
-
     // Tạo response 400 thống nhất cho lỗi request từ phía client.
     private ResponseEntity<ApiResponse<Void>> badRequest(String code, String message) {
         ApiErrorDto errorDto = new ApiErrorDto(code, message);
@@ -62,4 +50,11 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(message, errorDto));
     }
 
+//    // Trả lỗi chung để không lộ chi tiết stack trace ra response.
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception ex) {
+//        ApiErrorDto errorDto = new ApiErrorDto("INTERNAL_ERROR", "Unexpected error occurred");
+//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                .body(ApiResponse.error("Unexpected error occurred", errorDto));
+//    }
 }
