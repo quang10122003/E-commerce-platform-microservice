@@ -48,6 +48,10 @@ public class Product {
         if (name == null || name.isBlank()) {
             throw new BusinessException(DomainProductError.PRODUCT_NAME_REQUIRED);
         }
+        // Ảnh đại diện là dữ liệu bắt buộc của sản phẩm.
+        if (imageUrl == null || imageUrl.isBlank()) {
+            throw new BusinessException(DomainProductError.IMAGE_URL_REQUIRED);
+        }
 
         this.id = id;
         this.userId = userId;
@@ -93,6 +97,10 @@ public class Product {
     public void updateBasicInfo(String name, String description, String imageUrl) {
         if (name == null || name.isBlank()) {
             throw new BusinessException(DomainProductError.PRODUCT_NAME_REQUIRED);
+        }
+        // Không cho phép cập nhật sản phẩm về trạng thái thiếu ảnh đại diện.
+        if (imageUrl == null || imageUrl.isBlank()) {
+            throw new BusinessException(DomainProductError.IMAGE_URL_REQUIRED);
         }
         this.name = name;
         this.description = description;

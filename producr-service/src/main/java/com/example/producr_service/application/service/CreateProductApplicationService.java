@@ -66,9 +66,12 @@ public class CreateProductApplicationService implements CreateProductUseCase {
             UploadFileCommand productImage,
             List<StoredFile> storedFiles
     ) {
-        if (productImage != null) {
-            storedFiles.add(fileService.upload(UploadPurpose.PRODUCT_IMAGE, productImage));
+        // Ảnh đại diện bắt buộc phải được upload trước khi lưu sản phẩm.
+        if (productImage == null) {
+            throw new BusinessException(ProductError.INVALID_IMAGE_FILE,
+                    "File anh dai dien khong duoc de trong");
         }
+        storedFiles.add(fileService.upload(UploadPurpose.PRODUCT_IMAGE, productImage));
     }
 
     // Upload toàn bộ ảnh variant theo cấu hình riêng của variant image.

@@ -32,7 +32,10 @@ public class GatewayAccessControlFilter implements org.springframework.cloud.gat
                 .getFirst(HttpHeaders.AUTHORIZATION);
 
         // API public vẫn cho phép request không có token đi tiếp.
-        if (authorizationHeader == null || authorizationHeader.isBlank()) {
+        // Cho phép request đi tiếp khi header không có token thực tế.
+        if (authorizationHeader == null
+                || authorizationHeader.isBlank()
+                || authorizationHeader.trim().equalsIgnoreCase("Bearer")) {
             return chain.filter(exchange);
         }
 

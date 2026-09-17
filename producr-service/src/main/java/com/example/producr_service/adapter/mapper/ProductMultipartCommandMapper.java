@@ -35,7 +35,8 @@ public class ProductMultipartCommandMapper {
     // Chuyển ảnh đại diện từ multipart sang command
     private UploadFileCommand toProductImageCommand(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Image file must not be null");
+            throw new BusinessException(ProductError.INVALID_IMAGE_FILE,
+                    "File anh dai dien khong duoc de trong");
         }
         return toUploadFileCommand(file);
     }
