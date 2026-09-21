@@ -31,7 +31,7 @@ public class Product {
     private String name;
     private String description;
     private String imageUrl;
-    private boolean active;
+    private ProductStatus status;
 
     private final List<ProductAttribute> attributes = new ArrayList<>();
     private final List<ProductVariant> variants = new ArrayList<>();
@@ -60,7 +60,8 @@ public class Product {
         this.name = name;
         this.description = description;
         this.imageUrl = imageUrl;
-        this.active = true; // mac dinh mo ban khi vua tao, giong DEFAULT TRUE trong DB
+        // Product mới được tạo mặc định ở trạng thái hoạt động.
+        this.status = ProductStatus.ACTIVE;
     }
 
     public List<ProductAttribute> getAttributes() {
@@ -87,11 +88,11 @@ public class Product {
     }
 
     public void activate() {
-        this.active = true;
+        this.status = ProductStatus.ACTIVE;
     }
 
     public void deactivate() {
-        this.active = false;
+        this.status = ProductStatus.INACTIVE;
     }
 
     public void updateBasicInfo(String name, String description, String imageUrl) {

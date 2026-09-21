@@ -2,6 +2,7 @@ package com.example.producr_service.application.service;
 
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.application.dto.command.CreateProductCommand;
+import com.example.producr_service.application.dto.event.ProductCreatedEvent;
 import com.example.producr_service.application.dto.request.CreateProductRequest;
 import com.example.producr_service.application.dto.command.UploadFileCommand;
 import com.example.producr_service.application.dto.command.VariantImageUploadCommand;
@@ -10,8 +11,10 @@ import com.example.producr_service.application.dto.response.ProductResponse;
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
 import com.example.producr_service.application.port.out.CurrentUserPort;
+import com.example.producr_service.application.port.out.ProductCreatedEventPublisher;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.application.strategy.UploadPurpose;
+import com.example.producr_service.domain.model.Product;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +30,7 @@ public class CreateProductApplicationService implements CreateProductUseCase {
     private final FileService fileService;
     private final ProductService productService;
     private final CurrentUserPort currentUserPort;
+    private final ProductCreatedEventPublisher productCreatedEventPublisher;
 
     // Rollback dữ liệu DB và xóa bù trừ file khi use case tạo product thất bại.
     @Transactional(rollbackFor = Exception.class)
@@ -50,7 +54,12 @@ public class CreateProductApplicationService implements CreateProductUseCase {
             applyUploadedImageUrls(request, command.productImage(), variantImages, storedFiles);
 
             Long userId = currentUserPort.getCurrentUserId().userId();
-            return ProductResponse.from(productService.createProduct(userId,request));
+            Product product = productService.createProduct(userId, request);
+
+            // Phát event trong transaction để listener đồng bộ sau khi MySQL commit.
+            productCreatedEventPublisher.publish(new ProductCreatedEvent(product));
+
+            return ProductResponse.from(product);
         } catch (RuntimeException exception) {
             try {
                 fileService.deleteStoredFiles(storedFiles);

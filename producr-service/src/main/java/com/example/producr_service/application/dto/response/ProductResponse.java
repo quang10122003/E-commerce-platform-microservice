@@ -2,6 +2,7 @@ package com.example.producr_service.application.dto.response;
 
 import com.example.producr_service.domain.model.Product;
 import com.example.producr_service.domain.model.ProductVariant;
+import com.example.producr_service.domain.model.ProductStatus;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -17,7 +18,7 @@ public class ProductResponse {
     private String name;
     private String description;
     private String imageUrl;
-    private boolean active;
+    private ProductStatus status;
     private List<VariantResponse> variants;
 
     // dung factory method thay vi constructor dai - de doc va an toan khi doi thu tu field
@@ -29,7 +30,7 @@ public class ProductResponse {
         response.name = product.getName();
         response.description = product.getDescription();
         response.imageUrl = product.getImageUrl();
-        response.active = product.isActive();
+        response.status = product.getStatus();
         response.variants = product.getVariants().stream()
                 .map(VariantResponse::from)
                 .collect(Collectors.toList());

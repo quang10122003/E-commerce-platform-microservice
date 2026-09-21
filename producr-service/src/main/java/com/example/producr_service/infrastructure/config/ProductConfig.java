@@ -8,6 +8,7 @@ import com.example.producr_service.application.port.out.BrandRepositoryPort;
 import com.example.producr_service.application.port.out.CategoryRepoPort;
 import com.example.producr_service.application.port.out.CurrentUserPort;
 import com.example.producr_service.application.port.out.ProductRepositoryPort;
+import com.example.producr_service.application.port.out.ProductCreatedEventPublisher;
 import com.example.producr_service.application.registry.UploadStrategyRegistry;
 import com.example.producr_service.adapter.client.AuthUserFeignClient;
 import com.example.producr_service.adapter.out.openFeign.AuthUserAdapter;
@@ -71,12 +72,14 @@ public class ProductConfig {
 CreateProductUseCase createProductUseCase(
         FileService fileService,
         ProductService productService,
-        CurrentUserPort currentUserPort
+        CurrentUserPort currentUserPort,
+        ProductCreatedEventPublisher productCreatedEventPublisher
 ) {
     return new CreateProductApplicationService(
             fileService,
             productService,
-            currentUserPort
+            currentUserPort,
+            productCreatedEventPublisher
     );
 }
 

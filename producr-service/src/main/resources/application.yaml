@@ -12,6 +12,9 @@ spring:
     password: ${PASSWORD_DATABASE}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+
 server:
   port: 8083
 

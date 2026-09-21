@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/categories")
+@RequestMapping("api/categories")
 public class CategoryController {
     // Use case phục vụ thao tác lấy danh sách category.
     private final GetCategoriesUseCase getCategoriesUseCase;

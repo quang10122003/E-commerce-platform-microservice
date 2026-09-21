@@ -1,5 +1,6 @@
 package com.example.producr_service.adapter.entity;
 
+import com.example.producr_service.domain.model.ProductStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -50,8 +51,10 @@ public class ProductEntity {
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
-    @Column(name = "is_active", nullable = false)
-    private boolean active;
+    // Lưu trạng thái product dưới dạng tên enum trong database.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ProductStatus status;
 
     @Column(name = "created_at",updatable = false)
     private LocalDateTime createdAt;
