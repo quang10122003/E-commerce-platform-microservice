@@ -9,10 +9,11 @@ import com.example.producr_service.application.dto.command.VariantImageUploadCom
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
 import com.example.producr_service.application.dto.response.ProductResponse;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
+import com.example.producr_service.application.dto.response.UserInternaInfoRespone;
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
 import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
-import com.example.producr_service.application.port.out.CurrentUserPort;
+import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.port.out.ES.ProductSearchPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.storage.StoredFile;
@@ -56,11 +57,11 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                     storedFiles
             );
 
-            Long userId = currentUserPort.getCurrentUserId().userId();
-            Product product = productCreationService.createProduct(userId, request);
+            UserInternaInfoRespone userInternaInfoRespone = currentUserPort.getUserInfo();
+            Product product = productCreationService.createProduct(userInternaInfoRespone, request);
 
             // lưu outbox
-            saveProductCreatedOutboxEvent(product);
+            saveProductCreatedOutboxEvent(product,userInternaInfoRespone);
 
             return ProductResponse.from(product);
         } catch (RuntimeException exception) {
@@ -74,8 +75,14 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     }
 
     // Tạo event outbox tối đẩy lên db
-    private void saveProductCreatedOutboxEvent(Product product) {
-        ProductCreatedOutboxPayload payload = new ProductCreatedOutboxPayload(product.getId());
+    private void saveProductCreatedOutboxEvent(Product product, UserInternaInfoRespone userInternaInfoRespone ) {
+
+        // lấy tên tỉnh của shop tạo sản phẩm
+        String shopAddress = userInternaInfoRespone.shopAddress();
+        String locationProduct = shopAddress == null || shopAddress.isBlank()
+                ? null
+                : shopAddress.substring(shopAddress.lastIndexOf(",") + 1).trim();
+        ProductCreatedOutboxPayload payload = new ProductCreatedOutboxPayload(product.getId(),locationProduct);
         outboxPort.save(new OutboxEventDto(
                 UUID.randomUUID(),
                 "Product",

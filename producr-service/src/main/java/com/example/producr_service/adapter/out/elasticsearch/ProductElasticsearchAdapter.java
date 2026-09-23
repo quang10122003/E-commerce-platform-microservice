@@ -61,14 +61,18 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort, Prod
 
     // hàm tạo or thêm document cho product
     @Override
-    public void index(Product product) {
+    public void index(Product product, String location) {
         String categoryName = findCategoryName(product.getCategoryId());
         String brandName = findBrandName(product.getBrandId());
-        ProductSearchDocument document = productSearchDocumentMapper.toDocument(
-                product,
-                categoryName,
-                brandName
-        );
+
+        ProductSearchDocument document =
+                productSearchDocumentMapper.toDocument(
+                        product,
+                        categoryName,
+                        brandName,
+                        location
+                );
+
         productSearchRepository.save(document);
     }
 

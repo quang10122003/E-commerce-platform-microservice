@@ -15,7 +15,8 @@ public class ProductSearchDocumentMapper {
     public ProductSearchDocument toDocument(
             Product product,
             String categoryName,
-            String brandName
+            String brandName,
+            String location
     ) {
         // Lấy khoảng giá đã được domain Product tính từ các variant.
         Product.PriceRange priceRange = product.getPriceRange();
@@ -37,6 +38,7 @@ public class ProductSearchDocumentMapper {
                 .createdAt(product.getCreatedAt())
                 .attributes(toAttributeDocuments(product))
                 .variants(toVariantDocuments(product))
+                .location(location)
                 .build();
     }
 

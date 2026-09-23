@@ -18,6 +18,7 @@ public final class ProductSearchDocumentFields {
     public static final String CREATED_AT = "createdAt";
     public static final String ATTRIBUTES = "attributes";
     public static final String VARIANTS = "variants";
+    public static final String LOCATION = "location";
 
     private ProductSearchDocumentFields() {
     }

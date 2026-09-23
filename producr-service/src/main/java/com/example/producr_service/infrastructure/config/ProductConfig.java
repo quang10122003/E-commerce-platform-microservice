@@ -1,13 +1,14 @@
 package com.example.producr_service.infrastructure.config;
 
 import com.example.producr_service.application.port.out.storage.FileStoragePort;
+import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
 import com.example.producr_service.application.port.in.GetCategoriesUseCase;
 import com.example.producr_service.application.port.in.GetBrandsUseCase;
 import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
-import com.example.producr_service.application.port.out.CurrentUserPort;
+import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.ES.ProductSearchPort;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
@@ -85,11 +86,13 @@ public class ProductConfig {
     @Bean
     OutboxEventHandler productCreatedOutboxHandler(
             ProductRepositoryPort productRepositoryPort,
-            ProductSearchIndexPort productSearchIndexPort
+            ProductSearchIndexPort productSearchIndexPort,
+            MapJsonToObjPort mapJsonToObjPort
     ) {
         return new ProductCreatedOutboxHandler(
                 productRepositoryPort,
-                productSearchIndexPort
+                productSearchIndexPort,
+                mapJsonToObjPort
         );
     }
 

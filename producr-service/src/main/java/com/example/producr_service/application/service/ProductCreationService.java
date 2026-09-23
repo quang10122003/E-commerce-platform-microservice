@@ -2,6 +2,7 @@ package com.example.producr_service.application.service;
 
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.application.dto.request.CreateProductRequest;
+import com.example.producr_service.application.dto.response.UserInternaInfoRespone;
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
@@ -31,15 +32,15 @@ public class ProductCreationService {
     ProductRepositoryPort productRepositoryPort;
     CategoryRepoPort categoryRepositoryPort;
     BrandRepositoryPort brandRepositoryPort;
+    // Tạo và lưu aggregate Product và db từ request đã hoàn tất dữ liệu ảnh.
     @Transactional
-    // Tạo và lưu aggregate Product từ request đã hoàn tất dữ liệu ảnh.
-    public Product createProduct(Long userId,CreateProductRequest request) {
+    public Product createProduct(UserInternaInfoRespone userInternaInfoRespone, CreateProductRequest request) {
 
         // check danh mục bạn brand tồn tại chưa
         validateCategoryAndBrandExist(request.getCategoryId(), request.getBrandId());
 
 
-        Product product = new Product(null,userId, request.getCategoryId(), request.getBrandId(),
+        Product product = new Product(null,userInternaInfoRespone.userId(), request.getCategoryId(), request.getBrandId(),
                 request.getName(), request.getDescription(), request.getImageUrl());
 
         //list  TẤT CẢ các valuesOfThisAttribute lại, theo đúng thứ tự attribute

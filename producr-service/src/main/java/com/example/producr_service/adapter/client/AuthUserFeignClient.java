@@ -8,5 +8,5 @@ import org.springframework.web.bind.annotation.RequestHeader;
 @FeignClient(name = "auth-service")
 public interface AuthUserFeignClient {
     @GetMapping("/api/internal/getInfoUser")
-    UserInternaInfoRespone getCurrentUserId();
+    UserInternaInfoRespone getInfoUser();
 }

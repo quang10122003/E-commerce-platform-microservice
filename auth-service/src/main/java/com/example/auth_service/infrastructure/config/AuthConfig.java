@@ -42,8 +42,11 @@ public class AuthConfig {
     }
 
     @Bean
-    InternalGetUserInfoUseCase internalGetUserInfoUseCase(TokenServicePort tokenServicePort) {
-        return new AuthServiceInternal(tokenServicePort);
+    InternalGetUserInfoUseCase internalGetUserInfoUseCase(
+            TokenServicePort tokenServicePort,
+            UserRepositoryPort userRepositoryPort
+    ) {
+        return new AuthServiceInternal(tokenServicePort, userRepositoryPort);
     }
 
     @Bean

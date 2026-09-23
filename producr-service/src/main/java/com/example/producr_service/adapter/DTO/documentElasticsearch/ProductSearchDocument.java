@@ -37,6 +37,9 @@ public class ProductSearchDocument {
     @Field(name = ProductSearchDocumentFields.DESCRIPTION, type = FieldType.Text)
     private String description;
 
+    @Field(name = ProductSearchDocumentFields.LOCATION, type = FieldType.Keyword)
+    private String location;
+
     // Lưu ID category để lọc Product theo danh mục.
     @Field(name = ProductSearchDocumentFields.CATEGORY_ID, type = FieldType.Long)
     private Long categoryId;
