@@ -21,6 +21,7 @@ public class ProductMapper {
                 .name(product.getName())
                 .description(product.getDescription())
                 .imageUrl(product.getImageUrl())
+                .totalSold(product.getTotalSold())
                 .status(product.getStatus())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -82,7 +83,8 @@ public class ProductMapper {
         Product product = new Product(
                 productEntity.getId(), productEntity.getUserId(),productEntity.getCategory().getId(),
                 productEntity.getBrand() != null ? productEntity.getBrand().getId() : null,
-                productEntity.getName(), productEntity.getDescription(), productEntity.getImageUrl()
+                productEntity.getName(), productEntity.getDescription(), productEntity.getImageUrl(),
+                productEntity.getCreatedAt(), productEntity.getTotalSold()
         );
         // Đồng bộ trạng thái đã lưu từ persistence về domain aggregate.
         if (productEntity.getStatus() == ProductStatus.INACTIVE) {

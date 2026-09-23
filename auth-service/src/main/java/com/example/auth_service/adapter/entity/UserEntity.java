@@ -50,6 +50,24 @@ public class UserEntity implements UserDetails {
     @Column(name = "full_name", nullable = false)
     String fullName;
 
+    @Column(name = "shop_name")
+    String shopName;
+
+    @Column(name = "shop_logo_url", columnDefinition = "TEXT")
+    String shopLogoUrl;
+
+    @Column(name = "shop_description", columnDefinition = "TEXT")
+    String shopDescription;
+
+    @Column(name = "shop_phone")
+    String shopPhone;
+
+    @Column(name = "shop_address", columnDefinition = "TEXT")
+    String shopAddress;
+
+    @Column(name = "is_shop_lock", nullable = false)
+    boolean isShopLock;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     Set<RoleEntity> roles;

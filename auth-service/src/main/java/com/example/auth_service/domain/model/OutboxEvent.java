@@ -12,7 +12,7 @@ public record OutboxEvent(
         String aggregateId,
         EventType eventType,
         Object payload,
-        Status status,
+        OutboxStatus status,
         int retryCount,
         int maxRetry,
         LocalDateTime createdAt,
@@ -31,7 +31,7 @@ public record OutboxEvent(
                 aggregateId,
                 eventType,
                 payload,
-                Status.PENDING,
+                OutboxStatus.PENDING,
                 0,
                 5,
                 LocalDateTime.now(),
@@ -39,9 +39,4 @@ public record OutboxEvent(
                 null);
     }
 
-    public enum Status {
-        PENDING,
-        PUBLISHED,
-        FAILED
-    }
 }

@@ -1,9 +1,9 @@
 package com.example.producr_service.application.service;
 
-import com.example.producr_service.application.port.out.FileStoragePort;
+import com.example.producr_service.application.port.out.storage.FileStoragePort;
 import com.example.producr_service.application.registry.UploadStrategyRegistry;
-import com.example.producr_service.application.strategy.UploadPurpose;
-import com.example.producr_service.application.strategy.interfaces.IUploadStrategy;
+import com.example.producr_service.application.strategy.upload.IUploadStrategy;
+import com.example.producr_service.application.strategy.upload.UploadPurpose;
 import com.example.producr_service.application.port.out.storage.PreparedUpload;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.application.port.out.storage.StorageBucket;

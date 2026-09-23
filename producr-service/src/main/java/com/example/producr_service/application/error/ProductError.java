@@ -37,6 +37,16 @@ public enum ProductError implements ErrorCode  {
             "INVALID_IMAGE_FILE",
             "Image file is invalid",
             400
+    ),
+    INVALID_PRICE_RANGE(
+            "INVALID_PRICE_RANGE",
+            "Price range is invalid",
+            400
+    ),
+    SEARCH_KEYWORD_REQUIRED(
+            "SEARCH_KEYWORD_REQUIRED",
+            "Search keyword is required",
+            400
     );
 
     private final String code;

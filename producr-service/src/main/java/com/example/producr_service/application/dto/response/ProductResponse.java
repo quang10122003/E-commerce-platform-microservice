@@ -19,6 +19,8 @@ public class ProductResponse {
     private String description;
     private String imageUrl;
     private ProductStatus status;
+    // Hiển thị tổng số lượng product đã bán.
+    private long totalSold;
     private List<VariantResponse> variants;
 
     // dung factory method thay vi constructor dai - de doc va an toan khi doi thu tu field
@@ -31,6 +33,7 @@ public class ProductResponse {
         response.description = product.getDescription();
         response.imageUrl = product.getImageUrl();
         response.status = product.getStatus();
+        response.totalSold = product.getTotalSold();
         response.variants = product.getVariants().stream()
                 .map(VariantResponse::from)
                 .collect(Collectors.toList());

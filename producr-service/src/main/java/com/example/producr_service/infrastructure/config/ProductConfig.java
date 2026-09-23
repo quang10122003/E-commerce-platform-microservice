@@ -1,28 +1,36 @@
 package com.example.producr_service.infrastructure.config;
 
-import com.example.producr_service.application.port.out.FileStoragePort;
+import com.example.producr_service.application.port.out.storage.FileStoragePort;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
 import com.example.producr_service.application.port.in.GetCategoriesUseCase;
 import com.example.producr_service.application.port.in.GetBrandsUseCase;
-import com.example.producr_service.application.port.out.BrandRepositoryPort;
-import com.example.producr_service.application.port.out.CategoryRepoPort;
+import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
+import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
+import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
 import com.example.producr_service.application.port.out.CurrentUserPort;
-import com.example.producr_service.application.port.out.ProductRepositoryPort;
-import com.example.producr_service.application.port.out.ProductCreatedEventPublisher;
+import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
+import com.example.producr_service.application.port.out.ES.ProductSearchPort;
+import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
+import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.registry.UploadStrategyRegistry;
+import com.example.producr_service.application.registry.OutboxEventHandlerRegistry;
 import com.example.producr_service.adapter.client.AuthUserFeignClient;
 import com.example.producr_service.adapter.out.openFeign.AuthUserAdapter;
 import com.example.producr_service.application.service.FileService;
-import com.example.producr_service.application.service.CreateProductApplicationService;
+import com.example.producr_service.application.service.ProductCreationService;
+import com.example.producr_service.application.service.ProductImageUploadService;
 import com.example.producr_service.application.service.ProductService;
 import com.example.producr_service.application.service.CategoryService;
 import com.example.producr_service.application.service.BrandService;
-import com.example.producr_service.application.strategy.CategoryImageUploadStrategy;
-import com.example.producr_service.application.strategy.ProductImageUploadStrategy;
-import com.example.producr_service.application.strategy.ProductVariantImageUploadStrategy;
-import com.example.producr_service.application.strategy.interfaces.IUploadStrategy;
+import com.example.producr_service.application.strategy.upload.CategoryImageUploadStrategy;
+import com.example.producr_service.application.strategy.upload.ProductImageUploadStrategy;
+import com.example.producr_service.application.strategy.upload.ProductVariantImageUploadStrategy;
+import com.example.producr_service.application.strategy.upload.IUploadStrategy;
+import com.example.producr_service.application.strategy.outbox.OutboxEventHandler;
+import com.example.producr_service.application.strategy.outbox.ProductCreatedOutboxHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import com.example.common.untill.JsonUtils;
 
 import java.util.List;
 
@@ -35,18 +43,24 @@ public class ProductConfig {
         return new AuthUserAdapter(authUserFeignClient);
     }
 
-    // Đăng ký service chỉ phụ trách tạo và lưu aggregate Product.
+    // Đăng ký service chỉ xử lý việc dựng và lưu aggregate khi tạo product.
     @Bean
-    ProductService productService(
+    ProductCreationService productCreationService(
             ProductRepositoryPort productRepositoryPort,
             CategoryRepoPort categoryRepositoryPort,
             BrandRepositoryPort brandRepositoryPort
     ) {
-        return new ProductService(
+        return new ProductCreationService(
                 productRepositoryPort,
                 categoryRepositoryPort,
                 brandRepositoryPort
         );
+    }
+
+    // Đăng ký service xử lý validate, upload và gắn URL ảnh product.
+    @Bean
+    ProductImageUploadService productImageUploadService(FileService fileService) {
+        return new ProductImageUploadService(fileService);
     }
 
     // Đăng ký service lấy category theo mô hình port in/out của ứng dụng.
@@ -67,21 +81,59 @@ public class ProductConfig {
         return new BrandService(brandRepositoryPort);
     }
 
-    // Đăng ký use case điều phối upload và tạo product cho controller.
+    // Đăng ký strategy đồng bộ Product qua các port của application.
     @Bean
-CreateProductUseCase createProductUseCase(
+    OutboxEventHandler productCreatedOutboxHandler(
+            ProductRepositoryPort productRepositoryPort,
+            ProductSearchIndexPort productSearchIndexPort
+    ) {
+        return new ProductCreatedOutboxHandler(
+                productRepositoryPort,
+                productSearchIndexPort
+        );
+    }
+
+    // Gom các strategy outbox để định tuyến theo eventType.
+    @Bean
+    OutboxEventHandlerRegistry outboxEventHandlerRegistry(
+            List<OutboxEventHandler> eventHandlers
+    ) {
+        return new OutboxEventHandlerRegistry(eventHandlers);
+    }
+
+    // Đăng ký application service triển khai các use case thuộc phạm vi product.
+    @Bean
+    ProductService productService(
         FileService fileService,
-        ProductService productService,
+        ProductImageUploadService productImageUploadService,
+        ProductCreationService productCreationService,
         CurrentUserPort currentUserPort,
-        ProductCreatedEventPublisher productCreatedEventPublisher
-) {
-    return new CreateProductApplicationService(
-            fileService,
-            productService,
-            currentUserPort,
-            productCreatedEventPublisher
-    );
-}
+        ProductSearchPort productSearchPort,
+        OutboxPort outboxPort,
+        JsonUtils jsonUtils
+    ) {
+        return new ProductService(
+                fileService,
+                productImageUploadService,
+                productCreationService,
+                currentUserPort,
+                outboxPort,
+                productSearchPort,
+                jsonUtils
+        );
+    }
+
+    // Cung cấp use case tạo product cho controller qua input port.
+    @Bean
+    CreateProductUseCase createProductUseCase(ProductService productService) {
+        return productService;
+    }
+
+    // Cung cấp use case lấy catalog product cho controller qua input port.
+    @Bean
+    GetProductsCatalogUseCase getProductsCatalogUseCase(ProductService productService) {
+        return productService;
+    }
 
     // Đăng ký strategy upload ảnh category trong infrastructure layer.
     @Bean

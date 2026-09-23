@@ -10,6 +10,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -24,44 +25,69 @@ public class ProductSearchDocument {
     @Id
     private Long id;
 
+    // Lưu ID product dạng field để làm khóa phụ khi sort infinity scroll.
+    @Field(name = ProductSearchDocumentFields.PRODUCT_ID, type = FieldType.Long)
+    private Long productId;
+
     // Lưu tên Product để tìm kiếm theo từ khóa.
-    @Field(type = FieldType.Text)
+    @Field(name = ProductSearchDocumentFields.NAME, type = FieldType.Text)
     private String name;
 
     // Lưu mô tả Product để mở rộng kết quả tìm kiếm.
-    @Field(type = FieldType.Text)
+    @Field(name = ProductSearchDocumentFields.DESCRIPTION, type = FieldType.Text)
     private String description;
 
     // Lưu ID category để lọc Product theo danh mục.
-    @Field(type = FieldType.Long)
+    @Field(name = ProductSearchDocumentFields.CATEGORY_ID, type = FieldType.Long)
     private Long categoryId;
 
+    // Lưu tên category để trả về trực tiếp cho giao diện.
+    @Field(name = ProductSearchDocumentFields.CATEGORY_NAME, type = FieldType.Keyword)
+    private String categoryName;
+
     // Lưu ID brand để lọc Product theo thương hiệu.
-    @Field(type = FieldType.Long)
+    @Field(name = ProductSearchDocumentFields.BRAND_ID, type = FieldType.Long)
     private Long brandId;
 
+    // Lưu tên brand để trả về trực tiếp cho giao diện.
+    @Field(name = ProductSearchDocumentFields.BRAND_NAME, type = FieldType.Keyword)
+    private String brandName;
+
     // Lưu trạng thái product để lọc kết quả tìm kiếm.
-    @Field(type = FieldType.Keyword)
+    @Field(name = ProductSearchDocumentFields.STATUS, type = FieldType.Keyword)
     private ProductStatus status;
 
     // Lưu URL ảnh đại diện để hiển thị Product card.
-    @Field(type = FieldType.Keyword, index = false)
+    @Field(name = ProductSearchDocumentFields.IMAGE_URL, type = FieldType.Keyword, index = false)
     private String imageUrl;
 
+    // Lưu tổng số lượng product đã bán để trả về trong kết quả tìm kiếm.
+    @Field(name = ProductSearchDocumentFields.TOTAL_SOLD, type = FieldType.Long)
+    private long totalSold;
+
     // Lưu giá thấp nhất để hiển thị và sắp xếp Product.
-    @Field(type = FieldType.Double)
+    @Field(name = ProductSearchDocumentFields.MIN_PRICE, type = FieldType.Double)
     private BigDecimal minPrice;
 
     // Lưu giá cao nhất để hiển thị khoảng giá Product.
-    @Field(type = FieldType.Double)
+    @Field(name = ProductSearchDocumentFields.MAX_PRICE, type = FieldType.Double)
     private BigDecimal maxPrice;
 
+    // Lưu thời điểm tạo product để sắp xếp catalog mới nhất.
+    @Field(
+            name = ProductSearchDocumentFields.CREATED_AT,
+            type = FieldType.Date,
+            format = {},
+            pattern = "uuuu-MM-dd'T'HH:mm:ss"
+    )
+    private LocalDateTime createdAt;
+
     // Lưu danh sách thuộc tính để lọc theo màu, kích thước.
-    @Field(type = FieldType.Nested)
+    @Field(name = ProductSearchDocumentFields.ATTRIBUTES, type = FieldType.Nested)
     private List<AttributeDocument> attributes;
 
     // Lưu các variant để tìm SKU và lọc giá chính xác.
-    @Field(type = FieldType.Nested)
+    @Field(name = ProductSearchDocumentFields.VARIANTS, type = FieldType.Nested)
     private List<VariantDocument> variants;
 
     @Getter

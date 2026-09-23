@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.auth_service.adapter.entity.OutboxEventEntity;
 import com.example.auth_service.application.DTO.OutboxEventDto;
+import com.example.auth_service.domain.model.OutboxStatus;
 import com.example.auth_service.domain.model.OutboxEvent;
 import com.example.common.untill.JsonUtils;
 
@@ -41,7 +42,7 @@ public class OutboxEventMapper {
                 entity.getAggregateId(),
                 entity.getEventType(),
                 jsonUtils.fromJson(entity.getPayload()),
-                OutboxEvent.Status.valueOf(entity.getStatus().name()),
+                OutboxStatus.valueOf(entity.getStatus().name()),
                 entity.getRetryCount(),
                 entity.getMaxRetry(),
                 entity.getCreatedAt(),

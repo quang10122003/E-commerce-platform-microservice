@@ -3,7 +3,7 @@ package com.example.producr_service.application.service;
 
 import com.example.producr_service.application.dto.response.CategoryResponse;
 import com.example.producr_service.application.port.in.GetCategoriesUseCase;
-import com.example.producr_service.application.port.out.CategoryRepoPort;
+import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 

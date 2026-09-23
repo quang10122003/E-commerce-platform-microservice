@@ -19,6 +19,12 @@ public class User {
     private String email;
     private String password;
     private String fullName;
+    private String shopName;
+    private String shopLogoUrl;
+    private String shopDescription;
+    private String shopPhone;
+    private String shopAddress;
+    private boolean isShopLock;
     private Set<Role> roles;
     private boolean locked;
     private Instant createdAt;
@@ -34,6 +40,12 @@ public class User {
                 .email(email)
                 .password(password)
                 .fullName(fullName)
+                .shopName(null)
+                .shopLogoUrl(null)
+                .shopDescription(null)
+                .shopPhone(null)
+                .shopAddress(null)
+                .isShopLock(false)
                 .roles(roles)
                 .locked(false)
                 .build();

@@ -1,12 +1,10 @@
 package com.example.producr_service.adapter.out.storage;
 
-import com.example.producr_service.application.port.out.FileStoragePort;
+import com.example.producr_service.application.port.out.storage.FileStoragePort;
 import com.example.producr_service.application.port.out.storage.PreparedUpload;
 import com.example.producr_service.application.port.out.storage.StorageBucket;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;

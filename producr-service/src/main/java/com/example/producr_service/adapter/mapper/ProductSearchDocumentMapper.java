@@ -11,21 +11,30 @@ import java.util.List;
 // mapper map doamin với document của documentElasticsearch
 @Component
 public class ProductSearchDocumentMapper {
-    // Chuyển  Product thành document dùng để index Elasticsearch.
-    public ProductSearchDocument toDocument(Product product) {
+    // Chuyển Product và tên category, brand thành document dùng để index Elasticsearch.
+    public ProductSearchDocument toDocument(
+            Product product,
+            String categoryName,
+            String brandName
+    ) {
         // Lấy khoảng giá đã được domain Product tính từ các variant.
         Product.PriceRange priceRange = product.getPriceRange();
 
         return ProductSearchDocument.builder()
                 .id(product.getId())
+                .productId(product.getId())
                 .name(product.getName())
                 .description(product.getDescription())
                 .categoryId(product.getCategoryId())
+                .categoryName(categoryName)
                 .brandId(product.getBrandId())
+                .brandName(brandName)
                 .status(product.getStatus())
                 .imageUrl(product.getImageUrl())
+                .totalSold(product.getTotalSold())
                 .minPrice(priceRange.getMin().getAmount())
                 .maxPrice(priceRange.getMax().getAmount())
+                .createdAt(product.getCreatedAt())
                 .attributes(toAttributeDocuments(product))
                 .variants(toVariantDocuments(product))
                 .build();

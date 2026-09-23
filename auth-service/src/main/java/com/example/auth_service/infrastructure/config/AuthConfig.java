@@ -11,9 +11,31 @@ import org.springframework.context.annotation.Configuration;
 import com.example.auth_service.application.service.AuthApplicationService;
 import com.example.auth_service.application.service.AuthServiceInternal;
 import com.example.auth_service.application.port.in.InternalGetUserInfoUseCase;
+import com.example.auth_service.application.port.out.AuthEventPublisherPort;
+import com.example.auth_service.application.registry.OutboxEventHandlerRegistry;
+import com.example.auth_service.application.strategy.outbox.OutboxEventHandler;
+import com.example.auth_service.application.strategy.outbox.UserRegisteredOutboxHandler;
+
+import java.util.List;
 
 @Configuration
 public class AuthConfig {
+    // Đăng ký strategy xử lý event UserRegistered qua port phát hành message.
+    @Bean
+    OutboxEventHandler userRegisteredOutboxHandler(
+            AuthEventPublisherPort authEventPublisherPort
+    ) {
+        return new UserRegisteredOutboxHandler(authEventPublisherPort);
+    }
+
+    // Gom các strategy outbox để định tuyến theo eventType.
+    @Bean
+    OutboxEventHandlerRegistry outboxEventHandlerRegistry(
+            List<OutboxEventHandler> eventHandlers
+    ) {
+        return new OutboxEventHandlerRegistry(eventHandlers);
+    }
+
     @Bean
     AuthApplicationService authApplicationService(AuthenticationManagerPort authenticationManagerPort, TokenServicePort tokenServicePort, RoleRepositoryPort roleRepositoryPort, UserRepositoryPort userRepositoryPort, OutboxEventPort outboxEventPort, AccessControlCachePort accessControlCachePort){
         return new AuthApplicationService(authenticationManagerPort, tokenServicePort,roleRepositoryPort,userRepositoryPort, outboxEventPort,accessControlCachePort);
@@ -49,18 +71,4 @@ public class AuthConfig {
         return authApplicationService;
     }
 
-//    @Bean
-//    LoginUseCase loginUseCase(AuthApplicationService authApplicationService) {
-//        return authApplicationService;
-//    }
-//
-//    @Bean
-//    RegisterUseCase registerUseCase(
-//            AuthApplicationService authApplicationService,
-//            TransactionTemplate transactionTemplate) {
-//        // Bao bọc use case đăng ký bằng transaction tại tầng infrastructure.
-//        return request -> transactionTemplate.execute(
-//                status -> authApplicationService.register(request));
-//    }
-    
 }

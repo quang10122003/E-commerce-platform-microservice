@@ -35,6 +35,8 @@ eureka:
 app:
   jwt:
     public-key: ${JWT_PUBLIC_KEY}
+  outbox:
+    fixed-delay-ms: ${PRODUCT_OUTBOX_FIXED_DELAY_MS:5000}
 supabase:
   url: ${SUPABASE_URL}
   service-role-key: ${SUPABASE_SERVICE_ROLE_SECRET_KEY}

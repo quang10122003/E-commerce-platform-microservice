@@ -7,7 +7,7 @@ import com.example.producr_service.adapter.mapper.ProductMapper;
 import com.example.producr_service.adapter.out.persistence.Brand.BrandJpa;
 import com.example.producr_service.adapter.out.persistence.Category.CategoryJpa;
 import com.example.producr_service.adapter.out.persistence.ProductVariant.ProductVariantJpa;
-import com.example.producr_service.application.port.out.ProductRepositoryPort;
+import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.domain.model.Product;
 
 import lombok.AccessLevel;
@@ -17,6 +17,7 @@ import lombok.experimental.FieldDefaults;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @RequiredArgsConstructor
@@ -49,6 +50,7 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Product> findById(Long id) {
         return productJpa.findById(id).map(productMapper::toDomain);
     }

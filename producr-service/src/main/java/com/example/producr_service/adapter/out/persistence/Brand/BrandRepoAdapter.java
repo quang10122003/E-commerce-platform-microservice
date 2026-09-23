@@ -1,7 +1,7 @@
 package com.example.producr_service.adapter.out.persistence.Brand;
 
 import com.example.producr_service.adapter.mapper.BrandMapper;
-import com.example.producr_service.application.port.out.BrandRepositoryPort;
+import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.domain.model.Brand;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +9,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 @RequiredArgsConstructor
@@ -20,6 +21,12 @@ public class BrandRepoAdapter implements BrandRepositoryPort {
     @Override
     public boolean existsById(Long id) {
         return brandJpa.existsById(id);
+    }
+
+    // Lấy brand theo ID và chuyển entity thành domain model.
+    @Override
+    public Optional<Brand> findById(Long id) {
+        return brandJpa.findById(id).map(brandMapper::toDomain);
     }
 
     // Lấy toàn bộ brand và chuyển entity thành domain model.

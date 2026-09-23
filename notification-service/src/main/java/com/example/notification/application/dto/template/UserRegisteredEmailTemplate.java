@@ -6,16 +6,15 @@ import java.util.List;
 import com.example.notification.application.dto.event.UserRegisteredEvent;
 import com.example.notification.application.dto.request.EmailMessage;
 import com.example.notification.application.dto.template.interfaces.EmailTemplate;
-import com.example.notification.infrastructure.config.MailSenderProperties;
-
-import lombok.RequiredArgsConstructor;
-
-@RequiredArgsConstructor
 // tempale tạo EmailMessage  Dto cho case UserRegistered
 public class UserRegisteredEmailTemplate
         implements EmailTemplate<UserRegisteredEvent> {
 
-    private final MailSenderProperties mailSenderProperties;
+    private final String welcomeSender;
+
+    public UserRegisteredEmailTemplate(String welcomeSender) {
+        this.welcomeSender = welcomeSender;
+    }
 
     @Override
     public EmailMessage build(UserRegisteredEvent event) {
@@ -29,7 +28,7 @@ public class UserRegisteredEmailTemplate
                 """.formatted(event.fullName());
 
         return new EmailMessage(
-                mailSenderProperties.welcomeSender(),
+                welcomeSender,
                 List.of(event.email()),
                 "Chao mung ban",
                 html);

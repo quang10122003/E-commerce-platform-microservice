@@ -51,9 +51,13 @@ public class ProductEntity {
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
-    // Lưu trạng thái product dưới dạng tên enum trong database.
+    // Lưu tổng số lượng đã bán của product với giá trị mặc định bằng 0.
+    @Column(name = "total_sold", nullable = false)
+    private long totalSold;
+
+    // Lưu trạng thái product vào cột is_active theo schema hiện có.
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "is_active", nullable = false)
     private ProductStatus status;
 
     @Column(name = "created_at",updatable = false)

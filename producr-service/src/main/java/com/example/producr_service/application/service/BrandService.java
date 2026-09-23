@@ -2,7 +2,7 @@ package com.example.producr_service.application.service;
 
 import com.example.producr_service.application.dto.response.BrandResponse;
 import com.example.producr_service.application.port.in.GetBrandsUseCase;
-import com.example.producr_service.application.port.out.BrandRepositoryPort;
+import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 

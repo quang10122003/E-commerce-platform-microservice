@@ -7,6 +7,7 @@ import com.example.common.exception.BusinessException;
 import com.example.producr_service.domain.error.DomainProductError;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,12 +33,27 @@ public class Product {
     private String description;
     private String imageUrl;
     private ProductStatus status;
+    // Lưu tổng số lượng sản phẩm đã bán của toàn bộ variant.
+    private long totalSold;
+    private final LocalDateTime createdAt;
 
     private final List<ProductAttribute> attributes = new ArrayList<>();
     private final List<ProductVariant> variants = new ArrayList<>();
 
     public Product(Long id,  Long userId, Long categoryId, Long brandId, String name,
                    String description, String imageUrl) {
+        this(id, userId, categoryId, brandId, name, description, imageUrl, null);
+    }
+
+    // Khởi tạo aggregate từ dữ liệu persistence, bao gồm thời điểm tạo product.
+    public Product(Long id, Long userId, Long categoryId, Long brandId, String name,
+                   String description, String imageUrl, LocalDateTime createdAt) {
+        this(id, userId, categoryId, brandId, name, description, imageUrl, createdAt, 0L);
+    }
+
+    // Khởi tạo aggregate từ dữ liệu persistence, bao gồm tổng số lượng đã bán.
+    public Product(Long id, Long userId, Long categoryId, Long brandId, String name,
+                   String description, String imageUrl, LocalDateTime createdAt, long totalSold) {
         if (userId == null) {
             throw new BusinessException(DomainProductError.PRODUCT_USER_REQUIRED);
         }
@@ -60,6 +76,8 @@ public class Product {
         this.name = name;
         this.description = description;
         this.imageUrl = imageUrl;
+        this.createdAt = createdAt;
+        this.totalSold = totalSold;
         // Product mới được tạo mặc định ở trạng thái hoạt động.
         this.status = ProductStatus.ACTIVE;
     }
