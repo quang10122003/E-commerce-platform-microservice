@@ -142,6 +142,17 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort, Prod
                             .field(ProductSearchDocumentFields.STATUS + ".keyword")
                             .value(ProductStatus.ACTIVE.name())
                     ));
+
+                    // filter theo tính thành
+                    if (!filter.locations().isEmpty()) {
+                        bool.filter(terms -> terms.terms(termsQuery -> termsQuery
+                                .field(ProductSearchDocumentFields.LOCATION)
+                                .terms(values -> values.value(filter.locations().stream()
+                                        .map(FieldValue::of)
+                                        .toList()))
+                        ));
+                    }
+
                     return bool;
                 }))
                 ;

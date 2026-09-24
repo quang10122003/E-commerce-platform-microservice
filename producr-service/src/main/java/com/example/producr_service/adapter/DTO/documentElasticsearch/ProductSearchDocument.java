@@ -24,7 +24,6 @@ public class ProductSearchDocument {
     // Lưu ID Product từ MySQL làm ID document Elasticsearch.
     @Id
     private Long id;
-
     // Lưu ID product dạng field để làm khóa phụ khi sort infinity scroll.
     @Field(name = ProductSearchDocumentFields.PRODUCT_ID, type = FieldType.Long)
     private Long productId;

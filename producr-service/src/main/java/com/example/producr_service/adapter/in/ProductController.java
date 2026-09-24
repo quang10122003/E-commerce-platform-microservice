@@ -59,12 +59,13 @@ public class ProductController {
     // API lấy catalog product đang hoạt động bằng cơ chế infinity scroll.
     @GetMapping()
     public ResponseEntity<ProductCatalogSearchResponse> getProducts(
-            @RequestParam(required = false) String keyword,
+            @RequestParam String keyword,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) List<Long> brandIds,
             @RequestParam(required = false) @DecimalMin("0") BigDecimal minPrice,
             @RequestParam(required = false) @DecimalMin("0") BigDecimal maxPrice,
             @RequestParam(required = false) String cursor,
+            @RequestParam(required = false) List<String> locations,
             @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size,
             @RequestParam(name = "sort", defaultValue = "RELEVANCE") ProductSortOption sortOption
     ) {
@@ -75,6 +76,7 @@ public class ProductController {
                 minPrice,
                 maxPrice,
                 cursor,
+                locations,
                 size,
                 sortOption
         );

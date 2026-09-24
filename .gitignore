@@ -12,6 +12,9 @@ target/
 !.env.example
 !.env.sample
 
+# Quy tắc riêng cho Codex, không đưa vào repository.
+AGENTS.md
+
 ### VS Code ###
 .vscode/
 .idea/
