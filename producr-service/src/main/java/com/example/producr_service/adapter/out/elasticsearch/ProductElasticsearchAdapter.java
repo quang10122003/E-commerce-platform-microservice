@@ -7,6 +7,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
 import com.example.producr_service.adapter.DTO.documentElasticsearch.ProductSearchDocument;
 import com.example.producr_service.adapter.DTO.documentElasticsearch.ProductSearchDocumentFields;
+import com.example.producr_service.adapter.mapper.ProductMapper;
 import com.example.producr_service.adapter.mapper.ProductSearchDocumentMapper;
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
 import com.example.producr_service.application.dto.request.ProductSortOption;
@@ -58,6 +59,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort, Prod
 
     CategoryRepoPort categoryRepoPort;
     BrandRepositoryPort brandRepositoryPort;
+    ProductMapper productMapper;
 
     // hàm tạo or thêm document cho product
     @Override
@@ -220,7 +222,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort, Prod
 
         List<ProductSearchResponse> items = visibleHits.stream()
                 .map(SearchHit::getContent)
-                .map(this::toResponse)
+                .map(productMapper::toResponse)
                 .toList();
 
         // Cursor mới được tạo từ giá trị sort của item cuối cùng đã trả về.
@@ -258,24 +260,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort, Prod
                         .orElse(null))
                 .filter(Objects::nonNull)
                 .toList();
-    }
-
-
-    // Chuyển Elasticsearch document thành response cho API.
-    private ProductSearchResponse toResponse(ProductSearchDocument document) {
-        return new ProductSearchResponse(
-                document.getId(),
-                document.getName(),
-                document.getDescription(),
-                document.getCategoryId(),
-                document.getCategoryName(),
-                document.getBrandId(),
-                document.getBrandName(),
-                document.getStatus(),
-                document.getImageUrl(),
-                document.getMaxPrice(),
-                document.getTotalSold()
-        );
     }
 
     // Lấy tên category bắt buộc để làm giàu product search document.

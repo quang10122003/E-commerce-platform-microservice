@@ -1,5 +1,8 @@
 package com.example.common.response;
 
+import lombok.Builder;
+
+@Builder
 public record PageQuery(int page, int size) {
 
     public PageQuery {

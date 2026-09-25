@@ -28,6 +28,10 @@ public class ProductSearchDocument {
     @Field(name = ProductSearchDocumentFields.PRODUCT_ID, type = FieldType.Long)
     private Long productId;
 
+    // Lưu ID người sở hữu sản phẩm để lọc sản phẩm theo người bán.
+    @Field(name = ProductSearchDocumentFields.USER_ID, type = FieldType.Long)
+    private Long userId;
+
     // Lưu tên Product để tìm kiếm theo từ khóa.
     @Field(name = ProductSearchDocumentFields.NAME, type = FieldType.Text)
     private String name;

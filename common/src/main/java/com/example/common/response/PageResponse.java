@@ -8,3 +8,4 @@ public record PageResponse<T>(List<T> items,
                               long totalItems,
                               int totalPages) {
 }
+

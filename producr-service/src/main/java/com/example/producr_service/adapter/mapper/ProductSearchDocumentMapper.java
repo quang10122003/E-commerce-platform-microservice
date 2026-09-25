@@ -24,6 +24,7 @@ public class ProductSearchDocumentMapper {
         return ProductSearchDocument.builder()
                 .id(product.getId())
                 .productId(product.getId())
+                .userId(product.getUserId())
                 .name(product.getName())
                 .description(product.getDescription())
                 .categoryId(product.getCategoryId())

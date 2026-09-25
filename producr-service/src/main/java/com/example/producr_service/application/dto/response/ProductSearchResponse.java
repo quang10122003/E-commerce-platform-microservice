@@ -6,6 +6,8 @@ import java.math.BigDecimal;
 
 public record ProductSearchResponse(Long id,
                                     String name,
+                                    String location,
+                                    Long UserId,
                                     String description,
                                     Long categoryId,
                                     String categoryName,

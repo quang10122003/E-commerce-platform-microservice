@@ -6,10 +6,12 @@ import com.example.producr_service.application.port.in.CreateProductUseCase;
 import com.example.producr_service.application.port.in.GetCategoriesUseCase;
 import com.example.producr_service.application.port.in.GetBrandsUseCase;
 import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
+import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
+import com.example.producr_service.application.port.out.repo.SellerProductQueryPort;
 import com.example.producr_service.application.port.out.ES.ProductSearchPort;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
@@ -113,7 +115,8 @@ public class ProductConfig {
         CurrentUserPort currentUserPort,
         ProductSearchPort productSearchPort,
         OutboxPort outboxPort,
-        JsonUtils jsonUtils
+        JsonUtils jsonUtils,
+        SellerProductQueryPort sellerProductQueryPort
     ) {
         return new ProductService(
                 fileService,
@@ -122,7 +125,8 @@ public class ProductConfig {
                 currentUserPort,
                 outboxPort,
                 productSearchPort,
-                jsonUtils
+                jsonUtils,
+                sellerProductQueryPort
         );
     }
 
@@ -135,6 +139,12 @@ public class ProductConfig {
     // Cung cấp use case lấy catalog product cho controller qua input port.
     @Bean
     GetProductsCatalogUseCase getProductsCatalogUseCase(ProductService productService) {
+        return productService;
+    }
+
+    // Cung cấp use case đọc danh sách sản phẩm của người bán cho controller.
+    @Bean
+    GetSellerProductsUseCase getSellerProductsUseCase(ProductService productService) {
         return productService;
     }
 

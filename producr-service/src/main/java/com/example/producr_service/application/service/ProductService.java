@@ -1,42 +1,59 @@
 package com.example.producr_service.application.service;
 
 import com.example.common.exception.BusinessException;
+import com.example.common.response.PageResponse;
+import com.example.producr_service.adapter.entity.ProductEntity;
 import com.example.producr_service.application.dto.command.CreateProductCommand;
 import com.example.producr_service.application.dto.outbox.ProductCreatedOutboxPayload;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.dto.request.CreateProductRequest;
 import com.example.producr_service.application.dto.command.VariantImageUploadCommand;
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
+import com.example.producr_service.application.dto.request.SellerProductFilter;
 import com.example.producr_service.application.dto.response.ProductResponse;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
+import com.example.producr_service.application.dto.response.SellerProductItemResponse;
 import com.example.producr_service.application.dto.response.UserInternaInfoRespone;
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
 import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
+import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.port.out.ES.ProductSearchPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
+import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
+import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
+import com.example.producr_service.application.port.out.repo.SellerProductQueryPort;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.domain.model.Product;
+import com.example.producr_service.domain.model.ProductVariant;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.common.untill.JsonUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.math.BigDecimal;
 import java.util.UUID;
 
 // Triển khai các use case nghiệp vụ thuộc phạm vi product.
 @RequiredArgsConstructor
-public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase {
-    private final FileService fileService;
-    private final ProductImageUploadService productImageUploadService;
-    private final ProductCreationService productCreationService;
-    private final CurrentUserPort currentUserPort;
-    private final OutboxPort outboxPort;
+@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
+public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase {
+    FileService fileService;
+    ProductImageUploadService productImageUploadService;
+    ProductCreationService productCreationService;
+    CurrentUserPort currentUserPort;
+    OutboxPort outboxPort;
     // Port đọc danh sách product từ Elasticsearch.
-    private final ProductSearchPort productSearchPort;
-    private final JsonUtils jsonUtils;
+    ProductSearchPort productSearchPort;
+    JsonUtils jsonUtils;
+    SellerProductQueryPort sellerProductQueryPort;
+    ProductHelperService productHelperService;
+    ProductRepositoryPort productRepositoryPort;
+    ProductVariantRepoPort productVariantRepoPort;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -118,4 +135,24 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
             );
         }
     }
+
+    // Lấy danh sách sản phẩm có phân trang cho shop.
+    @Override
+    public PageResponse<SellerProductItemResponse> getSellerProducts(SellerProductFilter filter) {
+        // Gọi auth-service lấy ID người bán từ phiên đăng nhập.
+        Long userId = currentUserPort.getUserInfo().userId();
+        PageResponse<Product> pageProduct = productRepositoryPort.findProductsFillter(userId,filter);
+
+        List<Product> listproProducts = pageProduct.items();
+        // Lấy ID trang hiện tại để truy vấn thuộc tính phân loại theo lô, tránh N+1.
+        List<Long> productIds = productHelperService.getListIdProduct(listproProducts);
+
+        Map<Long, List<ProductVariant>> variantsByProductId =
+                productVariantRepoPort.findByProduct_IdIn(productIds);
+
+        return sellerProductQueryPort.findProducts(userId, filter);
+    }
+
+    private getProductID
+
 }

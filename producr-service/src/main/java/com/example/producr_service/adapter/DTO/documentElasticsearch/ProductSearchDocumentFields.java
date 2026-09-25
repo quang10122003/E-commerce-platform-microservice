@@ -4,6 +4,7 @@ package com.example.producr_service.adapter.DTO.documentElasticsearch;
 public final class ProductSearchDocumentFields {
 
     public static final String PRODUCT_ID = "productId";
+    public static final String USER_ID = "userId";
     public static final String NAME = "name";
     public static final String DESCRIPTION = "description";
     public static final String CATEGORY_ID = "categoryId";
