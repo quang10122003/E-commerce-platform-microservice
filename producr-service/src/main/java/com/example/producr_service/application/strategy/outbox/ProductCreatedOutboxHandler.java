@@ -33,8 +33,7 @@ public class ProductCreatedOutboxHandler implements OutboxEventHandler {
 
         Product product = productRepositoryPort.findById(productId)
                 .orElseThrow(() -> new IllegalStateException(
-                        "Không tìm thấy Product id=" + productId + " để đồng bộ"
-                ));
+                        "Không tìm thấy Product id=" + productId + " để đồng bộ"));
 
         productSearchIndexPort.index(product, locationProduct);
     }

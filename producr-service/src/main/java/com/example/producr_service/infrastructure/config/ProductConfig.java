@@ -7,6 +7,7 @@ import com.example.producr_service.application.port.in.GetCategoriesUseCase;
 import com.example.producr_service.application.port.in.GetBrandsUseCase;
 import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
 import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
+import com.example.producr_service.application.port.in.ProcessProductOutboxUseCase;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
@@ -22,6 +23,7 @@ import com.example.producr_service.adapter.out.openFeign.AuthUserAdapter;
 import com.example.producr_service.application.service.FileService;
 import com.example.producr_service.application.service.ProductCreationService;
 import com.example.producr_service.application.service.ProductHelperService;
+import com.example.producr_service.application.service.ProductOutboxStatusService;
 import com.example.producr_service.application.service.ProductImageUploadService;
 import com.example.producr_service.application.service.ProductService;
 import com.example.producr_service.application.service.CategoryService;
@@ -65,6 +67,15 @@ public class ProductConfig {
     @Bean
     ProductHelperService productHelperService() {
         return new ProductHelperService();
+    }
+
+    // Cung cấp service quản lý transaction khi job cập nhật trạng thái outbox.
+    @Bean
+    ProcessProductOutboxUseCase processProductOutboxUseCase(
+            OutboxPort outboxPort,
+            OutboxEventHandlerRegistry outboxEventHandlerRegistry
+    ) {
+        return new ProductOutboxStatusService(outboxPort, outboxEventHandlerRegistry);
     }
 
     // Đăng ký service xử lý validate, upload và gắn URL ảnh product.

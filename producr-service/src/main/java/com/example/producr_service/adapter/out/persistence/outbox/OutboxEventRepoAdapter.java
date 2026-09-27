@@ -6,7 +6,6 @@ import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,7 +25,6 @@ public class OutboxEventRepoAdapter implements OutboxPort {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<OutboxEventDto> findPending() {
         return outboxEventJpa
                 .findByStatusAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(
@@ -39,7 +37,6 @@ public class OutboxEventRepoAdapter implements OutboxPort {
     }
 
     @Override
-    @Transactional
     public void markPublished(UUID eventId) {
         outboxEventJpa.findByEventId(eventId.toString()).ifPresent(event -> {
             event.setStatus(OutboxEventEntity.Status.PUBLISHED);
@@ -49,7 +46,6 @@ public class OutboxEventRepoAdapter implements OutboxPort {
     }
 
     @Override
-    @Transactional
     public void markFailed(UUID eventId, String errorMessage) {
         outboxEventJpa.findByEventId(eventId.toString()).ifPresent(event -> {
             int retryCount = event.getRetryCount() + 1;
