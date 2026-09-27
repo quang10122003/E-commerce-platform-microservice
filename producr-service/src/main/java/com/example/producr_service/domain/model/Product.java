@@ -36,6 +36,8 @@ public class Product {
     private String name;
     private String description;
     private String imageUrl;
+    // Lưu đường dẫn ảnh bìa trên storage, có thể trống với dữ liệu cũ.
+    private String objectPath;
     private ProductStatus status;
     // Lưu tổng số lượng sản phẩm đã bán của toàn bộ variant.
     private long totalSold;
@@ -48,7 +50,8 @@ public class Product {
     public Product(Long id, Long userId, Long categoryId, String categoryName,
                    Long brandId, String brandName, String name,
                    String description, String imageUrl) {
-        this(id, userId, categoryId, categoryName, brandId, brandName, name, description, imageUrl, null);
+        this(id, userId, categoryId, categoryName, brandId, brandName, name,
+                description, imageUrl, null);
     }
 
     // Khởi tạo aggregate từ dữ liệu persistence, bao gồm thời điểm tạo product.
@@ -63,6 +66,15 @@ public class Product {
     public Product(Long id, Long userId, Long categoryId, String categoryName,
                    Long brandId, String brandName, String name,
                    String description, String imageUrl, LocalDateTime createdAt, long totalSold) {
+        this(id, userId, categoryId, categoryName, brandId, brandName, name,
+                description, imageUrl, createdAt, totalSold, null);
+    }
+
+    // Giữ đường dẫn ảnh đã upload cùng aggregate để lưu trữ và dọn ảnh khi cần.
+    public Product(Long id, Long userId, Long categoryId, String categoryName,
+                   Long brandId, String brandName, String name,
+                   String description, String imageUrl, LocalDateTime createdAt,
+                   long totalSold, String objectPath) {
         if (userId == null) {
             throw new BusinessException(DomainProductError.PRODUCT_USER_REQUIRED);
         }
@@ -96,6 +108,7 @@ public class Product {
         this.name = name;
         this.description = description;
         this.imageUrl = imageUrl;
+        this.objectPath = objectPath;
         this.createdAt = createdAt;
         this.totalSold = totalSold;
         // Product mới được tạo mặc định ở trạng thái hoạt động.
@@ -143,6 +156,10 @@ public class Product {
         }
         this.name = name;
         this.description = description;
+        // Tránh giữ object path của ảnh cũ khi URL ảnh thay đổi.
+        if (!Objects.equals(this.imageUrl, imageUrl)) {
+            this.objectPath = null;
+        }
         this.imageUrl = imageUrl;
     }
 

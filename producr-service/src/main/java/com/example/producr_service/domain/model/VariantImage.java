@@ -10,14 +10,21 @@ public class VariantImage {
 
     private final Long id;
     private String imageUrl;
+    // Lưu đường dẫn ảnh phân loại trên storage, có thể trống với dữ liệu cũ.
+    private String objectPath;
     private boolean primary;
 
     public VariantImage(Long id, String imageUrl, boolean primary) {
+        this(id, imageUrl, null, primary);
+    }
+
+    public VariantImage(Long id, String imageUrl, String objectPath, boolean primary) {
         if (imageUrl == null || imageUrl.isBlank()) {
             throw new BusinessException(DomainProductError.IMAGE_URL_REQUIRED);
         }
         this.id = id;
         this.imageUrl = imageUrl;
+        this.objectPath = objectPath;
         this.primary = primary;
     }
 

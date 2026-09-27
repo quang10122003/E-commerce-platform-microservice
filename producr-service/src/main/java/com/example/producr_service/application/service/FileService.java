@@ -1,5 +1,6 @@
 package com.example.producr_service.application.service;
 
+import com.example.producr_service.application.port.in.DeleteStoredFilesUseCase;
 import com.example.producr_service.application.port.out.storage.FileStoragePort;
 import com.example.producr_service.application.registry.UploadStrategyRegistry;
 import com.example.producr_service.application.strategy.upload.IUploadStrategy;
@@ -15,7 +16,7 @@ import java.util.stream.Collectors;
 
 // Chịu trách nhiệm điều phối upload và xóa file thông qua storage port.
 @Slf4j
-public class FileService{
+public class FileService implements DeleteStoredFilesUseCase {
     private final FileStoragePort fileStoragePort;
     private final UploadStrategyRegistry strategyRegistry;
 
@@ -67,6 +68,7 @@ public class FileService{
     }
 
     // Xóa các file đã upload để bù trừ khi bước lưu Product không thành công.
+    @Override
     public void deleteStoredFiles(List<StoredFile> storedFiles) {
         if (storedFiles.isEmpty()) {
             return;
@@ -100,5 +102,10 @@ public class FileService{
     // Xóa nhiều ảnh trong cùng bucket thông qua cổng lưu trữ đã cấu hình.
     public void delete(StorageBucket bucket, List<String> objectPaths) {
         fileStoragePort.delete(bucket, objectPaths);
+    }
+
+    // Lấy object path từ URL đã lưu để dùng khi xóa ảnh.
+    public String extractObjectPath(StorageBucket bucket, String publicUrl) {
+        return fileStoragePort.extractObjectPath(bucket, publicUrl);
     }
 }

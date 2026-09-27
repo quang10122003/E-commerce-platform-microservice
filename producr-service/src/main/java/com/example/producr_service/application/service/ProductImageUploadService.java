@@ -3,7 +3,7 @@ package com.example.producr_service.application.service;
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.application.dto.command.UploadFileCommand;
 import com.example.producr_service.application.dto.command.VariantImageUploadCommand;
-import com.example.producr_service.application.dto.request.CreateProductRequest;
+import com.example.producr_service.application.dto.request.CreateProductData;
 import com.example.producr_service.application.dto.request.VariantImagePosition;
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.out.storage.StoredFile;
@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-// Xử lý validate, upload và gắn URL cho ảnh product.
+// Xử lý validate, upload và gắn thông tin lưu trữ cho ảnh product.
 @RequiredArgsConstructor
 public class ProductImageUploadService {
 
@@ -22,7 +22,7 @@ public class ProductImageUploadService {
 
     // Chuẩn bị toàn bộ ảnh product và giữ file đã upload để caller có thể rollback.
     public void uploadAndApplyImageUrls(
-            CreateProductRequest request,
+            CreateProductData request,
             UploadFileCommand productImage,
             List<VariantImageUploadCommand> variantImages,
             List<StoredFile> storedFiles
@@ -30,7 +30,7 @@ public class ProductImageUploadService {
         validateVariantImageCommands(request, variantImages);
         uploadProductImage(productImage, storedFiles);
         uploadVariantImages(variantImages, storedFiles);
-        applyUploadedImageUrls(request, productImage, variantImages, storedFiles);
+        applyUploadedImages(request, productImage, variantImages, storedFiles);
     }
 
     // Upload ảnh bìa product theo cấu hình riêng của product image.
@@ -61,7 +61,7 @@ public class ProductImageUploadService {
 
     // Kiểm tra toàn bộ vị trí ảnh variant trước khi thực hiện upload.
     private void validateVariantImageCommands(
-            CreateProductRequest request,
+            CreateProductData request,
             List<VariantImageUploadCommand> imageCommands
     ) {
         // Đảm bảo số file gửi lên khớp với toàn bộ vị trí ảnh variant đã khai báo.
@@ -96,31 +96,35 @@ public class ProductImageUploadService {
     }
 
     // Đếm tổng số ảnh cần upload của tất cả variant.
-    private int countVariantImageSlots(CreateProductRequest request) {
+    private int countVariantImageSlots(CreateProductData request) {
         return request.getVariants().stream()
                 .mapToInt(variant -> variant.getImages().size())
                 .sum();
     }
 
-    // Gắn URL file đã upload vào ảnh bìa và từng vị trí ảnh variant tương ứng.
-    private void applyUploadedImageUrls(
-            CreateProductRequest request,
+    // Gắn URL và object path cho ảnh bìa cùng từng vị trí ảnh variant.
+    private void applyUploadedImages(
+            CreateProductData request,
             UploadFileCommand productImage,
             List<VariantImageUploadCommand> imageCommands,
             List<StoredFile> storedFiles
     ) {
         int urlIndex = 0;
         if (productImage != null) {
-            request.setImageUrl(storedFiles.get(urlIndex++).publicUrl());
+            StoredFile storedFile = storedFiles.get(urlIndex++);
+            request.setImageUrl(storedFile.publicUrl());
+            request.setObjectPath(storedFile.objectPath());
         }
 
         for (int i = 0; i < imageCommands.size(); i++) {
             VariantImageUploadCommand imageCommand = imageCommands.get(i);
-            request.getVariants()
+            CreateProductData.VariantImageRequest imageRequest = request.getVariants()
                     .get(imageCommand.variantIndex())
                     .getImages()
-                    .get(imageCommand.imageIndex())
-                    .setImageUrl(storedFiles.get(urlIndex + i).publicUrl());
+                    .get(imageCommand.imageIndex());
+            StoredFile storedFile = storedFiles.get(urlIndex + i);
+            imageRequest.setImageUrl(storedFile.publicUrl());
+            imageRequest.setObjectPath(storedFile.objectPath());
         }
     }
 

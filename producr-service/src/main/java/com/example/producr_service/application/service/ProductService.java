@@ -5,7 +5,7 @@ import com.example.common.response.PageResponse;
 import com.example.producr_service.application.dto.command.CreateProductCommand;
 import com.example.producr_service.application.dto.outbox.ProductCreatedOutboxPayload;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
-import com.example.producr_service.application.dto.request.CreateProductRequest;
+import com.example.producr_service.application.dto.request.CreateProductData;
 import com.example.producr_service.application.dto.command.VariantImageUploadCommand;
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
 import com.example.producr_service.application.dto.request.SellerProductFilter;
@@ -23,6 +23,7 @@ import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.application.port.out.storage.StoredFile;
+import com.example.producr_service.application.port.out.storage.ProductImageRollbackPort;
 import com.example.producr_service.domain.model.Product;
 import com.example.producr_service.domain.model.ProductVariant;
 import lombok.AccessLevel;
@@ -40,7 +41,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase {
-    FileService fileService;
+    ProductImageRollbackPort productImageRollbackPort;
     ProductImageUploadService productImageUploadService;
     ProductCreationService productCreationService;
     CurrentUserPort currentUserPort;
@@ -55,37 +56,30 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     @Transactional(rollbackFor = Exception.class)
     @Override
     public ProductResponse createProduct(CreateProductCommand command) {
-        CreateProductRequest request = command.productRequest();
+        CreateProductData request = command.productRequest();
         List<VariantImageUploadCommand> variantImages = command.variantImages() == null
                 ? List.of()
                 : command.variantImages();
 
         List<StoredFile> storedFiles = new java.util.ArrayList<>();
+        // Đăng ký trước khi upload để cả lỗi upload dở dang cũng được dọn sau rollback.
+        productImageRollbackPort.deleteImageStore(storedFiles);
 
-        try {
-            // Validate, upload ảnh và gắn URL vào request trước khi tạo product.
-            productImageUploadService.uploadAndApplyImageUrls(
-                    request,
-                    command.productImage(),
-                    variantImages,
-                    storedFiles
-            );
+        // Validate, upload ảnh và gắn metadata vào request trước khi tạo product.
+        productImageUploadService.uploadAndApplyImageUrls(
+                request,
+                command.productImage(),
+                variantImages,
+                storedFiles
+        );
 
-            UserInternaInfoRespone userInternaInfoRespone = currentUserPort.getUserInfo();
-            Product product = productCreationService.createProduct(userInternaInfoRespone, request);
+        UserInternaInfoRespone userInternaInfoRespone = currentUserPort.getUserInfo();
+        Product product = productCreationService.createProduct(userInternaInfoRespone, request);
 
-            // lưu outbox
-            saveProductCreatedOutboxEvent(product,userInternaInfoRespone);
+        // lưu outbox
+        saveProductCreatedOutboxEvent(product,userInternaInfoRespone);
 
-            return ProductResponse.from(product);
-        } catch (RuntimeException exception) {
-            try {
-                fileService.deleteStoredFiles(storedFiles);
-            } catch (RuntimeException cleanupException) {
-                exception.addSuppressed(cleanupException);
-            }
-            throw exception;
-        }
+        return ProductResponse.from(product);
     }
 
     // Tạo event outbox tối đẩy lên db

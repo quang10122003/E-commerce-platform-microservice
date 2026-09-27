@@ -1,4 +1,4 @@
-package com.example.producr_service.application.dto.request;
+package com.example.producr_service.adapter.DTO.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;

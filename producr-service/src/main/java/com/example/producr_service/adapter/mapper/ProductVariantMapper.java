@@ -52,6 +52,7 @@ public class ProductVariantMapper {
 
     // Chuyển ảnh phân loại persistence sang domain model.
     private VariantImage toDomain(VariantImageEntity entity) {
-        return new VariantImage(entity.getId(), entity.getImageUrl(), entity.isPrimary());
+        return new VariantImage(entity.getId(), entity.getImageUrl(),
+                entity.getObjectPath(), entity.isPrimary());
     }
 }

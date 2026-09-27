@@ -16,6 +16,7 @@ import com.example.producr_service.application.port.out.repo.ProductVariantRepoP
 import com.example.producr_service.application.port.out.ES.ProductSearchPort;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
+import com.example.producr_service.application.port.out.storage.ProductImageRollbackPort;
 import com.example.producr_service.application.registry.UploadStrategyRegistry;
 import com.example.producr_service.application.registry.OutboxEventHandlerRegistry;
 import com.example.producr_service.adapter.client.AuthUserFeignClient;
@@ -127,7 +128,7 @@ public class ProductConfig {
     // Đăng ký application service triển khai các use case thuộc phạm vi product.
     @Bean
     ProductService productService(
-        FileService fileService,
+        ProductImageRollbackPort productImageRollbackPort,
         ProductImageUploadService productImageUploadService,
         ProductCreationService productCreationService,
         CurrentUserPort currentUserPort,
@@ -139,7 +140,7 @@ public class ProductConfig {
         ProductVariantRepoPort productVariantRepoPort
     ) {
         return new ProductService(
-                fileService,
+                productImageRollbackPort,
                 productImageUploadService,
                 productCreationService,
                 currentUserPort,

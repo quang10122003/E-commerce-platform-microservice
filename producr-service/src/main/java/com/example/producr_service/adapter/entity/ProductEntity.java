@@ -1,6 +1,7 @@
 package com.example.producr_service.adapter.entity;
 
 import com.example.producr_service.domain.model.ProductStatus;
+import com.example.producr_service.application.port.out.storage.StorageBucket;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,6 +52,13 @@ public class ProductEntity {
 
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
+
+    @Column(name = "object_path", length = 500)
+    private String objectPath;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "storage_bucket", length = 50)
+    private StorageBucket storageBucket;
 
     // Lưu tổng số lượng đã bán của product với giá trị mặc định bằng 0.
     @Column(name = "total_sold", nullable = false)

@@ -1,5 +1,6 @@
 package com.example.producr_service.adapter.entity;
 
+import com.example.producr_service.application.port.out.storage.StorageBucket;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -28,6 +29,13 @@ public class VariantImageEntity {
 
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
+
+    @Column(name = "object_path", length = 500)
+    private String objectPath;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "storage_bucket", length = 50)
+    private StorageBucket storageBucket;
 
     @Column(name = "is_primary", nullable = false)
     private boolean primary;

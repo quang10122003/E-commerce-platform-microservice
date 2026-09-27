@@ -2,9 +2,10 @@ package com.example.producr_service.adapter.mapper;
 
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.application.dto.command.CreateProductCommand;
-import com.example.producr_service.application.dto.request.CreateProductRequest;
+import com.example.producr_service.adapter.DTO.request.CreateProductRequest;
+import com.example.producr_service.application.dto.request.CreateProductData;
 import com.example.producr_service.application.dto.command.UploadFileCommand;
-import com.example.producr_service.application.dto.request.VariantImageMeta;
+import com.example.producr_service.adapter.DTO.request.VariantImageMeta;
 import com.example.producr_service.application.dto.command.VariantImageUploadCommand;
 import com.example.producr_service.application.error.ProductError;
 import org.springframework.stereotype.Component;
@@ -26,10 +27,51 @@ public class ProductMultipartCommandMapper {
             List<VariantImageMeta> variantImageMeta
     ) throws IOException {
         return new CreateProductCommand(
-                request,
+                toProductData(request),
                 toProductImageCommand(productImage),
                 toVariantImageCommands(variantImages, variantImageMeta)
         );
+    }
+
+    // Chuyển dữ liệu HTTP sang DTO nội bộ, không đưa validation vào application.
+    private CreateProductData toProductData(CreateProductRequest request) {
+        CreateProductData data = new CreateProductData();
+        data.setCategoryId(request.getCategoryId());
+        data.setBrandId(request.getBrandId());
+        data.setName(request.getName());
+        data.setDescription(request.getDescription());
+        if (request.getAttributes() != null) {
+            data.setAttributes(request.getAttributes().stream().map(attribute -> {
+                CreateProductData.AttributeRequest mapped = new CreateProductData.AttributeRequest();
+                mapped.setName(attribute.getName());
+                mapped.setValues(attribute.getValues());
+                return mapped;
+            }).toList());
+        }
+        if (request.getVariants() != null) {
+            data.setVariants(request.getVariants().stream().map(variant -> {
+                CreateProductData.VariantRequest mapped = new CreateProductData.VariantRequest();
+                mapped.setPrice(variant.getPrice());
+                mapped.setStockQuantity(variant.getStockQuantity());
+                if (variant.getAttributeSelections() != null) {
+                    mapped.setAttributeSelections(variant.getAttributeSelections().stream().map(selection -> {
+                        CreateProductData.AttributeSelection item = new CreateProductData.AttributeSelection();
+                        item.setAttributeIndex(selection.getAttributeIndex());
+                        item.setValueIndex(selection.getValueIndex());
+                        return item;
+                    }).toList());
+                }
+                if (variant.getImages() != null) {
+                    mapped.setImages(variant.getImages().stream().map(image -> {
+                        CreateProductData.VariantImageRequest item = new CreateProductData.VariantImageRequest();
+                        item.setPrimary(image.isPrimary());
+                        return item;
+                    }).toList());
+                }
+                return mapped;
+            }).toList());
+        }
+        return data;
     }
 
     // Chuyển ảnh đại diện từ multipart sang command

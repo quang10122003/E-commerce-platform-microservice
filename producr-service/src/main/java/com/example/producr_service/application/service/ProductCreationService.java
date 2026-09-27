@@ -1,7 +1,7 @@
 package com.example.producr_service.application.service;
 
 import com.example.common.exception.BusinessException;
-import com.example.producr_service.application.dto.request.CreateProductRequest;
+import com.example.producr_service.application.dto.request.CreateProductData;
 import com.example.producr_service.application.dto.response.UserInternaInfoRespone;
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
@@ -32,9 +32,10 @@ public class ProductCreationService {
     ProductRepositoryPort productRepositoryPort;
     CategoryRepoPort categoryRepositoryPort;
     BrandRepositoryPort brandRepositoryPort;
-    // Tạo và lưu aggregate Product và db từ request đã hoàn tất dữ liệu ảnh.
+    // Tạo và lưu Product từ request đã được backend gắn metadata ảnh.
     @Transactional
-    public Product createProduct(UserInternaInfoRespone userInternaInfoRespone, CreateProductRequest request) {
+    public Product createProduct(UserInternaInfoRespone userInternaInfoRespone,
+                                 CreateProductData request) {
 
         // Lấy danh mục và thương hiệu để giữ cả mã lẫn tên trong Product mới.
         Category category = categoryRepositoryPort.findById(request.getCategoryId())
@@ -48,13 +49,14 @@ public class ProductCreationService {
                 null, userInternaInfoRespone.userId(),
                 category.getId(), category.getName(),
                 brand == null ? null : brand.getId(), brand == null ? null : brand.getName(),
-                request.getName(), request.getDescription(), request.getImageUrl()
+                request.getName(), request.getDescription(), request.getImageUrl(),
+                null, 0L, request.getObjectPath()
         );
 
         //list  TẤT CẢ các valuesOfThisAttribute lại, theo đúng thứ tự attribute
         List<List<AttributeValue>> valuesByIndex = new ArrayList<>();
 
-        for (CreateProductRequest.AttributeRequest attrReq : request.getAttributes()) {
+        for (CreateProductData.AttributeRequest attrReq : request.getAttributes()) {
             ProductAttribute attribute = new ProductAttribute(null, attrReq.getName());
 
             // list lưu AttributeValue của 1 ProductAttribute cụ thể
@@ -73,7 +75,7 @@ public class ProductCreationService {
         Set<String> skusUsedInThisRequest = new HashSet<>();
         Set<Set<AttributeValue>> selectedCombinations = new HashSet<>();
 
-        for (CreateProductRequest.VariantRequest vReq : request.getVariants()) {
+        for (CreateProductData.VariantRequest vReq : request.getVariants()) {
 
             List<AttributeValue> selectedValues = resolveSelectedAttributeValues(valuesByIndex, vReq);
             validateUniqueAttributeCombination(selectedCombinations, selectedValues);
@@ -88,8 +90,9 @@ public class ProductCreationService {
                 variant.linkAttributeValue(value);
             }
 
-            for (CreateProductRequest.VariantImageRequest imgReq : vReq.getImages()) {
-                variant.addImage(new VariantImage(null, imgReq.getImageUrl(), imgReq.isPrimary()));
+            for (CreateProductData.VariantImageRequest imgReq : vReq.getImages()) {
+                variant.addImage(new VariantImage(null, imgReq.getImageUrl(),
+                        imgReq.getObjectPath(), imgReq.isPrimary()));
             }
 
             product.addVariant(variant);
@@ -122,7 +125,7 @@ public class ProductCreationService {
 
     // đổi (attributeIndex, valueIndex) client gui thanh dung AttributeValue tuong ung, dong thoi validate index hop le
     private AttributeValue resolveAttributeValue(List<List<AttributeValue>> valuesByIndex,
-                                                 CreateProductRequest.AttributeSelection sel) {
+                                                 CreateProductData.AttributeSelection sel) {
         int attributeIndex = sel.getAttributeIndex();
         int valueIndex = sel.getValueIndex();
 
@@ -142,12 +145,12 @@ public class ProductCreationService {
     // Resolve selection và bảo đảm mỗi thuộc tính được chọn đúng một lần.
     private List<AttributeValue> resolveSelectedAttributeValues(
             List<List<AttributeValue>> valuesByIndex,
-            CreateProductRequest.VariantRequest variantRequest
+            CreateProductData.VariantRequest variantRequest
     ) {
         Set<Integer> selectedAttributeIndexes = new HashSet<>();
         List<AttributeValue> selectedValues = new ArrayList<>();
 
-        for (CreateProductRequest.AttributeSelection selection : variantRequest.getAttributeSelections()) {
+        for (CreateProductData.AttributeSelection selection : variantRequest.getAttributeSelections()) {
             if (!selectedAttributeIndexes.add(selection.getAttributeIndex())) {
                 throw new BusinessException(ProductError.INVALID_VARIANT_ATTRIBUTES,
                         "attributeIndex bi trung: " + selection.getAttributeIndex());

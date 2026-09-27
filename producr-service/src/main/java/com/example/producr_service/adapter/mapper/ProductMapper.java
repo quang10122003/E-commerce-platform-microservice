@@ -3,6 +3,7 @@ import com.example.producr_service.adapter.DTO.documentElasticsearch.ProductSear
 import com.example.producr_service.adapter.entity.*;
 import com.example.common.response.PageResponse;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
+import com.example.producr_service.application.port.out.storage.StorageBucket;
 import com.example.producr_service.domain.model.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,8 @@ public class ProductMapper {
                 .name(product.getName())
                 .description(product.getDescription())
                 .imageUrl(product.getImageUrl())
+                .objectPath(product.getObjectPath())
+                .storageBucket(StorageBucket.PRODUCT_IMAGES)
                 .totalSold(product.getTotalSold())
                 .status(product.getStatus())
                 .createdAt(LocalDateTime.now())
@@ -80,7 +83,9 @@ public class ProductMapper {
 
             for (VariantImage image : productVariant.getImages()) {
                 productVariantEntity.addImage(new VariantImageEntity(
-                        null, productVariantEntity, image.getImageUrl(), image.isPrimary()));
+                        null, productVariantEntity, image.getImageUrl(),
+                        image.getObjectPath(),
+                        StorageBucket.PRODUCT_VARIANTS, image.isPrimary()));
             }
         }
 
@@ -105,7 +110,8 @@ public class ProductMapper {
                 productEntity.getBrand() != null ? productEntity.getBrand().getId() : null,
                 productEntity.getBrand() != null ? productEntity.getBrand().getName() : null,
                 productEntity.getName(), productEntity.getDescription(), productEntity.getImageUrl(),
-                productEntity.getCreatedAt(), productEntity.getTotalSold()
+                productEntity.getCreatedAt(), productEntity.getTotalSold(),
+                productEntity.getObjectPath()
         );
         // Đồng bộ trạng thái đã lưu từ persistence về domain aggregate.
         if (productEntity.getStatus() == ProductStatus.INACTIVE) {
@@ -138,7 +144,8 @@ public class ProductMapper {
             }
             for (VariantImageEntity imgEntity : variantEntity.getImages()) {
                 variant.addImage(new VariantImage(
-                        imgEntity.getId(), imgEntity.getImageUrl(), imgEntity.isPrimary()));
+                        imgEntity.getId(), imgEntity.getImageUrl(),
+                        imgEntity.getObjectPath(), imgEntity.isPrimary()));
             }
             product.addVariant(variant);
         }

@@ -49,6 +49,8 @@ CREATE TABLE products (
     name                    VARCHAR(255) NOT NULL,
     description             TEXT,
     image_url               VARCHAR(500) not null,  -- ảnh đại diện cho thẻ card, khác ảnh riêng ở variant_images
+    object_path             VARCHAR(500) NULL,
+    storage_bucket          VARCHAR(50) NULL,
     total_sold              BIGINT NOT NULL DEFAULT 0,
     is_active               ENUM('ACTIVE', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',  -- shop ẩn/hiện sản phẩm
 
@@ -102,6 +104,8 @@ CREATE TABLE variant_images (
     id                      INT AUTO_INCREMENT PRIMARY KEY,
     product_variants_id     INT NOT NULL,
     image_url               VARCHAR(500) NOT NULL,
+    object_path             VARCHAR(500) NULL,
+    storage_bucket          VARCHAR(50) NULL,
     is_primary              BOOLEAN NOT NULL DEFAULT FALSE,  -- ảnh chính, hiện trước tiên
 
     FOREIGN KEY (product_variants_id) REFERENCES product_variants(id) ON DELETE CASCADE
