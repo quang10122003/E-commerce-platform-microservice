@@ -11,7 +11,7 @@ import com.example.producr_service.application.port.out.repo.BrandRepositoryPort
 import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
-import com.example.producr_service.application.port.out.repo.SellerProductQueryPort;
+import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.application.port.out.ES.ProductSearchPort;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
@@ -21,6 +21,7 @@ import com.example.producr_service.adapter.client.AuthUserFeignClient;
 import com.example.producr_service.adapter.out.openFeign.AuthUserAdapter;
 import com.example.producr_service.application.service.FileService;
 import com.example.producr_service.application.service.ProductCreationService;
+import com.example.producr_service.application.service.ProductHelperService;
 import com.example.producr_service.application.service.ProductImageUploadService;
 import com.example.producr_service.application.service.ProductService;
 import com.example.producr_service.application.service.CategoryService;
@@ -58,6 +59,12 @@ public class ProductConfig {
                 categoryRepositoryPort,
                 brandRepositoryPort
         );
+    }
+
+    // Đăng ký helper dựng trang sản phẩm từ dữ liệu domain.
+    @Bean
+    ProductHelperService productHelperService() {
+        return new ProductHelperService();
     }
 
     // Đăng ký service xử lý validate, upload và gắn URL ảnh product.
@@ -116,7 +123,9 @@ public class ProductConfig {
         ProductSearchPort productSearchPort,
         OutboxPort outboxPort,
         JsonUtils jsonUtils,
-        SellerProductQueryPort sellerProductQueryPort
+        ProductHelperService productHelperService,
+        ProductRepositoryPort productRepositoryPort,
+        ProductVariantRepoPort productVariantRepoPort
     ) {
         return new ProductService(
                 fileService,
@@ -126,7 +135,9 @@ public class ProductConfig {
                 outboxPort,
                 productSearchPort,
                 jsonUtils,
-                sellerProductQueryPort
+                productHelperService,
+                productRepositoryPort,
+                productVariantRepoPort
         );
     }
 

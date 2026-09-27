@@ -10,8 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
-    // Tải danh mục cùng sản phẩm mà vẫn phân trang theo sản phẩm.
-    @EntityGraph(attributePaths = "category")
+    // Tải tên danh mục và thương hiệu cùng trang sản phẩm.
+    @EntityGraph(attributePaths = {"category", "brand"})
     @Query(
             value = """
           SELECT p
@@ -35,6 +35,7 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
                         WHERE v.product = p AND v.stockQuantity > 0
                     ))
             )
+          AND(:keyword IS NULL OR p.name LIKE %:keyword%)
           ORDER BY p.createdAt DESC, p.id DESC
           """,
             countQuery = """
@@ -59,6 +60,7 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
                         WHERE v.product = p AND v.stockQuantity > 0
                     ))
             )
+            AND(:keyword IS NULL OR p.name LIKE %:keyword%)
           """
     )
     Page<ProductEntity> findSellerProducts(
@@ -67,6 +69,7 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
             @Param("status") String status,
             @Param("active") ProductStatus active,
             @Param("inactive") ProductStatus inactive,
+            @Param("keyword") String keyword,
             Pageable pageable
     );
 

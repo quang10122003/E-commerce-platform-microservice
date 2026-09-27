@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -67,6 +68,8 @@ public class ProductEntity {
     private LocalDateTime updatedAt;
 
     // ON DELETE CASCADE o DB -> cascade = ALL, orphanRemoval = true o JPA
+    // Tải thuộc tính của các sản phẩm trong trang theo lô khi dựng domain.
+    @BatchSize(size = 50)
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AttributeEntity> attributes = new ArrayList<>();
 

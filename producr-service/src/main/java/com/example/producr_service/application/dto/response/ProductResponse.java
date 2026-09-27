@@ -14,7 +14,11 @@ public class ProductResponse {
 
     private Long id;
     private Long categoryId;
+    // Tên danh mục tại thời điểm đọc sản phẩm.
+    private String categoryName;
     private Long brandId;
+    // Tên thương hiệu, để trống khi sản phẩm không gắn thương hiệu.
+    private String brandName;
     private String name;
     private String description;
     private String imageUrl;
@@ -28,7 +32,9 @@ public class ProductResponse {
         ProductResponse response = new ProductResponse();
         response.id = product.getId();
         response.categoryId = product.getCategoryId();
+        response.categoryName = product.getCategoryName();
         response.brandId = product.getBrandId();
+        response.brandName = product.getBrandName();
         response.name = product.getName();
         response.description = product.getDescription();
         response.imageUrl = product.getImageUrl();

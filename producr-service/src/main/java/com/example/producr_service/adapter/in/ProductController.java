@@ -90,8 +90,9 @@ public class ProductController {
 
     // api lấy danh sach sản phẩm  và các biến thể liên của shop có phân trang
     @GetMapping("shop")
-    ResponseEntity<PageResponse<SellerProductItemResponse>> getSellerProductsUseCase(@RequestParam(required = false) Long categoryId, @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size, @RequestParam int page,@RequestParam(required = false) SellerProductFilter.Status status){
-        SellerProductFilter sellerProductFilter = new SellerProductFilter(PageQuery.builder().page(page).size(size).build(),categoryId,status);
+    ResponseEntity<PageResponse<SellerProductItemResponse>> getSellerProductsUseCase(@RequestParam(required = false) Long categoryId, @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size, @RequestParam int page,@RequestParam(required = false) SellerProductFilter.Status status,@RequestParam(required = false) String keyword){
+        SellerProductFilter sellerProductFilter = new SellerProductFilter(
+                PageQuery.builder().page(page).size(size).build(), categoryId, status, keyword);
         return ResponseEntity.ok(getSellerProductsUseCase.getSellerProducts(sellerProductFilter));
     }
 

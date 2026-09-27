@@ -36,12 +36,20 @@ public class ProductCreationService {
     @Transactional
     public Product createProduct(UserInternaInfoRespone userInternaInfoRespone, CreateProductRequest request) {
 
-        // check danh mục bạn brand tồn tại chưa
-        validateCategoryAndBrandExist(request.getCategoryId(), request.getBrandId());
+        // Lấy danh mục và thương hiệu để giữ cả mã lẫn tên trong Product mới.
+        Category category = categoryRepositoryPort.findById(request.getCategoryId())
+                .orElseThrow(() -> new BusinessException(ProductError.CATEGORY_NOT_FOUND));
+        Brand brand = request.getBrandId() == null
+                ? null
+                : brandRepositoryPort.findById(request.getBrandId())
+                        .orElseThrow(() -> new BusinessException(ProductError.BRAND_NOT_FOUND));
 
-
-        Product product = new Product(null,userInternaInfoRespone.userId(), request.getCategoryId(), request.getBrandId(),
-                request.getName(), request.getDescription(), request.getImageUrl());
+        Product product = new Product(
+                null, userInternaInfoRespone.userId(),
+                category.getId(), category.getName(),
+                brand == null ? null : brand.getId(), brand == null ? null : brand.getName(),
+                request.getName(), request.getDescription(), request.getImageUrl()
+        );
 
         //list  TẤT CẢ các valuesOfThisAttribute lại, theo đúng thứ tự attribute
         List<List<AttributeValue>> valuesByIndex = new ArrayList<>();
@@ -112,15 +120,6 @@ public class ProductCreationService {
         return candidate;
     }
 
-    // check danh mục và brad tồn tại hay chưa
-    private void validateCategoryAndBrandExist(Long categoryId, Long brandId) {
-        if (!categoryRepositoryPort.existsById(categoryId)) {
-            throw new BusinessException(ProductError.CATEGORY_NOT_FOUND);
-        }
-        if (brandId != null && !brandRepositoryPort.existsById(brandId)) {
-            throw new BusinessException(ProductError.BRAND_NOT_FOUND);
-        }
-    }
     // đổi (attributeIndex, valueIndex) client gui thanh dung AttributeValue tuong ung, dong thoi validate index hop le
     private AttributeValue resolveAttributeValue(List<List<AttributeValue>> valuesByIndex,
                                                  CreateProductRequest.AttributeSelection sel) {

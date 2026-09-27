@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,8 @@ public class AttributeEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
+    // Tải các giá trị thuộc tính theo lô khi dựng trang sản phẩm.
+    @BatchSize(size = 50)
     @OneToMany(mappedBy = "attribute", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<AttributeValueEntity> values = new ArrayList<>();

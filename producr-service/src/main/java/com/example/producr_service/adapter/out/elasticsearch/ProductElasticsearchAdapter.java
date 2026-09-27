@@ -17,9 +17,6 @@ import com.example.producr_service.application.dto.response.ProductSearchRespons
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.ES.ProductSearchPort;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
-import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
-import com.example.producr_service.domain.model.Brand;
-import com.example.producr_service.domain.model.Category;
 import com.example.producr_service.domain.model.Product;
 import com.example.producr_service.domain.model.ProductStatus;
 import lombok.AccessLevel;
@@ -57,23 +54,14 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort, Prod
 
     ProductSearchCursorCodec productSearchCursorCodec;
 
-    CategoryRepoPort categoryRepoPort;
     BrandRepositoryPort brandRepositoryPort;
     ProductMapper productMapper;
 
-    // hàm tạo or thêm document cho product
+    // Tạo document từ Product đã có tên danh mục và thương hiệu rồi lưu vào Elasticsearch.
     @Override
     public void index(Product product, String location) {
-        String categoryName = findCategoryName(product.getCategoryId());
-        String brandName = findBrandName(product.getBrandId());
-
         ProductSearchDocument document =
-                productSearchDocumentMapper.toDocument(
-                        product,
-                        categoryName,
-                        brandName,
-                        location
-                );
+                productSearchDocumentMapper.toDocument(product, location);
 
         productSearchRepository.save(document);
     }
@@ -262,22 +250,4 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort, Prod
                 .toList();
     }
 
-    // Lấy tên category bắt buộc để làm giàu product search document.
-    private String findCategoryName(Long categoryId) {
-        return categoryRepoPort.findById(categoryId)
-                .map(Category::getName)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Category id=" + categoryId + " khong ton tai khi index product"));
-    }
-
-    // Lấy tên brand khi product có gắn brand.
-    private String findBrandName(Long brandId) {
-        if (brandId == null) {
-            return null;
-        }
-
-        return brandRepositoryPort.findById(brandId)
-                .map(Brand::getName)
-                .orElse(null);
-    }
 }

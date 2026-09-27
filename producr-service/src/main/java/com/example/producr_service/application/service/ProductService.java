@@ -2,7 +2,6 @@ package com.example.producr_service.application.service;
 
 import com.example.common.exception.BusinessException;
 import com.example.common.response.PageResponse;
-import com.example.producr_service.adapter.entity.ProductEntity;
 import com.example.producr_service.application.dto.command.CreateProductCommand;
 import com.example.producr_service.application.dto.outbox.ProductCreatedOutboxPayload;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
@@ -23,7 +22,6 @@ import com.example.producr_service.application.port.out.ES.ProductSearchPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
-import com.example.producr_service.application.port.out.repo.SellerProductQueryPort;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.domain.model.Product;
 import com.example.producr_service.domain.model.ProductVariant;
@@ -50,7 +48,6 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     // Port đọc danh sách product từ Elasticsearch.
     ProductSearchPort productSearchPort;
     JsonUtils jsonUtils;
-    SellerProductQueryPort sellerProductQueryPort;
     ProductHelperService productHelperService;
     ProductRepositoryPort productRepositoryPort;
     ProductVariantRepoPort productVariantRepoPort;
@@ -138,21 +135,23 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
 
     // Lấy danh sách sản phẩm có phân trang cho shop.
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<SellerProductItemResponse> getSellerProducts(SellerProductFilter filter) {
         // Gọi auth-service lấy ID người bán từ phiên đăng nhập.
         Long userId = currentUserPort.getUserInfo().userId();
         PageResponse<Product> pageProduct = productRepositoryPort.findProductsFillter(userId,filter);
 
-        List<Product> listproProducts = pageProduct.items();
+        List<Product> products = pageProduct.items();
         // Lấy ID trang hiện tại để truy vấn thuộc tính phân loại theo lô, tránh N+1.
-        List<Long> productIds = productHelperService.getListIdProduct(listproProducts);
+        List<Long> productIds = productHelperService.getListIdProduct(products);
 
         Map<Long, List<ProductVariant>> variantsByProductId =
-                productVariantRepoPort.findByProduct_IdIn(productIds);
+                productIds.isEmpty()
+                        ? Map.of()
+                        : productVariantRepoPort.findByProduct_IdIn(productIds);
 
-        return sellerProductQueryPort.findProducts(userId, filter);
+        return productHelperService.buildSellerProductPage(pageProduct, variantsByProductId);
     }
 
-    private getProductID
 
 }

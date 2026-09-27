@@ -3,7 +3,6 @@ import com.example.producr_service.adapter.DTO.documentElasticsearch.ProductSear
 import com.example.producr_service.adapter.entity.*;
 import com.example.common.response.PageResponse;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
-import com.example.producr_service.application.dto.response.SellerProductItemResponse;
 import com.example.producr_service.domain.model.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -13,17 +12,14 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
 
 @Component
 @FieldDefaults(makeFinal = true,level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
 public class ProductMapper {
-    ProductVariantMapper productVariantMapper;
 
     public ProductEntity toEntity(Product product, CategoryEntity category, BrandEntity brand) {
         ProductEntity productEntity = ProductEntity.builder()
@@ -91,11 +87,23 @@ public class ProductMapper {
         return productEntity;
     }
 
-    /** ProductEntity (da co du id sau khi luu/doc tu DB) -> Product (domain). */
+    // Chuyển entity thành Product và lấy tên danh mục, thương hiệu từ quan hệ đã lưu.
     public Product toDomain(ProductEntity productEntity) {
+        return toDomain(productEntity, true);
+    }
+
+    // Tải thuộc tính của sản phẩm nhưng để phân loại được truy vấn theo lô riêng.
+    private Product toSellerDomain(ProductEntity productEntity) {
+        return toDomain(productEntity, false);
+    }
+
+    // Chuyển entity sang domain, tùy luồng có cần tải phân loại trực tiếp hay không.
+    private Product toDomain(ProductEntity productEntity, boolean includeVariants) {
         Product product = new Product(
-                productEntity.getId(), productEntity.getUserId(),productEntity.getCategory().getId(),
+                productEntity.getId(), productEntity.getUserId(),
+                productEntity.getCategory().getId(), productEntity.getCategory().getName(),
                 productEntity.getBrand() != null ? productEntity.getBrand().getId() : null,
+                productEntity.getBrand() != null ? productEntity.getBrand().getName() : null,
                 productEntity.getName(), productEntity.getDescription(), productEntity.getImageUrl(),
                 productEntity.getCreatedAt(), productEntity.getTotalSold()
         );
@@ -114,6 +122,10 @@ public class ProductMapper {
                 valueMap.put(valueEntity, value);
             }
             product.addAttribute(attribute);
+        }
+
+        if (!includeVariants) {
+            return product;
         }
 
         for (ProductVariantEntity variantEntity : productEntity.getVariants()) {
@@ -137,41 +149,13 @@ public class ProductMapper {
     // Chuyển trang entity sang trang domain và giữ nguyên metadata phân trang.
     public PageResponse<Product> toDomainPage(Page<ProductEntity> productPage) {
         return new PageResponse<>(
-                productPage.getContent().stream().map(this::toDomain).toList(),
+                productPage.getContent().stream().map(this::toSellerDomain).toList(),
                 productPage.getNumber() + 1,
                 productPage.getSize(),
                 productPage.getTotalElements(),
                 productPage.getTotalPages()
         );
     }
-
-    // map product entity  và ProductVariantEntity thành repone DTO
-    public SellerProductItemResponse toSellerItem(
-            ProductEntity product,
-            List<ProductVariantEntity> variants
-    ) {
-        // Sắp xếp phân loại theo ID để API luôn trả về cùng thứ tự.
-        List<SellerProductItemResponse.Variant> variantResponses = variants.stream()
-                .sorted(Comparator.comparing(ProductVariantEntity::getId))
-                .map(productVariantMapper::toSellerVariant)
-                .toList();
-
-        // Hết hàng được ưu tiên cho cả sản phẩm đang bán và đang ẩn.
-        boolean inStock = variants.stream().anyMatch(variant -> variant.getStockQuantity() > 0);
-        SellerProductItemResponse.DisplayStatus displayStatus = !inStock
-                ? SellerProductItemResponse.DisplayStatus.OUT_OF_STOCK
-                : product.getStatus() == ProductStatus.INACTIVE
-                        ? SellerProductItemResponse.DisplayStatus.INACTIVE
-                        : SellerProductItemResponse.DisplayStatus.ACTIVE;
-
-        return new SellerProductItemResponse(
-                product.getId(), product.getName(), product.getImageUrl(), product.getCreatedAt(),
-                product.getCategory().getId(), product.getCategory().getName(), displayStatus, variantResponses
-        );
-    }
-
-
-
 
     // Chuyển Elasticsearch document thành ProductSearchResponse cho API.
     public ProductSearchResponse toResponse(ProductSearchDocument document) {

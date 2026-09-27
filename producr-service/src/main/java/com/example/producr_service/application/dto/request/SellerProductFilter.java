@@ -5,7 +5,7 @@ import com.example.common.response.PageQuery;
 public record SellerProductFilter(PageQuery pageQuery,
                                   Long categoryId,
                                   Status status,
-                                  String keywork) {
+                                  String keyword) {
 
     // Xác định nhóm sản phẩm cần lọc trên màn quản lý.
     public enum Status {

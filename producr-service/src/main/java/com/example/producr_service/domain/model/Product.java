@@ -28,7 +28,11 @@ public class Product {
     private final Long id;
     private final Long userId;
     private Long categoryId;
+    // Lưu tên danh mục tương ứng với categoryId để phục vụ các luồng đọc sản phẩm.
+    private String categoryName;
     private Long brandId; // co the null - san pham chua ro hang
+    // Lưu tên thương hiệu tương ứng với brandId, có thể null.
+    private String brandName;
     private String name;
     private String description;
     private String imageUrl;
@@ -40,19 +44,24 @@ public class Product {
     private final List<ProductAttribute> attributes = new ArrayList<>();
     private final List<ProductVariant> variants = new ArrayList<>();
 
-    public Product(Long id,  Long userId, Long categoryId, Long brandId, String name,
+    // Tạo sản phẩm mới với mã và tên danh mục, thương hiệu.
+    public Product(Long id, Long userId, Long categoryId, String categoryName,
+                   Long brandId, String brandName, String name,
                    String description, String imageUrl) {
-        this(id, userId, categoryId, brandId, name, description, imageUrl, null);
+        this(id, userId, categoryId, categoryName, brandId, brandName, name, description, imageUrl, null);
     }
 
     // Khởi tạo aggregate từ dữ liệu persistence, bao gồm thời điểm tạo product.
-    public Product(Long id, Long userId, Long categoryId, Long brandId, String name,
+    public Product(Long id, Long userId, Long categoryId, String categoryName,
+                   Long brandId, String brandName, String name,
                    String description, String imageUrl, LocalDateTime createdAt) {
-        this(id, userId, categoryId, brandId, name, description, imageUrl, createdAt, 0L);
+        this(id, userId, categoryId, categoryName, brandId, brandName,
+                name, description, imageUrl, createdAt, 0L);
     }
 
     // Khởi tạo aggregate từ dữ liệu persistence, bao gồm tổng số lượng đã bán.
-    public Product(Long id, Long userId, Long categoryId, Long brandId, String name,
+    public Product(Long id, Long userId, Long categoryId, String categoryName,
+                   Long brandId, String brandName, String name,
                    String description, String imageUrl, LocalDateTime createdAt, long totalSold) {
         if (userId == null) {
             throw new BusinessException(DomainProductError.PRODUCT_USER_REQUIRED);
@@ -60,6 +69,15 @@ public class Product {
 
         if (categoryId == null) {
             throw new BusinessException(DomainProductError.PRODUCT_CATEGORY_REQUIRED);
+        }
+        if (categoryName == null || categoryName.isBlank()) {
+            throw new BusinessException(DomainProductError.CATEGORY_NAME_REQUIRED);
+        }
+        if (brandId != null && (brandName == null || brandName.isBlank())) {
+            throw new BusinessException(DomainProductError.BRAND_NAME_REQUIRED);
+        }
+        if (brandId == null && brandName != null) {
+            throw new IllegalArgumentException("Tên thương hiệu cần có mã thương hiệu");
         }
         if (name == null || name.isBlank()) {
             throw new BusinessException(DomainProductError.PRODUCT_NAME_REQUIRED);
@@ -72,7 +90,9 @@ public class Product {
         this.id = id;
         this.userId = userId;
         this.categoryId = categoryId;
+        this.categoryName = categoryName;
         this.brandId = brandId;
+        this.brandName = brandName;
         this.name = name;
         this.description = description;
         this.imageUrl = imageUrl;
@@ -126,15 +146,28 @@ public class Product {
         this.imageUrl = imageUrl;
     }
 
-    public void changeBrand(Long brandId) {
+    // Giữ mã và tên thương hiệu đồng bộ khi thay đổi thương hiệu.
+    public void changeBrand(Long brandId, String brandName) {
+        if (brandId != null && (brandName == null || brandName.isBlank())) {
+            throw new BusinessException(DomainProductError.BRAND_NAME_REQUIRED);
+        }
+        if (brandId == null && brandName != null) {
+            throw new IllegalArgumentException("Tên thương hiệu cần có mã thương hiệu");
+        }
         this.brandId = brandId;
+        this.brandName = brandName;
     }
 
-    public void moveToCategory(Long categoryId) {
+    // Giữ mã và tên danh mục đồng bộ khi chuyển sản phẩm sang danh mục khác.
+    public void moveToCategory(Long categoryId, String categoryName) {
         if (categoryId == null) {
             throw new BusinessException(DomainProductError.PRODUCT_CATEGORY_REQUIRED);
         }
+        if (categoryName == null || categoryName.isBlank()) {
+            throw new BusinessException(DomainProductError.CATEGORY_NAME_REQUIRED);
+        }
         this.categoryId = categoryId;
+        this.categoryName = categoryName;
     }
 
     // tìm product_variant phuf hợp với attributeValues
