@@ -31,14 +31,14 @@ public class JwtTokenVerificationAdapter implements TokenVerificationPort {
 
             // Chỉ access token mới được phép đi tới các API phía sau Gateway.
             if (!"access".equals(tokenType) || userId == null) {
-                throw new BusinessException(AuthorizationError.BEARER_TOKEN_INVALID);
+                throw new BusinessException(AuthorizationError.UNAUTHENTICATED);
             }
 
             return new TokenIdentity(String.valueOf(userId));
         } catch (BusinessException ex) {
             throw ex;
         } catch (JwtException | IllegalArgumentException ex) {
-            throw new BusinessException(AuthorizationError.BEARER_TOKEN_INVALID, ex);
+            throw new BusinessException(AuthorizationError.UNAUTHENTICATED, ex);
         }
     }
 }

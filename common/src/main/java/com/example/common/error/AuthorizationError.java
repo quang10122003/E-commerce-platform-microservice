@@ -1,13 +1,12 @@
 package com.example.common.error;
 
-// Khai báo các lỗi dùng chung khi kiểm tra Authorization header.
+// Khai báo các lỗi xác thực và phân quyền dùng chung.
 public enum AuthorizationError implements ErrorCode {
-    AUTHORIZATION_HEADER_REQUIRED("AUTHORIZATION_HEADER_REQUIRED", "Authorization header is required", 401),
-    AUTHORIZATION_HEADER_INVALID("AUTHORIZATION_HEADER_INVALID", "Authorization header must use Bearer scheme", 401),
-    BEARER_TOKEN_INVALID("BEARER_TOKEN_INVALID", "Bearer token is invalid", 401),
+    UNAUTHENTICATED("UNAUTHENTICATED", "Authentication is required to access this resource", 401),
+    ACCESS_DENIED("ACCESS_DENIED", "You do not have permission to access this resource", 403),
     USER_LOCKED("USER_LOCKED", "User account is locked", 403),
     TOKEN_BLACKLISTED("TOKEN_BLACKLISTED", "Token has been revoked", 403),
-    ACCESS_CONTROL_UNAVAILABLE("ACCESS_CONTROL_UNAVAILABLE", "Access control is temporarily unavailable", 503);
+    ACCESS_CONTROL_UNAVAILABLE("ACCESS_CONTROL_UNAVAILABLE", "Access control is temporarily unavailable at the API Gateway.", 503);
 
     private final String code;
     private final String message;

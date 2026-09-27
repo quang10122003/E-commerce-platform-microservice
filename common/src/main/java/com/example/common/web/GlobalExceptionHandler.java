@@ -50,11 +50,11 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(message, errorDto));
     }
 
-//    // Trả lỗi chung để không lộ chi tiết stack trace ra response.
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception ex) {
-//        ApiErrorDto errorDto = new ApiErrorDto("INTERNAL_ERROR", "Unexpected error occurred");
-//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                .body(ApiResponse.error("Unexpected error occurred", errorDto));
-//    }
+    // Trả lỗi chung để không lộ chi tiết stack trace ra response cho các lỗi 500
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception ex) {
+        ApiErrorDto errorDto = new ApiErrorDto("INTERNAL_ERROR", "Unexpected error occurred");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("An unexpected error occurred; please check the server console.", errorDto));
+    }
 }

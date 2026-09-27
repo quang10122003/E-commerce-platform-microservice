@@ -44,8 +44,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             Claims claims = jwtVerifier.extractAllClaims(token);
 
+            // Chỉ access token được dùng để xác thực request API.
+            if (!"access".equals(claims.get("tokenType", String.class))) {
+                SecurityContextHolder.clearContext();
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             String email = claims.getSubject();
-            // Chặn tài khoản đã bị khóa ngay từ JWT
+            // Đọc vai trò từ token để tạo quyền truy cập trong SecurityContext.
             List<String> roles = claims.get("roles", List.class);
 
             List<GrantedAuthority> authorities = roles == null

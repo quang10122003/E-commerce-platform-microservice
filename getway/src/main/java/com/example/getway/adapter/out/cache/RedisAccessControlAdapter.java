@@ -41,7 +41,7 @@ public class RedisAccessControlAdapter implements AccessControlCachePort {
         }
     }
 
-    // Chuyển lỗi Redis thành lỗi nghiệp vụ để Gateway trả response nhất quán.
+    // Chuyển lỗi Redis thành lỗi nghiệp vụ để Gateway trả response báo kiểm soát truy cập tạm thời không khả dụng tầng getway
     private RuntimeException accessControlUnavailable(DataAccessException ex) {
         log.error("Không thể kiểm tra trạng thái truy cập trên Redis", ex);
         return new com.example.common.exception.BusinessException(
