@@ -18,3 +18,4 @@ AGENTS.md
 ### VS Code ###
 .vscode/
 .idea/
+.playwright-mcp/
