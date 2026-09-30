@@ -7,9 +7,7 @@ import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
-import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.domain.model.*;
-import com.example.producr_service.domain.service.SkuGenerator;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -19,7 +17,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -27,11 +24,8 @@ import java.util.stream.Collectors;
 // Xử lý logic dựng, kiểm tra và lưu aggregate khi tạo product.
 public class ProductCreationService {
 
-    private static final int MAX_SKU_RETRY = 10;
-    private static final int RANDOM_SUFFIX_LENGTH = 4;
-
     ProductRepositoryPort productRepositoryPort;
-    ProductVariantRepoPort productVariantRepoPort;
+    ProductHelper productHelper;
     CategoryRepoPort categoryRepositoryPort;
     BrandRepositoryPort brandRepositoryPort;
     // Tạo và lưu Product từ request đã được backend gắn metadata ảnh.
@@ -83,8 +77,9 @@ public class ProductCreationService {
             List<AttributeValue> selectedValues = resolveSelectedAttributeValues(valuesByIndex, vReq);
             validateUniqueAttributeCombination(selectedCombinations, selectedValues);
 
-            String sku = generateUniqueSku(request.getName(), selectedValues, skusUsedInThisRequest);
-            skusUsedInThisRequest.add(sku);
+            String sku = productHelper.generateUniqueSku(request.getName(),
+                    selectedValues.stream().map(AttributeValue::getValue).toList(),
+                    null, skusUsedInThisRequest);
 
             ProductVariant variant = new ProductVariant(
                     null, sku, Money.of(vReq.getPrice()), vReq.getStockQuantity());
@@ -112,27 +107,6 @@ public class ProductCreationService {
                 || objectPath == null || objectPath.isBlank()) {
             throw new BusinessException(ProductError.INVALID_IMAGE_FILE);
         }
-    }
-
-    private String generateUniqueSku(String productName, List<AttributeValue> selectedValues,
-                                     Set<String> skusUsedInThisRequest) {
-        List<String> valueTexts = selectedValues.stream()
-                .map(AttributeValue::getValue)
-                .collect(Collectors.toList());
-
-        String baseSku = SkuGenerator.generateBase(productName, valueTexts);
-        String candidate = baseSku;
-
-        int attempt = 0;
-        while (skusUsedInThisRequest.contains(candidate) || productVariantRepoPort.existsBySku(candidate)) {
-            attempt++;
-            if (attempt > MAX_SKU_RETRY) {
-                throw new IllegalStateException(
-                        "Khong the sinh SKU duy nhat cho '" + baseSku + "' sau " + MAX_SKU_RETRY + " lan thu");
-            }
-            candidate = baseSku + "-" + SkuGenerator.randomSuffix(RANDOM_SUFFIX_LENGTH);
-        }
-        return candidate;
     }
 
     // đổi (attributeIndex, valueIndex) client gui thanh dung AttributeValue tuong ung, dong thoi validate index hop le

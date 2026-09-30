@@ -4,16 +4,20 @@ import com.example.common.response.PageQuery;
 import com.example.common.response.PageResponse;
 import com.example.producr_service.adapter.mapper.ProductMultipartCommandMapper;
 import com.example.producr_service.adapter.DTO.request.CreateProductRequest;
+import com.example.producr_service.adapter.DTO.request.UpdateProductRequest;
 import com.example.producr_service.adapter.DTO.request.VariantImageMeta;
 import com.example.producr_service.application.dto.request.*;
 import com.example.producr_service.application.dto.response.ProductResponse;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
 import com.example.producr_service.application.dto.response.SellerProductItemResponse;
+import com.example.producr_service.application.dto.response.ShopProductDetailResponse;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductvariantUseCase;
 import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
 import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
+import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
+import com.example.producr_service.application.port.in.UpdateProductUseCase;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.DecimalMin;
@@ -43,6 +47,8 @@ public class ProductController {
     GetSellerProductsUseCase getSellerProductsUseCase;
     DeleteProductUseCase deleteProductUseCase;
     DeleteProductvariantUseCase deleteProductvariantUseCase;
+    GetShopProductDetailUseCase getShopProductDetailUseCase;
+    UpdateProductUseCase updateProductUseCase;
 
 
     //  api tạo sản phẩm của shop
@@ -62,6 +68,27 @@ public class ProductController {
                 )
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // Lấy đủ thuộc tính, phân loại và ảnh để người bán mở form chỉnh sửa.
+    @GetMapping("/shop/{productId}")
+    public ResponseEntity<ShopProductDetailResponse> getShopProductDetail(
+            @PathVariable Long productId) {
+        return ResponseEntity.ok(getShopProductDetailUseCase.getShopProductDetail(productId));
+    }
+
+    // Nhận dữ liệu form cùng ảnh mới để cập nhật sản phẩm trong một lần lưu.
+    @PutMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ShopProductDetailResponse> updateProduct(
+            @PathVariable Long productId,
+            @RequestPart("request") @Valid UpdateProductRequest request,
+            @RequestPart(value = "productImage", required = false) MultipartFile productImage,
+            @RequestPart(value = "variantImages", required = false) List<MultipartFile> variantImages,
+            @RequestPart(value = "variantImageMeta", required = false) @Valid List<VariantImageMeta> variantImageMeta
+    ) throws IOException {
+        return ResponseEntity.ok(updateProductUseCase.updateProduct(productId,
+                productMultipartCommandMapper.toUpdateCommand(
+                        request, productImage, variantImages, variantImageMeta)));
     }
 
 

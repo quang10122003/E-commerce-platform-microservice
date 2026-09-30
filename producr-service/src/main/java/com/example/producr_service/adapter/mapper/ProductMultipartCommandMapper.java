@@ -2,8 +2,11 @@ package com.example.producr_service.adapter.mapper;
 
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.application.dto.command.CreateProductCommand;
+import com.example.producr_service.application.dto.command.UpdateProductCommand;
 import com.example.producr_service.adapter.DTO.request.CreateProductRequest;
+import com.example.producr_service.adapter.DTO.request.UpdateProductRequest;
 import com.example.producr_service.application.dto.request.CreateProductData;
+import com.example.producr_service.application.dto.request.UpdateProductData;
 import com.example.producr_service.application.dto.command.UploadFileCommand;
 import com.example.producr_service.adapter.DTO.request.VariantImageMeta;
 import com.example.producr_service.application.dto.command.VariantImageUploadCommand;
@@ -31,6 +34,44 @@ public class ProductMultipartCommandMapper {
                 toProductImageCommand(productImage),
                 toVariantImageCommands(variantImages, variantImageMeta)
         );
+    }
+
+    // Giữ vị trí từng ảnh mới khi chuyển form multipart sang dữ liệu xử lý nội bộ.
+    public UpdateProductCommand toUpdateCommand(
+            UpdateProductRequest request,
+            MultipartFile productImage,
+            List<MultipartFile> variantImages,
+            List<VariantImageMeta> variantImageMeta
+    ) throws IOException {
+        for (UpdateProductRequest.Variant variant : request.getVariants()) {
+            if (variant.getSku() != null) {
+                throw new BusinessException(ProductError.INVALID_VARIANT_ATTRIBUTES,
+                        "Khong duoc gui sku khi cap nhat san pham");
+            }
+        }
+        UpdateProductData data = new UpdateProductData(
+                request.getCategoryId(), request.getBrandId(), request.getName(), request.getDescription(),
+                request.getAttributes().stream()
+                        .map(attribute -> new UpdateProductData.Attribute(attribute.getId(), attribute.getName(),
+                                attribute.getValues().stream()
+                                        .map(value -> new UpdateProductData.Value(value.getId(), value.getValue()))
+                                        .toList()))
+                        .toList(),
+                request.getVariants().stream()
+                        .map(variant -> new UpdateProductData.Variant(variant.getId(), variant.getPrice(),
+                                variant.getStockQuantity(),
+                                variant.getAttributeSelections().stream()
+                                        .map(selection -> new UpdateProductData.Selection(
+                                                selection.getAttributeIndex(), selection.getValueIndex()))
+                                        .toList(),
+                                variant.getImages().stream()
+                                        .map(image -> new UpdateProductData.Image(image.getId(), image.isPrimary()))
+                                        .toList()))
+                        .toList()
+        );
+        return new UpdateProductCommand(data,
+                productImage == null || productImage.isEmpty() ? null : toUploadFileCommand(productImage),
+                toVariantImageCommands(variantImages, variantImageMeta));
     }
 
     // Chuyển dữ liệu HTTP sang DTO nội bộ, không đưa validation vào application.

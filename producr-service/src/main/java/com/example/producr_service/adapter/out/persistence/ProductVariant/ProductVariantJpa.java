@@ -18,6 +18,7 @@ public interface ProductVariantJpa
         extends JpaRepository<ProductVariantEntity, Long> {
 
     boolean existsBySku(String sku);
+    boolean existsBySkuAndIdNot(String sku, Long variantId);
 
     // Tải phân loại và thuộc tính của các sản phẩm trong một trang.
     @EntityGraph(attributePaths = {"attributeValues", "attributeValues.attribute"})

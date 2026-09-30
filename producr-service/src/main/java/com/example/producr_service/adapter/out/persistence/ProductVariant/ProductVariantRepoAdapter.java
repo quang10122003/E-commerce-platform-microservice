@@ -26,6 +26,12 @@ public class ProductVariantRepoAdapter implements ProductVariantRepoPort {
         return productVariantJpa.existsBySku(sku);
     }
 
+    // Kiểm tra trùng SKU nhưng bỏ qua chính bản ghi đang được cập nhật.
+    @Override
+    public boolean existsBySkuAndIdNot(String sku, Long variantId) {
+        return productVariantJpa.existsBySkuAndIdNot(sku, variantId);
+    }
+
     // Gom các phân loại theo sản phẩm để dựng trang người bán.
     @Override
     public Map<Long, List<ProductVariant>> findByProduct_IdIn(Collection<Long> productIds) {

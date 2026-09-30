@@ -1,8 +1,11 @@
 package com.example.producr_service.infrastructure.config;
 
 import com.example.producr_service.application.port.out.storage.FileStoragePort;
+import com.example.producr_service.application.port.out.ShopProductDetailMapperPort;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
+import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
+import com.example.producr_service.application.port.in.UpdateProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductvariantUseCase;
 import com.example.producr_service.application.port.in.GetCategoriesUseCase;
@@ -31,6 +34,7 @@ import com.example.producr_service.application.service.ShopProductPageAssembler;
 import com.example.producr_service.application.service.ProductOutboxStatusService;
 import com.example.producr_service.application.service.ProductImageUploadService;
 import com.example.producr_service.application.service.ProductService;
+import com.example.producr_service.application.service.ProductUpdateService;
 import com.example.producr_service.application.service.ProductHelper;
 import com.example.producr_service.application.service.CategoryService;
 import com.example.producr_service.application.service.BrandService;
@@ -40,6 +44,7 @@ import com.example.producr_service.application.strategy.upload.ProductVariantIma
 import com.example.producr_service.application.strategy.upload.IUploadStrategy;
 import com.example.producr_service.application.strategy.outbox.OutboxEventHandler;
 import com.example.producr_service.application.strategy.outbox.ProductCreatedOutboxHandler;
+import com.example.producr_service.application.strategy.outbox.ProductUpdatedOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.ProductImagesDeleteOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.ProductvariantImagesDeleteOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.ProductDeletedOutboxHandler;
@@ -63,13 +68,13 @@ public class ProductConfig {
     @Bean
     ProductCreationService productCreationService(
             ProductRepositoryPort productRepositoryPort,
-            ProductVariantRepoPort productVariantRepoPort,
+            ProductHelper productHelper,
             CategoryRepoPort categoryRepositoryPort,
             BrandRepositoryPort brandRepositoryPort
     ) {
         return new ProductCreationService(
                 productRepositoryPort,
-                productVariantRepoPort,
+                productHelper,
                 categoryRepositoryPort,
                 brandRepositoryPort
         );
@@ -83,8 +88,9 @@ public class ProductConfig {
 
     // Đăng ký helper hỗ trợ các xử lý của ProductService.
     @Bean
-    ProductHelper productServiceHelper(ProductRepositoryPort productRepositoryPort) {
-        return new ProductHelper(productRepositoryPort);
+    ProductHelper productServiceHelper(ProductRepositoryPort productRepositoryPort,
+                                       ProductVariantRepoPort productVariantRepoPort) {
+        return new ProductHelper(productRepositoryPort, productVariantRepoPort);
     }
 
     // Cung cấp service quản lý transaction khi job cập nhật trạng thái outbox.
@@ -132,6 +138,38 @@ public class ProductConfig {
                 productSearchIndexPort,
                 mapJsonToObjPort
         );
+    }
+
+    // Đăng ký handler đọc lại sản phẩm đã lưu để cập nhật chỉ mục tìm kiếm.
+    @Bean
+    OutboxEventHandler productUpdatedOutboxHandler(
+            ProductRepositoryPort productRepositoryPort,
+            ProductSearchIndexPort productSearchIndexPort,
+            MapJsonToObjPort mapJsonToObjPort
+    ) {
+        return new ProductUpdatedOutboxHandler(
+                productRepositoryPort, productSearchIndexPort, mapJsonToObjPort);
+    }
+
+    // Truyền các port đọc, lưu, ảnh và outbox cho luồng chỉnh sửa sản phẩm.
+    @Bean
+    ProductUpdateService productUpdateService(
+            ProductRepositoryPort productRepositoryPort,
+            ProductVariantRepoPort productVariantRepoPort,
+            CategoryRepoPort categoryRepoPort,
+            BrandRepositoryPort brandRepositoryPort,
+            CurrentUserPort currentUserPort,
+            ProductHelper productHelper,
+            FileUploader fileUploader,
+            ProductImageRollbackPort productImageRollbackPort,
+            OutboxPort outboxPort,
+            JsonUtils jsonUtils,
+            ShopProductDetailMapperPort shopProductDetailMapperPort
+    ) {
+        return new ProductUpdateService(productRepositoryPort, productVariantRepoPort,
+                categoryRepoPort, brandRepositoryPort, currentUserPort, productHelper,
+                fileUploader, productImageRollbackPort, outboxPort, jsonUtils,
+                shopProductDetailMapperPort);
     }
 
     // Đăng ký handler dọn ảnh sản phẩm sau khi event xóa được xử lý.
@@ -194,7 +232,8 @@ public class ProductConfig {
         JsonUtils jsonUtils,
         ShopProductPageAssembler sellerProductPageAssembler,
         ProductRepositoryPort productRepositoryPort,
-        ProductVariantRepoPort productVariantRepoPort
+        ProductVariantRepoPort productVariantRepoPort,
+        ProductUpdateService productUpdateService
     ) {
         return new ProductService(
                 productImageRollbackPort,
@@ -207,13 +246,26 @@ public class ProductConfig {
                 jsonUtils,
                 sellerProductPageAssembler,
                 productRepositoryPort,
-                productVariantRepoPort
+                productVariantRepoPort,
+                productUpdateService
         );
     }
 
     // Cung cấp use case tạo product cho controller qua input port.
     @Bean
     CreateProductUseCase createProductUseCase(ProductService productService) {
+        return productService;
+    }
+
+    // Cho controller đọc dữ liệu sản phẩm qua ProductService, không gọi lớp xử lý phụ.
+    @Bean
+    GetShopProductDetailUseCase getShopProductDetailUseCase(ProductService productService) {
+        return productService;
+    }
+
+    // Cho controller cập nhật sản phẩm qua ProductService để giữ transaction chung.
+    @Bean
+    UpdateProductUseCase updateProductUseCase(ProductService productService) {
         return productService;
     }
 

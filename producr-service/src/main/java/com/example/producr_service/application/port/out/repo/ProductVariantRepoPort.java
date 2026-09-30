@@ -10,6 +10,7 @@ import java.util.Optional;
 
 public interface ProductVariantRepoPort {
     boolean existsBySku(String sku);
+    boolean existsBySkuAndIdNot(String sku, Long variantId);
 
     Map<Long, List<ProductVariant>> findByProduct_IdIn(Collection<Long> productIds);
 

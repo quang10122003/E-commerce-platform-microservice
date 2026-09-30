@@ -38,6 +38,16 @@ public enum ProductError implements ErrorCode  {
             "Variant attributes are invalid",
             400
     ),
+    INVALID_PRODUCT_UPDATE(
+            "INVALID_PRODUCT_UPDATE",
+            "Product update is invalid",
+            400
+    ),
+    ATTRIBUTE_IN_USE(
+            "ATTRIBUTE_IN_USE",
+            "Attribute is used by a variant",
+            409
+    ),
     DUPLICATE_VARIANT_ATTRIBUTE_COMBINATION(
             "DUPLICATE_VARIANT_ATTRIBUTE_COMBINATION",
             "Variant attribute combination already exists",

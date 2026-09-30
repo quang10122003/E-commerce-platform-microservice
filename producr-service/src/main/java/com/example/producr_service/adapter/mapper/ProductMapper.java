@@ -3,6 +3,8 @@ import com.example.producr_service.adapter.DTO.documentElasticsearch.ProductSear
 import com.example.producr_service.adapter.entity.*;
 import com.example.common.response.PageResponse;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
+import com.example.producr_service.application.dto.response.ShopProductDetailResponse;
+import com.example.producr_service.application.port.out.ShopProductDetailMapperPort;
 import com.example.producr_service.application.port.out.storage.StorageBucket;
 import com.example.producr_service.domain.model.*;
 import lombok.AccessLevel;
@@ -16,11 +18,139 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 @Component
 @FieldDefaults(makeFinal = true,level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
-public class ProductMapper {
+public class ProductMapper implements ShopProductDetailMapperPort {
+
+    // Trả ID, SKU và ảnh cần cho form chỉnh sửa nhưng không lộ đường dẫn storage.
+    @Override
+    public ShopProductDetailResponse toShopProductDetailResponse(Product product) {
+        List<ProductAttribute> sourceAttributes = product.getAttributes();
+        List<ShopProductDetailResponse.Attribute> attributes = sourceAttributes.stream()
+                .map(attribute -> new ShopProductDetailResponse.Attribute(
+                        attribute.getId(), attribute.getName(),
+                        attribute.getValues().stream()
+                                .map(value -> new ShopProductDetailResponse.Value(
+                                        value.getId(), value.getValue()))
+                                .toList()))
+                .toList();
+        List<ShopProductDetailResponse.Variant> variants = product.getVariants().stream()
+                .map(variant -> toShopVariantResponse(variant, sourceAttributes))
+                .toList();
+        return new ShopProductDetailResponse(product.getId(), product.getCategoryId(),
+                product.getBrandId(), product.getName(), product.getDescription(),
+                product.getImageUrl(), attributes, variants);
+    }
+
+    // Tìm vị trí từng giá trị đã chọn để frontend gửi lại đúng tổ hợp phân loại.
+    private ShopProductDetailResponse.Variant toShopVariantResponse(
+            ProductVariant variant, List<ProductAttribute> attributes) {
+        List<ShopProductDetailResponse.Selection> selections = new ArrayList<>();
+        for (int attributeIndex = 0; attributeIndex < attributes.size(); attributeIndex++) {
+            List<AttributeValue> values = attributes.get(attributeIndex).getValues();
+            for (int valueIndex = 0; valueIndex < values.size(); valueIndex++) {
+                if (variant.getAttributeValues().contains(values.get(valueIndex))) {
+                    selections.add(new ShopProductDetailResponse.Selection(attributeIndex, valueIndex));
+                }
+            }
+        }
+        return new ShopProductDetailResponse.Variant(
+                variant.getId(), variant.getSku(), variant.getPrice().getAmount(),
+                variant.getStockQuantity(), selections,
+                variant.getImages().stream()
+                        .map(image -> new ShopProductDetailResponse.Image(
+                                image.getId(), image.getImageUrl(), image.isPrimary()))
+                        .toList());
+    }
+
+    // Cập nhật entity đang quản lý để giữ ID phân loại, thuộc tính và ảnh còn dùng.
+    public void updateEntity(Product product, ProductEntity entity,
+                             CategoryEntity category, BrandEntity brand) {
+        entity.setCategory(category);
+        entity.setBrand(brand);
+        entity.setName(product.getName());
+        entity.setDescription(product.getDescription());
+        entity.setImageUrl(product.getImageUrl());
+        entity.setObjectPath(product.getObjectPath());
+        entity.setUpdatedAt(LocalDateTime.now());
+
+        Map<Long, AttributeEntity> existingAttributes = new HashMap<>();
+        for (AttributeEntity attribute : entity.getAttributes()) existingAttributes.put(attribute.getId(), attribute);
+        Set<Long> retainedAttributeIds = new HashSet<>();
+        Map<AttributeValue, AttributeValueEntity> values = new IdentityHashMap<>();
+        for (ProductAttribute source : product.getAttributes()) {
+            AttributeEntity attribute = source.getId() == null ? null : existingAttributes.get(source.getId());
+            if (attribute == null) {
+                attribute = AttributeEntity.builder().product(entity).name(source.getName())
+                        .values(new ArrayList<>()).build();
+                entity.addAttribute(attribute);
+            } else {
+                retainedAttributeIds.add(attribute.getId());
+                attribute.setName(source.getName());
+            }
+            Map<Long, AttributeValueEntity> existingValues = new HashMap<>();
+            for (AttributeValueEntity value : attribute.getValues()) existingValues.put(value.getId(), value);
+            Set<Long> retainedValueIds = new HashSet<>();
+            for (AttributeValue sourceValue : source.getValues()) {
+                AttributeValueEntity value = sourceValue.getId() == null
+                        ? null : existingValues.get(sourceValue.getId());
+                if (value == null) {
+                    value = new AttributeValueEntity(null, attribute, sourceValue.getValue());
+                    attribute.addValue(value);
+                } else {
+                    retainedValueIds.add(value.getId());
+                    value.setValue(sourceValue.getValue());
+                }
+                values.put(sourceValue, value);
+            }
+            attribute.getValues().removeIf(value -> value.getId() != null
+                    && !retainedValueIds.contains(value.getId()));
+        }
+
+        Map<Long, ProductVariantEntity> existingVariants = new HashMap<>();
+        for (ProductVariantEntity variant : entity.getVariants()) existingVariants.put(variant.getId(), variant);
+        for (ProductVariant source : product.getVariants()) {
+            ProductVariantEntity variant = source.getId() == null ? null : existingVariants.get(source.getId());
+            if (variant == null) {
+                variant = ProductVariantEntity.builder().product(entity).sku(source.getSku())
+                        .createdAt(LocalDateTime.now()).images(new ArrayList<>())
+                        .attributeValues(new HashSet<>()).build();
+                entity.addVariant(variant);
+            }
+            variant.setSku(source.getSku());
+            variant.setPrice(source.getPrice().getAmount());
+            variant.setStockQuantity(source.getStockQuantity());
+            variant.getAttributeValues().clear();
+            for (AttributeValue sourceValue : source.getAttributeValues()) {
+                variant.linkAttributeValue(values.get(sourceValue));
+            }
+            Map<Long, VariantImageEntity> existingImages = new HashMap<>();
+            for (VariantImageEntity image : variant.getImages()) existingImages.put(image.getId(), image);
+            Set<Long> retainedImageIds = new HashSet<>();
+            for (VariantImage sourceImage : source.getImages()) {
+                VariantImageEntity image = sourceImage.getId() == null
+                        ? null : existingImages.get(sourceImage.getId());
+                if (image == null) {
+                    image = new VariantImageEntity(null, variant, sourceImage.getImageUrl(),
+                            sourceImage.getObjectPath(), StorageBucket.PRODUCT_VARIANTS,
+                            sourceImage.isPrimary());
+                    variant.addImage(image);
+                } else {
+                    retainedImageIds.add(image.getId());
+                    image.setPrimary(sourceImage.isPrimary());
+                }
+            }
+            variant.getImages().removeIf(image -> image.getId() != null
+                    && !retainedImageIds.contains(image.getId()));
+        }
+        entity.getAttributes().removeIf(attribute -> attribute.getId() != null
+                && !retainedAttributeIds.contains(attribute.getId()));
+    }
 
     public ProductEntity toEntity(Product product, CategoryEntity category, BrandEntity brand) {
         ProductEntity productEntity = ProductEntity.builder()

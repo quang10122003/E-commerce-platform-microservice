@@ -9,6 +9,7 @@ import java.util.Optional;
 
 public interface ProductRepositoryPort {
     Product save(Product product);
+    Product update(Product product);
     Optional<Product> findById(Long id);
 
     PageResponse<Product> findProductsFillter(

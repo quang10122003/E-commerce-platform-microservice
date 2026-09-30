@@ -55,6 +55,21 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
         return productMapper.toDomain(saved);
     }
 
+    // Áp dụng thay đổi trên entity đã có, không dựng lại graph với ID mới.
+    @Override
+    public Product update(Product product) {
+        ProductEntity entity = productJpa.findById(product.getId())
+                .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
+        CategoryEntity category = categoryJpa.findById(product.getCategoryId())
+                .orElseThrow(() -> new BusinessException(ProductError.CATEGORY_NOT_FOUND));
+        BrandEntity brand = product.getBrandId() == null ? null
+                : brandJpa.findById(product.getBrandId())
+                        .orElseThrow(() -> new BusinessException(ProductError.BRAND_NOT_FOUND));
+        productMapper.updateEntity(product, entity, category, brand);
+        productJpa.flush();
+        return productMapper.toDomain(entity);
+    }
+
     // Đọc một sản phẩm và chuyển toàn bộ dữ liệu liên quan sang domain.
     @Override
     public Optional<Product> findById(Long id) {

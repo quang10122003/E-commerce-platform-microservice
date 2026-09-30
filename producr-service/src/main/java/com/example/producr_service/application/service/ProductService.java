@@ -4,6 +4,7 @@ import com.example.common.exception.BusinessException;
 import com.example.common.response.PageResponse;
 import com.example.producr_service.application.constant.Constant;
 import com.example.producr_service.application.dto.command.CreateProductCommand;
+import com.example.producr_service.application.dto.command.UpdateProductCommand;
 import com.example.producr_service.application.dto.outbox.*;
 import com.example.producr_service.application.dto.request.CreateProductData;
 import com.example.producr_service.application.dto.command.VariantImageUploadCommand;
@@ -12,6 +13,7 @@ import com.example.producr_service.application.dto.request.SellerProductFilter;
 import com.example.producr_service.application.dto.response.ProductResponse;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
 import com.example.producr_service.application.dto.response.SellerProductItemResponse;
+import com.example.producr_service.application.dto.response.ShopProductDetailResponse;
 import com.example.producr_service.application.dto.response.UserInternaInfoRespone;
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.in.*;
@@ -36,7 +38,7 @@ import java.util.stream.Stream;
 // Triển khai các use case nghiệp vụ thuộc phạm vi product.
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase {
+public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase {
     ProductImageRollbackPort productImageRollbackPort;
     ProductImageUploadService productImageUploadService;
     ProductCreationService productCreationService;
@@ -49,6 +51,21 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     ShopProductPageAssembler sellerProductPageAssembler;
     ProductRepositoryPort productRepositoryPort;
     ProductVariantRepoPort productVariantRepoPort;
+    ProductUpdateService productUpdateService;
+
+    // Giữ phiên đọc để lấy đủ thuộc tính, phân loại và ảnh cho form chỉnh sửa.
+    @Override
+    @Transactional(readOnly = true)
+    public ShopProductDetailResponse getShopProductDetail(Long productId) {
+        return productUpdateService.getShopProductDetail(productId);
+    }
+
+    // Gộp thay đổi sản phẩm và outbox trong một transaction để không lưu dở dang.
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ShopProductDetailResponse updateProduct(Long productId, UpdateProductCommand command) {
+        return productUpdateService.updateProduct(productId, command);
+    }
 
     @Transactional(rollbackFor = Exception.class)
     @Override

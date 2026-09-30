@@ -3,6 +3,10 @@ package com.example.producr_service.application.constant;
 public final class Constant {
     public static final String PRODUCT = "Product";
     public static final String VARIANT = "Variant";
+    // Giới hạn sinh SKU theo cột lưu trữ và số lần thử tránh trùng.
+    public static final int MAX_SKU_LENGTH = 50;
+    public static final int MAX_SKU_RETRY = 10;
+    public static final int SKU_RANDOM_SUFFIX_LENGTH = 4;
     // Tên index tìm kiếm sản phẩm trên Elasticsearch.
     public static final String SEARCH_INDEX = "product_search";
     // Tên bucket lưu ảnh danh mục trên storage.
