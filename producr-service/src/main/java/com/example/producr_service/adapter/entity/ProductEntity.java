@@ -53,11 +53,11 @@ public class ProductEntity {
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
-    @Column(name = "object_path", length = 500)
+    @Column(name = "object_path", nullable = false, length = 500)
     private String objectPath;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "storage_bucket", length = 50)
+    @Column(name = "storage_bucket", nullable = false, length = 50)
     private StorageBucket storageBucket;
 
     // Lưu tổng số lượng đã bán của product với giá trị mặc định bằng 0.

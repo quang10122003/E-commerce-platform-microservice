@@ -10,7 +10,7 @@ public class VariantImage {
 
     private final Long id;
     private String imageUrl;
-    // Lưu đường dẫn ảnh phân loại trên storage, có thể trống với dữ liệu cũ.
+    // Lưu đường dẫn ảnh phân loại trên storage.
     private String objectPath;
     private boolean primary;
 

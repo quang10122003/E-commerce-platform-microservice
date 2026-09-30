@@ -36,7 +36,7 @@ public class Product {
     private String name;
     private String description;
     private String imageUrl;
-    // Lưu đường dẫn ảnh bìa trên storage, có thể trống với dữ liệu cũ.
+    // Lưu đường dẫn ảnh bìa trên storage.
     private String objectPath;
     private ProductStatus status;
     // Lưu tổng số lượng sản phẩm đã bán của toàn bộ variant.

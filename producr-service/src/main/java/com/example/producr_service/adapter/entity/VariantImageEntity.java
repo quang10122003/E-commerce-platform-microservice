@@ -30,11 +30,11 @@ public class VariantImageEntity {
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
-    @Column(name = "object_path", length = 500)
+    @Column(name = "object_path", nullable = false, length = 500)
     private String objectPath;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "storage_bucket", length = 50)
+    @Column(name = "storage_bucket", nullable = false, length = 50)
     private StorageBucket storageBucket;
 
     @Column(name = "is_primary", nullable = false)

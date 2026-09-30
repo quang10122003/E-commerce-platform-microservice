@@ -46,6 +46,8 @@ public class ProductCreationService {
                 ? null
                 : brandRepositoryPort.findById(request.getBrandId())
                         .orElseThrow(() -> new BusinessException(ProductError.BRAND_NOT_FOUND));
+
+        validateUploadedImageMetadata(request.getImageUrl(), request.getObjectPath());
         Product product = new Product(
                 null, userInternaInfoRespone.userId(),
                 category.getId(), category.getName(),
@@ -92,6 +94,7 @@ public class ProductCreationService {
             }
 
             for (CreateProductData.VariantImageRequest imgReq : vReq.getImages()) {
+                validateUploadedImageMetadata(imgReq.getImageUrl(), imgReq.getObjectPath());
                 variant.addImage(new VariantImage(null, imgReq.getImageUrl(),
                         imgReq.getObjectPath(), imgReq.isPrimary()));
             }
@@ -101,6 +104,14 @@ public class ProductCreationService {
 
         // Buoc 5 - luu toan bo aggregate trong 1 transaction
         return productRepositoryPort.save(product);
+    }
+
+    // Bảo đảm metadata do backend gắn sau upload đủ để lưu ảnh và dọn storage.
+    private void validateUploadedImageMetadata(String imageUrl, String objectPath) {
+        if (imageUrl == null || imageUrl.isBlank()
+                || objectPath == null || objectPath.isBlank()) {
+            throw new BusinessException(ProductError.INVALID_IMAGE_FILE);
+        }
     }
 
     private String generateUniqueSku(String productName, List<AttributeValue> selectedValues,
