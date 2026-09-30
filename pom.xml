@@ -25,6 +25,7 @@
 		<module>getway</module>
 		<module>notification-service</module>
 		<module>producr-service</module>
+		<module>order_service</module>
 	</modules>
 
 	<properties>
