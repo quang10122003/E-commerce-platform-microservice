@@ -15,7 +15,6 @@ import com.example.producr_service.application.dto.response.ProductBrandOption;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
-import com.example.producr_service.application.port.out.ES.ProductSearchPort;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.domain.model.Product;
 import com.example.producr_service.domain.model.ProductStatus;
@@ -40,7 +39,7 @@ import static com.example.common.untill.ValidationUtils.hasText;
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true,level = AccessLevel.PRIVATE)
-public class ProductElasticsearchAdapter implements ProductSearchIndexPort, ProductSearchPort {
+public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
 
     private static final String BRANDS_AGGREGATION = "matched_brands";
 
@@ -64,6 +63,11 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort, Prod
                 productSearchDocumentMapper.toDocument(product, location);
 
         productSearchRepository.save(document);
+    }
+
+    @Override
+    public void deleteById(Long productId) {
+        productSearchRepository.deleteById(productId);
     }
 
     // Tìm kiếm catalog product bằng cursor để hỗ trợ infinity scroll.

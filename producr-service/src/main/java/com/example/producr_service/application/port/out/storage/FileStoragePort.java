@@ -12,7 +12,4 @@ public interface FileStoragePort {
 
     // Xóa nhiều object trong cùng một bucket.
     void delete(StorageBucket bucket, List<String> objectPaths);
-
-    // Lấy object path từ URL công khai thuộc bucket đã chỉ định.
-    String extractObjectPath(StorageBucket bucket, String publicUrl);
 }

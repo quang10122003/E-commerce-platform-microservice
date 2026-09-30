@@ -2,9 +2,9 @@ package com.example.producr_service.application.service;
 
 import com.example.common.exception.BusinessException;
 import com.example.common.response.PageResponse;
+import com.example.producr_service.application.constant.Constant;
 import com.example.producr_service.application.dto.command.CreateProductCommand;
-import com.example.producr_service.application.dto.outbox.ProductCreatedOutboxPayload;
-import com.example.producr_service.application.dto.outbox.OutboxEventDto;
+import com.example.producr_service.application.dto.outbox.*;
 import com.example.producr_service.application.dto.request.CreateProductData;
 import com.example.producr_service.application.dto.command.VariantImageUploadCommand;
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
@@ -14,11 +14,9 @@ import com.example.producr_service.application.dto.response.ProductCatalogSearch
 import com.example.producr_service.application.dto.response.SellerProductItemResponse;
 import com.example.producr_service.application.dto.response.UserInternaInfoRespone;
 import com.example.producr_service.application.error.ProductError;
-import com.example.producr_service.application.port.in.CreateProductUseCase;
-import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
-import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
+import com.example.producr_service.application.port.in.*;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
-import com.example.producr_service.application.port.out.ES.ProductSearchPort;
+import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
@@ -32,10 +30,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.common.untill.JsonUtils;
 
-import java.util.List;
-import java.util.Map;
-import java.math.BigDecimal;
-import java.util.UUID;
+import java.util.*;
 
 // Triển khai các use case nghiệp vụ thuộc phạm vi product.
 @RequiredArgsConstructor
@@ -46,10 +41,11 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     ProductCreationService productCreationService;
     CurrentUserPort currentUserPort;
     OutboxPort outboxPort;
-    // Port đọc danh sách product từ Elasticsearch.
-    ProductSearchPort productSearchPort;
+    // Port thao tác chỉ mục và tìm kiếm product trên Elasticsearch.
+    ProductSearchIndexPort productSearchIndexPort;
+    ProductHelper productHelper;
     JsonUtils jsonUtils;
-    ProductHelperService productHelperService;
+    ShopProductPageAssembler sellerProductPageAssembler;
     ProductRepositoryPort productRepositoryPort;
     ProductVariantRepoPort productVariantRepoPort;
 
@@ -61,7 +57,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                 ? List.of()
                 : command.variantImages();
 
-        List<StoredFile> storedFiles = new java.util.ArrayList<>();
+        List<StoredFile> storedFiles = new ArrayList<>();
         // Đăng ký trước khi upload để cả lỗi upload dở dang cũng được dọn sau rollback.
         productImageRollbackPort.deleteImageStore(storedFiles);
 
@@ -87,13 +83,11 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
 
         // lấy tên tỉnh của shop tạo sản phẩm
         String shopAddress = userInternaInfoRespone.shopAddress();
-        String locationProduct = shopAddress == null || shopAddress.isBlank()
-                ? null
-                : shopAddress.substring(shopAddress.lastIndexOf(",") + 1).trim();
+        String locationProduct =  productHelper.extractProvinceNameFromAddress(shopAddress);
         ProductCreatedOutboxPayload payload = new ProductCreatedOutboxPayload(product.getId(),locationProduct);
         outboxPort.save(new OutboxEventDto(
                 UUID.randomUUID(),
-                "Product",
+                Constant.PRODUCT,
                 String.valueOf(product.getId()),
                 ProductCreatedOutboxPayload.EVENT_TYPE,
                 jsonUtils.toJson(payload)
@@ -102,29 +96,9 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
 
     @Override
     public ProductCatalogSearchResponse getProducts(ProductScrollFilter filter) {
-        validateSearchKeyword(filter.keyword());
-        validatePriceRange(filter.minPrice(), filter.maxPrice());
-        return productSearchPort.search(filter);
-    }
-
-    // Chặn truy vấn catalog khi client không truyền từ khóa tìm kiếm.
-    private void validateSearchKeyword(String keyword) {
-        if (keyword == null || keyword.isBlank()) {
-            throw new BusinessException(
-                    ProductError.SEARCH_KEYWORD_REQUIRED,
-                    "keyword khong duoc de trong"
-            );
-        }
-    }
-
-    // Kiểm tra khoảng giá trước khi gửi query tìm kiếm sang Elasticsearch.
-    private void validatePriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
-        if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
-            throw new BusinessException(
-                    ProductError.INVALID_PRICE_RANGE,
-                    "minPrice khong duoc lon hon maxPrice"
-            );
-        }
+        productHelper.validateSearchKeyword(filter.keyword());
+        productHelper.validatePriceRange(filter.minPrice(), filter.maxPrice());
+        return productSearchIndexPort.search(filter);
     }
 
     // Lấy danh sách sản phẩm có phân trang cho shop.
@@ -137,15 +111,16 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
 
         List<Product> products = pageProduct.items();
         // Lấy ID trang hiện tại để truy vấn thuộc tính phân loại theo lô, tránh N+1.
-        List<Long> productIds = productHelperService.getListIdProduct(products);
+        List<Long> productIds = sellerProductPageAssembler.getListIdProduct(products);
 
         Map<Long, List<ProductVariant>> variantsByProductId =
                 productIds.isEmpty()
                         ? Map.of()
                         : productVariantRepoPort.findByProduct_IdIn(productIds);
 
-        return productHelperService.buildSellerProductPage(pageProduct, variantsByProductId);
+        return sellerProductPageAssembler.buildSellerProductPage(pageProduct, variantsByProductId);
     }
+
 
 
 }

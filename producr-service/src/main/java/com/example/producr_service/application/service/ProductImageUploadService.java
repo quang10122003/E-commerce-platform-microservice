@@ -18,7 +18,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ProductImageUploadService {
 
-    private final FileService fileService;
+    private final FileUploader fileUploader;
 
     // Chuẩn bị toàn bộ ảnh product và giữ file đã upload để caller có thể rollback.
     public void uploadAndApplyImageUrls(
@@ -44,7 +44,7 @@ public class ProductImageUploadService {
                     "File anh dai dien khong duoc de trong");
         }
 
-        storedFiles.add(fileService.upload(UploadPurpose.PRODUCT_IMAGE, productImage));
+        storedFiles.add(fileUploader.upload(UploadPurpose.PRODUCT_IMAGE, productImage));
     }
 
     // Upload toàn bộ ảnh variant theo cấu hình riêng của variant image.
@@ -56,7 +56,7 @@ public class ProductImageUploadService {
                 .map(VariantImageUploadCommand::file)
                 .toList();
 
-        storedFiles.addAll(fileService.upload(UploadPurpose.PRODUCT_VARIANT_IMAGE, variantImageFiles));
+        storedFiles.addAll(fileUploader.upload(UploadPurpose.PRODUCT_VARIANT_IMAGE, variantImageFiles));
     }
 
     // Kiểm tra toàn bộ vị trí ảnh variant trước khi thực hiện upload.

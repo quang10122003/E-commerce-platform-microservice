@@ -1,32 +1,34 @@
 package com.example.producr_service.application.service;
 
-import com.example.producr_service.application.port.in.DeleteStoredFilesUseCase;
 import com.example.producr_service.application.port.out.storage.FileStoragePort;
 import com.example.producr_service.application.registry.UploadStrategyRegistry;
 import com.example.producr_service.application.strategy.upload.IUploadStrategy;
 import com.example.producr_service.application.strategy.upload.UploadPurpose;
 import com.example.producr_service.application.port.out.storage.PreparedUpload;
 import com.example.producr_service.application.port.out.storage.StoredFile;
-import com.example.producr_service.application.port.out.storage.StorageBucket;
 import com.example.producr_service.application.dto.command.UploadFileCommand;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// Chịu trách nhiệm điều phối upload và xóa file thông qua storage port.
+// Điều phối upload và dọn file đã tải lên khi upload thất bại.
 @Slf4j
-public class FileService implements DeleteStoredFilesUseCase {
+public class FileUploader {
     private final FileStoragePort fileStoragePort;
     private final UploadStrategyRegistry strategyRegistry;
+    private final StoredFileCleaner storedFileCleaner;
 
-    // Khởi tạo service với cổng lưu trữ và registry strategy upload.
-    public FileService(
+    // Khởi tạo uploader với cổng lưu trữ, registry và bộ dọn file.
+    public FileUploader(
             FileStoragePort fileStoragePort,
-            UploadStrategyRegistry strategyRegistry
+            UploadStrategyRegistry strategyRegistry,
+            StoredFileCleaner storedFileCleaner
     ) {
         this.fileStoragePort = fileStoragePort;
         this.strategyRegistry = strategyRegistry;
+        this.storedFileCleaner = storedFileCleaner;
     }
 
     // Upload một file theo mục đích nghiệp vụ.
@@ -48,7 +50,7 @@ public class FileService implements DeleteStoredFilesUseCase {
 
     // Upload tuần tự và xóa các file đã lưu nếu một file phía sau thất bại.
     private List<StoredFile> uploadPreparedFiles(List<PreparedUpload> preparedUploads) {
-        List<StoredFile> storedFiles = new java.util.ArrayList<>();
+        List<StoredFile> storedFiles = new ArrayList<>();
         try {
             for (PreparedUpload preparedUpload : preparedUploads) {
                 String publicUrl = fileStoragePort.upload(preparedUpload);
@@ -58,25 +60,13 @@ public class FileService implements DeleteStoredFilesUseCase {
         } catch (RuntimeException exception) {
             // lỗi thì xóa toàn bộ ảnh vừa tải lên
             try {
-                deleteStoredFiles(storedFiles);
+                storedFileCleaner.deleteStoredFiles(storedFiles);
             } catch (RuntimeException cleanupException) {
-                log.error("up ảnh lỗi và clean ảnh cx lỗi ");
+                log.error("Upload failed and cleanup also failed for {} files", storedFiles.size(), cleanupException);
                 exception.addSuppressed(cleanupException);
             }
             throw exception;
         }
-    }
-
-    // Xóa các file đã upload để bù trừ khi bước lưu Product không thành công.
-    @Override
-    public void deleteStoredFiles(List<StoredFile> storedFiles) {
-        if (storedFiles.isEmpty()) {
-            return;
-        }
-        storedFiles.stream()
-                .collect(Collectors.groupingBy(StoredFile::bucket,
-                        Collectors.mapping(StoredFile::objectPath, Collectors.toList())))
-                .forEach(fileStoragePort::delete);
     }
 
     // Đóng gói kết quả upload với vị trí object gốc trong storage.
@@ -92,20 +82,5 @@ public class FileService implements DeleteStoredFilesUseCase {
     private PreparedUpload prepare(UploadPurpose uploadPurpose, UploadFileCommand command) {
         IUploadStrategy strategy = strategyRegistry.get(uploadPurpose);
         return strategy.prepare(command);
-    }
-
-    // Xóa ảnh trong bucket thông qua cổng lưu trữ đã cấu hình.
-    public void delete(StorageBucket bucket, String objectPath) {
-        fileStoragePort.delete(bucket, objectPath);
-    }
-
-    // Xóa nhiều ảnh trong cùng bucket thông qua cổng lưu trữ đã cấu hình.
-    public void delete(StorageBucket bucket, List<String> objectPaths) {
-        fileStoragePort.delete(bucket, objectPaths);
-    }
-
-    // Lấy object path từ URL đã lưu để dùng khi xóa ảnh.
-    public String extractObjectPath(StorageBucket bucket, String publicUrl) {
-        return fileStoragePort.extractObjectPath(bucket, publicUrl);
     }
 }

@@ -7,6 +7,7 @@ import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
+import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.domain.model.*;
 import com.example.producr_service.domain.service.SkuGenerator;
 import lombok.AccessLevel;
@@ -30,6 +31,7 @@ public class ProductCreationService {
     private static final int RANDOM_SUFFIX_LENGTH = 4;
 
     ProductRepositoryPort productRepositoryPort;
+    ProductVariantRepoPort productVariantRepoPort;
     CategoryRepoPort categoryRepositoryPort;
     BrandRepositoryPort brandRepositoryPort;
     // Tạo và lưu Product từ request đã được backend gắn metadata ảnh.
@@ -44,7 +46,6 @@ public class ProductCreationService {
                 ? null
                 : brandRepositoryPort.findById(request.getBrandId())
                         .orElseThrow(() -> new BusinessException(ProductError.BRAND_NOT_FOUND));
-
         Product product = new Product(
                 null, userInternaInfoRespone.userId(),
                 category.getId(), category.getName(),
@@ -112,7 +113,7 @@ public class ProductCreationService {
         String candidate = baseSku;
 
         int attempt = 0;
-        while (skusUsedInThisRequest.contains(candidate) || productRepositoryPort.existsBySku(candidate)) {
+        while (skusUsedInThisRequest.contains(candidate) || productVariantRepoPort.existsBySku(candidate)) {
             attempt++;
             if (attempt > MAX_SKU_RETRY) {
                 throw new IllegalStateException(

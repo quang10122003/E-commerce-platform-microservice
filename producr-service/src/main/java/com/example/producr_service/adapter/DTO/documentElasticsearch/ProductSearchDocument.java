@@ -1,6 +1,6 @@
 package com.example.producr_service.adapter.DTO.documentElasticsearch;
 
-import com.example.producr_service.application.constant.ProductConstants;
+import com.example.producr_service.application.constant.Constant;
 import com.example.producr_service.domain.model.ProductStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +19,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(indexName = ProductConstants.SEARCH_INDEX)
+@Document(indexName = Constant.SEARCH_INDEX)
 //cấu trúc index cho product
 public class ProductSearchDocument {
 

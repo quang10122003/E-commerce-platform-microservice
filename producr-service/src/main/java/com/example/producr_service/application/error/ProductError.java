@@ -8,6 +8,16 @@ public enum ProductError implements ErrorCode  {
             "Category not found",
             404
     ),
+    PRODUCT_NOT_FOUND(
+            "PRODUCT_NOT_FOUND",
+            "product not found",
+            404
+    ),
+    PRODUCT_VARIANT_NOT_FOUND(
+            "PRODUCT_VARIANT_NOT_FOUND",
+            "product variant not found",
+            404
+    ),
     BRAND_NOT_FOUND(
             "BRAND_NOT_FOUND",
             "Brand not found",
@@ -47,6 +57,10 @@ public enum ProductError implements ErrorCode  {
             "SEARCH_KEYWORD_REQUIRED",
             "Search keyword is required",
             400
+    ),CANNOT_DELETE_LAST_VARIANT(
+            "CANNOT_DELETE_LAST_VARIANT",
+            "Cannot delete the last variant of a product",
+            409
     );
 
     private final String code;

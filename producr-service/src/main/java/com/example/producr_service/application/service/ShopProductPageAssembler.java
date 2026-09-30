@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 // Dựng dữ liệu trang quản lý sản phẩm từ các model đã được repository trả về.
-public class ProductHelperService {
+public class ShopProductPageAssembler {
 
     // Lấy ID của các sản phẩm trong trang để truy vấn phân loại theo lô.
     public List<Long> getListIdProduct(Collection<Product> products) {

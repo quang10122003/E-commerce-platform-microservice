@@ -1,6 +1,8 @@
 package com.example.producr_service.application.constant;
 
-public final class ProductConstants {
+public final class Constant {
+    public static final String PRODUCT = "Product";
+    public static final String VARIANT = "Variant";
     // Tên index tìm kiếm sản phẩm trên Elasticsearch.
     public static final String SEARCH_INDEX = "product_search";
     // Tên bucket lưu ảnh danh mục trên storage.
@@ -14,6 +16,6 @@ public final class ProductConstants {
     // Đường dẫn truy cập công khai tới object.
     public static final String STORAGE_PUBLIC_OBJECT_PATH = STORAGE_OBJECT_PATH + "public/";
 
-    private ProductConstants() {
+    private Constant() {
     }
 }

@@ -19,6 +19,7 @@ import com.example.auth_service.application.DTO.event.UserRegisteredEventDto;
 import com.example.auth_service.application.DTO.request.LoginRequest;
 import com.example.auth_service.application.DTO.request.RegisterRquest;
 import com.example.auth_service.application.error.AuthError;
+import com.example.auth_service.application.constant.Constant;
 import com.example.auth_service.application.port.out.*;
 import com.example.auth_service.domain.model.OutboxEvent;
 import com.example.auth_service.domain.model.Role;
@@ -162,7 +163,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
         UUID eventId = UUID.randomUUID();
         EventType eventType = EventType.USER_REGISTERED;
         outboxEventPort.save(new OutboxEvent(
-                eventId, "User", String.valueOf(user.getId()), eventType,
+                eventId, Constant.USER, String.valueOf(user.getId()), eventType,
                 new UserRegisteredEventDto(eventId, eventType.getValue(),
                         user.getId(), user.getEmail(), user.getFullName(), LocalDateTime.now())));
     }

@@ -2,12 +2,16 @@ package com.example.producr_service.adapter.out.persistence.Product;
 
 import com.example.producr_service.adapter.entity.ProductEntity;
 import com.example.producr_service.domain.model.ProductStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.util.Optional;
 
 public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
     // Tải tên danh mục và thương hiệu cùng trang sản phẩm.
@@ -73,4 +77,9 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
             Pageable pageable
     );
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+SELECT p from ProductEntity p where  p.id = :productId
+""")
+    Optional<ProductEntity> findByIdForLock(@Param("productId") Long productId);
 }

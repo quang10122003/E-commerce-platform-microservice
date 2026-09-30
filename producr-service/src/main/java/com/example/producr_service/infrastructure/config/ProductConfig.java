@@ -8,12 +8,12 @@ import com.example.producr_service.application.port.in.GetBrandsUseCase;
 import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
 import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
 import com.example.producr_service.application.port.in.ProcessProductOutboxUseCase;
+import com.example.producr_service.application.port.in.DeleteStoredFilesUseCase;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
-import com.example.producr_service.application.port.out.ES.ProductSearchPort;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.storage.ProductImageRollbackPort;
@@ -21,12 +21,15 @@ import com.example.producr_service.application.registry.UploadStrategyRegistry;
 import com.example.producr_service.application.registry.OutboxEventHandlerRegistry;
 import com.example.producr_service.adapter.client.AuthUserFeignClient;
 import com.example.producr_service.adapter.out.openFeign.AuthUserAdapter;
-import com.example.producr_service.application.service.FileService;
+import com.example.producr_service.application.service.FileUploader;
+import com.example.producr_service.application.service.StoredFileCleaner;
+import com.example.producr_service.application.service.DeleteStoredFilesService;
 import com.example.producr_service.application.service.ProductCreationService;
-import com.example.producr_service.application.service.ProductHelperService;
+import com.example.producr_service.application.service.ShopProductPageAssembler;
 import com.example.producr_service.application.service.ProductOutboxStatusService;
 import com.example.producr_service.application.service.ProductImageUploadService;
 import com.example.producr_service.application.service.ProductService;
+import com.example.producr_service.application.service.ProductHelper;
 import com.example.producr_service.application.service.CategoryService;
 import com.example.producr_service.application.service.BrandService;
 import com.example.producr_service.application.strategy.upload.CategoryImageUploadStrategy;
@@ -54,11 +57,13 @@ public class ProductConfig {
     @Bean
     ProductCreationService productCreationService(
             ProductRepositoryPort productRepositoryPort,
+            ProductVariantRepoPort productVariantRepoPort,
             CategoryRepoPort categoryRepositoryPort,
             BrandRepositoryPort brandRepositoryPort
     ) {
         return new ProductCreationService(
                 productRepositoryPort,
+                productVariantRepoPort,
                 categoryRepositoryPort,
                 brandRepositoryPort
         );
@@ -66,8 +71,14 @@ public class ProductConfig {
 
     // Đăng ký helper dựng trang sản phẩm từ dữ liệu domain.
     @Bean
-    ProductHelperService productHelperService() {
-        return new ProductHelperService();
+    ShopProductPageAssembler sellerProductPageAssembler() {
+        return new ShopProductPageAssembler();
+    }
+
+    // Đăng ký helper hỗ trợ các xử lý của ProductService.
+    @Bean
+    ProductHelper productServiceHelper(ProductRepositoryPort productRepositoryPort) {
+        return new ProductHelper(productRepositoryPort);
     }
 
     // Cung cấp service quản lý transaction khi job cập nhật trạng thái outbox.
@@ -81,8 +92,8 @@ public class ProductConfig {
 
     // Đăng ký service xử lý validate, upload và gắn URL ảnh product.
     @Bean
-    ProductImageUploadService productImageUploadService(FileService fileService) {
-        return new ProductImageUploadService(fileService);
+    ProductImageUploadService productImageUploadService(FileUploader fileUploader) {
+        return new ProductImageUploadService(fileUploader);
     }
 
     // Đăng ký service lấy category theo mô hình port in/out của ứng dụng.
@@ -132,10 +143,11 @@ public class ProductConfig {
         ProductImageUploadService productImageUploadService,
         ProductCreationService productCreationService,
         CurrentUserPort currentUserPort,
-        ProductSearchPort productSearchPort,
+        ProductSearchIndexPort productSearchIndexPort,
+        ProductHelper productHelper,
         OutboxPort outboxPort,
         JsonUtils jsonUtils,
-        ProductHelperService productHelperService,
+        ShopProductPageAssembler sellerProductPageAssembler,
         ProductRepositoryPort productRepositoryPort,
         ProductVariantRepoPort productVariantRepoPort
     ) {
@@ -145,9 +157,10 @@ public class ProductConfig {
                 productCreationService,
                 currentUserPort,
                 outboxPort,
-                productSearchPort,
+                productSearchIndexPort,
+                productHelper,
                 jsonUtils,
-                productHelperService,
+                sellerProductPageAssembler,
                 productRepositoryPort,
                 productVariantRepoPort
         );
@@ -197,12 +210,25 @@ public class ProductConfig {
         return new UploadStrategyRegistry(strategies);
     }
 
-    // Đăng ký application service và cấp adapter lưu trữ cho service.
+    // Dùng chung logic dọn file cho rollback, upload lỗi và outbox.
     @Bean
-    FileService fileService(
+    StoredFileCleaner storedFileCleaner(FileStoragePort fileStoragePort) {
+        return new StoredFileCleaner(fileStoragePort);
+    }
+
+    // Cung cấp use case dọn file cho listener sau rollback.
+    @Bean
+    DeleteStoredFilesUseCase deleteStoredFilesUseCase(StoredFileCleaner storedFileCleaner) {
+        return new DeleteStoredFilesService(storedFileCleaner);
+    }
+
+    // Cung cấp component upload file cho xử lý nội bộ.
+    @Bean
+    FileUploader fileUploader(
             FileStoragePort fileStoragePort,
-            UploadStrategyRegistry uploadStrategyRegistry
+            UploadStrategyRegistry uploadStrategyRegistry,
+            StoredFileCleaner storedFileCleaner
     ) {
-        return new FileService(fileStoragePort, uploadStrategyRegistry);
+        return new FileUploader(fileStoragePort, uploadStrategyRegistry, storedFileCleaner);
     }
 }

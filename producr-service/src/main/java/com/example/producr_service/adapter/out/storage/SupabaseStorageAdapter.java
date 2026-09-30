@@ -1,6 +1,6 @@
 package com.example.producr_service.adapter.out.storage;
 
-import com.example.producr_service.application.constant.ProductConstants;
+import com.example.producr_service.application.constant.Constant;
 
 import com.example.producr_service.application.port.out.storage.FileStoragePort;
 import com.example.producr_service.application.port.out.storage.PreparedUpload;
@@ -69,7 +69,7 @@ public class SupabaseStorageAdapter implements FileStoragePort {
         if (!"https".equalsIgnoreCase(uri.getScheme())
                 || uri.getHost() == null
                 || uri.getPath() != null && !uri.getPath().isBlank()
-                || normalizedUrl.contains(ProductConstants.STORAGE_OBJECT_PATH)) {
+                || normalizedUrl.contains(Constant.STORAGE_OBJECT_PATH)) {
             throw new IllegalStateException(
                     "SUPABASE_URL phải là URL gốc dạng https://<project-ref>.supabase.co"
             );
@@ -87,7 +87,7 @@ public class SupabaseStorageAdapter implements FileStoragePort {
         try {
             restClient.post()
                     .uri(this.supabaseUrl
-                            + ProductConstants.STORAGE_OBJECT_PATH
+                            + Constant.STORAGE_OBJECT_PATH
                             + bucketName
                             + "/"
                             + upload.objectPath())
@@ -105,7 +105,7 @@ public class SupabaseStorageAdapter implements FileStoragePort {
                     bucketName
             );
             return this.supabaseUrl
-                    + ProductConstants.STORAGE_PUBLIC_OBJECT_PATH
+                    + Constant.STORAGE_PUBLIC_OBJECT_PATH
                     + bucketName
                     + "/"
                     + upload.objectPath();
@@ -133,7 +133,7 @@ public class SupabaseStorageAdapter implements FileStoragePort {
         try {
             restClient.method(HttpMethod.DELETE)
                     .uri(this.supabaseUrl
-                            + ProductConstants.STORAGE_OBJECT_PATH
+                            + Constant.STORAGE_OBJECT_PATH
                             + bucketName)
                     .header("Authorization", "Bearer " + serviceRoleKey)
                     .header("apikey", serviceRoleKey)
@@ -164,31 +164,9 @@ public class SupabaseStorageAdapter implements FileStoragePort {
     // Kiểm tra danh sách object trước khi gửi request xóa hàng loạt.
     private void validateDeletePaths(List<String> objectPaths) {
         Assert.notEmpty(objectPaths, "Danh sách đường dẫn object không được để trống");
-        Assert.isTrue(objectPaths.size() <= 1000, "Mỗi lần chỉ được xóa tối đa 1000 object");
-
         objectPaths.forEach(path -> Assert.hasText(
                 path,
                 "Đường dẫn object không được để trống"
         ));
     }
-
-    // Chuyển enum nghiệp vụ thành tên bucket thực tế trên Supabase.
-    // Chỉ nhận URL công khai do storage hiện tại tạo cho đúng bucket.
-    @Override
-    public String extractObjectPath(StorageBucket bucket, String publicUrl) {
-        Assert.hasText(publicUrl, "URL ảnh không được để trống");
-        String prefix = supabaseUrl + ProductConstants.STORAGE_PUBLIC_OBJECT_PATH
-                + bucket.getBucketName() + "/";
-        if (!publicUrl.startsWith(prefix)) {
-            throw new IllegalArgumentException("URL ảnh không thuộc bucket đã chỉ định");
-        }
-
-        String objectPath = publicUrl.substring(prefix.length());
-        if (objectPath.isBlank() || objectPath.startsWith("/")
-                || objectPath.contains("?") || objectPath.contains("#")) {
-            throw new IllegalArgumentException("URL ảnh không chứa object path hợp lệ");
-        }
-        return objectPath;
-    }
-
 }

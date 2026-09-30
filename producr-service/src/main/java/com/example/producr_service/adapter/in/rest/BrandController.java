@@ -1,4 +1,4 @@
-package com.example.producr_service.adapter.in;
+package com.example.producr_service.adapter.in.rest;
 
 import com.example.producr_service.application.dto.response.BrandResponse;
 import com.example.producr_service.application.port.in.GetBrandsUseCase;
