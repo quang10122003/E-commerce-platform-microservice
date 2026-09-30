@@ -1,9 +1,7 @@
 package com.example.auth_service.adapter.in.scheduler;
 
 import com.example.auth_service.application.DTO.OutboxEventDto;
-import com.example.auth_service.application.port.out.OutboxEventPort;
-import com.example.auth_service.application.registry.OutboxEventHandlerRegistry;
-import com.example.auth_service.application.strategy.outbox.OutboxEventHandler;
+import com.example.auth_service.application.port.in.ProcessAuthOutboxUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -17,17 +15,16 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class KafkaOutboxPublisher {
+public class OutboxPublisher {
 
-    private final OutboxEventPort outboxEventPort;
-    private final OutboxEventHandlerRegistry outboxEventHandlerRegistry;
+    private final ProcessAuthOutboxUseCase processAuthOutboxUseCase;
 
     @Scheduled(fixedDelayString = "${app.kafka.publisher.fixed-delay-ms:5000}")
     public void publishPendingEvents() {
         String previousRequestId = MDC.get("request_id");
         MDC.put("request_id", "scheduler-" + UUID.randomUUID());
         try {
-            List<OutboxEventDto> events = outboxEventPort.findPending();
+            List<OutboxEventDto> events = processAuthOutboxUseCase.findPending();
             log.debug("Bắt đầu phát hành outbox event: số lượng={}", events.size());
             events.forEach(this::publish);
         } finally {
@@ -43,9 +40,7 @@ public class KafkaOutboxPublisher {
     // Gọi strategy tương ứng và chỉ đánh dấu thành công sau khi phát hành hoàn tất.
     private void publish(OutboxEventDto event) {
         try {
-            OutboxEventHandler handler = outboxEventHandlerRegistry.handle(event.eventType());
-            handler.handle(event);
-            outboxEventPort.markPublished(event.eventId());
+            processAuthOutboxUseCase.processEvent(event);
         } catch (Exception exception) {
             log.error(
                     "Phát hành outbox event thất bại: event_id={}, event_type={}",
@@ -53,7 +48,7 @@ public class KafkaOutboxPublisher {
                     event.eventType(),
                     exception
             );
-            outboxEventPort.markFailed(event.eventId(), exception.getMessage());
+            processAuthOutboxUseCase.markFailed(event.eventId(), exception.getMessage());
         }
     }
 }

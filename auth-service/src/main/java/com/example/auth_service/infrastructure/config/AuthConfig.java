@@ -5,10 +5,12 @@ import com.example.auth_service.application.port.in.LoginUseCase;
 import com.example.auth_service.application.port.in.LogoutUserCase;
 import com.example.auth_service.application.port.in.RefreshTokenUseCase;
 import com.example.auth_service.application.port.in.RegisterUseCase;
+import com.example.auth_service.application.port.in.ProcessAuthOutboxUseCase;
 import com.example.auth_service.application.port.out.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import com.example.auth_service.application.service.AuthApplicationService;
+import com.example.auth_service.application.service.AuthOutboxStatusService;
 import com.example.auth_service.application.service.AuthServiceInternal;
 import com.example.auth_service.application.port.in.InternalGetUserInfoUseCase;
 import com.example.auth_service.application.port.out.AuthEventPublisherPort;
@@ -34,6 +36,14 @@ public class AuthConfig {
             List<OutboxEventHandler> eventHandlers
     ) {
         return new OutboxEventHandlerRegistry(eventHandlers);
+    }
+
+    @Bean
+    ProcessAuthOutboxUseCase processAuthOutboxUseCase(
+            OutboxEventPort outboxEventPort,
+            OutboxEventHandlerRegistry outboxEventHandlerRegistry
+    ) {
+        return new AuthOutboxStatusService(outboxEventPort, outboxEventHandlerRegistry);
     }
 
     @Bean

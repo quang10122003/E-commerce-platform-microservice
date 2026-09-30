@@ -1,6 +1,7 @@
 package com.example.auth_service.application.port.out;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.example.auth_service.application.DTO.OutboxEventDto;
@@ -13,6 +14,9 @@ public interface OutboxEventPort {
 
     // Lấy các sự kiện đang chờ để adapter Kafka publish.
     List<OutboxEventDto> findPending();
+
+    // Khóa event còn chờ xử lý để chỉ một instance được publish.
+    Optional<OutboxEventDto> lockPendingEvent(UUID eventId);
 
     // Đánh dấu event đã publish thành công.
     void markPublished(UUID eventId);

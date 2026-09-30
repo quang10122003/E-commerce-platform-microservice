@@ -40,7 +40,9 @@ public class ProductOutboxRetryScheduler {
     // Chạy strategy tương ứng và cập nhật trạng thái retry của event.
     private void processEvent(OutboxEventDto event) {
         try {
-            processProductOutboxUseCase.processEvent(event);
+            if (!processProductOutboxUseCase.processEvent(event)) {
+                return;
+            }
             log.info(
                     "Xử lý product outbox thành công: event_type={}, aggregate_type={}, aggregate_id={}, event_id={}",
                     event.eventType(),

@@ -2,6 +2,7 @@ package com.example.auth_service.adapter.out.persistence.outbox;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
@@ -34,11 +35,17 @@ public class OutboxEventRepoAdapter implements OutboxEventPort {
     @Override
     @Transactional(readOnly = true)
     public List<OutboxEventDto> findPending() {
-        return outboxEventRepoJpaJpa.findByStatusOrderByCreatedAtAsc(
+        return outboxEventRepoJpaJpa.findByStatusOrderByIdAsc(
                         OutboxEventEntity.Status.PENDING)
                 .stream()
                 .map(outboxEventMapper::toDto)
                 .toList();
+    }
+
+    @Override
+    public Optional<OutboxEventDto> lockPendingEvent(UUID eventId) {
+        return outboxEventRepoJpaJpa.lockPendingEvent(eventId.toString())
+                .map(outboxEventMapper::toDto);
     }
 
     @Override

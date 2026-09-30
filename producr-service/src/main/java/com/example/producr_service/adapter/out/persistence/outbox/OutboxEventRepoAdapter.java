@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 // Adapter persistence quản lý vòng đời event outbox tổng quát.
@@ -27,13 +28,19 @@ public class OutboxEventRepoAdapter implements OutboxPort {
     @Override
     public List<OutboxEventDto> findPending() {
         return outboxEventJpa
-                .findByStatusAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(
+                .findByStatusAndNextAttemptAtLessThanEqualOrderByIdAsc(
                         OutboxEventEntity.Status.PENDING,
                         LocalDateTime.now()
                 )
                 .stream()
                 .map(outboxEventMapper::toDto)
                 .toList();
+    }
+
+    @Override
+    public Optional<OutboxEventDto> lockPendingEvent(UUID eventId) {
+        return outboxEventJpa.lockPendingEvent(eventId.toString(), LocalDateTime.now())
+                .map(outboxEventMapper::toDto);
     }
 
     @Override

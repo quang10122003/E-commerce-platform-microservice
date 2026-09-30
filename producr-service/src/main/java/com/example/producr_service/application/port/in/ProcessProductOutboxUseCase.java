@@ -11,8 +11,8 @@ public interface ProcessProductOutboxUseCase {
     // Lấy các event đã đến hạn xử lý.
     List<OutboxEventDto> findPending();
 
-    // Chạy handler và ghi nhận event đã xử lý thành công.
-    void processEvent(OutboxEventDto event);
+    // Chạy handler nếu lấy được khóa event và báo có thực sự xử lý hay không.
+    boolean processEvent(OutboxEventDto event);
 
     // Ghi nhận lỗi để event được thử lại theo lịch.
     void markFailed(UUID eventId, String errorMessage);

@@ -37,10 +37,18 @@ public class ProductOutboxStatusService implements ProcessProductOutboxUseCase {
     // Xử lý event và ghi nhận thành công trong cùng transaction để tải đủ dữ liệu sản phẩm.
     @Override
     @Transactional
-    public void processEvent(OutboxEventDto event) {
+    public boolean processEvent(OutboxEventDto candidate) {
+        // Danh sách đã đọc có thể cũ; chỉ instance giữ khóa mới được chạy handler.
+        var lockedEvent = outboxPort.lockPendingEvent(candidate.eventId());
+        if (lockedEvent.isEmpty()) {
+            return false;
+        }
+
+        OutboxEventDto event = lockedEvent.get();
         OutboxEventHandler handler = outboxEventHandlerRegistry.handle(event.eventType());
         handler.handle(event);
         outboxPort.markPublished(event.eventId());
+        return true;
     }
 
     // Ghi nhận lỗi và lịch thử lại của event trong một transaction riêng.
