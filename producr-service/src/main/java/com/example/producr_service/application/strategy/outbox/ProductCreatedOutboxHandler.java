@@ -8,6 +8,8 @@ import com.example.producr_service.application.port.out.repo.ProductRepositoryPo
 import com.example.producr_service.domain.model.Product;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Optional;
+
 // Đồng bộ Product đã tạo từ cơ sở dữ liệu sang Elasticsearch.
 @RequiredArgsConstructor
 public class ProductCreatedOutboxHandler implements OutboxEventHandler {
@@ -31,10 +33,8 @@ public class ProductCreatedOutboxHandler implements OutboxEventHandler {
         Long productId = payload.productId();
         String locationProduct = payload.location();
 
-        Product product = productRepositoryPort.findById(productId)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Không tìm thấy Product id=" + productId + " để đồng bộ"));
-
-        productSearchIndexPort.index(product, locationProduct);
+        Optional<Product> product = productRepositoryPort.findById(productId);
+        // Event tạo đã hết hiệu lực nếu sản phẩm bị xóa trước khi worker xử lý.
+        product.ifPresent(value -> productSearchIndexPort.index(value, locationProduct));
     }
 }

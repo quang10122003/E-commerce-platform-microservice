@@ -3,6 +3,8 @@ package com.example.producr_service.infrastructure.config;
 import com.example.producr_service.application.port.out.storage.FileStoragePort;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
+import com.example.producr_service.application.port.in.DeleteProductUseCase;
+import com.example.producr_service.application.port.in.DeleteProductvariantUseCase;
 import com.example.producr_service.application.port.in.GetCategoriesUseCase;
 import com.example.producr_service.application.port.in.GetBrandsUseCase;
 import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
@@ -38,6 +40,10 @@ import com.example.producr_service.application.strategy.upload.ProductVariantIma
 import com.example.producr_service.application.strategy.upload.IUploadStrategy;
 import com.example.producr_service.application.strategy.outbox.OutboxEventHandler;
 import com.example.producr_service.application.strategy.outbox.ProductCreatedOutboxHandler;
+import com.example.producr_service.application.strategy.outbox.ProductImagesDeleteOutboxHandler;
+import com.example.producr_service.application.strategy.outbox.ProductvariantImagesDeleteOutboxHandler;
+import com.example.producr_service.application.strategy.outbox.ProductDeletedOutboxHandler;
+import com.example.producr_service.application.strategy.outbox.ProductvariantDeleteOutboxHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import com.example.common.untill.JsonUtils;
@@ -128,6 +134,45 @@ public class ProductConfig {
         );
     }
 
+    // Đăng ký handler dọn ảnh sản phẩm sau khi event xóa được xử lý.
+    @Bean
+    OutboxEventHandler productImagesDeleteOutboxHandler(
+            MapJsonToObjPort mapJsonToObjPort,
+            StoredFileCleaner storedFileCleaner
+    ) {
+        return new ProductImagesDeleteOutboxHandler(mapJsonToObjPort, storedFileCleaner);
+    }
+
+    // Đăng ký handler dọn ảnh phân loại sau khi transaction xóa commit.
+    @Bean
+    OutboxEventHandler productvariantImagesDeleteOutboxHandler(
+            MapJsonToObjPort mapJsonToObjPort,
+            StoredFileCleaner storedFileCleaner
+    ) {
+        return new ProductvariantImagesDeleteOutboxHandler(mapJsonToObjPort, storedFileCleaner);
+    }
+
+    // Đăng ký handler cập nhật chỉ mục sau khi xóa phân loại.
+    @Bean
+    OutboxEventHandler productvariantDeleteOutboxHandler(
+            MapJsonToObjPort mapJsonToObjPort,
+            ProductSearchIndexPort productSearchIndexPort,
+            ProductRepositoryPort productRepositoryPort
+    ) {
+        return new ProductvariantDeleteOutboxHandler(
+                mapJsonToObjPort, productSearchIndexPort, productRepositoryPort
+        );
+    }
+
+    // Đăng ký handler xóa document tìm kiếm sau khi sản phẩm đã bị xóa.
+    @Bean
+    OutboxEventHandler productDeletedOutboxHandler(
+            MapJsonToObjPort mapJsonToObjPort,
+            ProductSearchIndexPort productSearchIndexPort
+    ) {
+        return new ProductDeletedOutboxHandler(mapJsonToObjPort, productSearchIndexPort);
+    }
+
     // Gom các strategy outbox để định tuyến theo eventType.
     @Bean
     OutboxEventHandlerRegistry outboxEventHandlerRegistry(
@@ -169,6 +214,18 @@ public class ProductConfig {
     // Cung cấp use case tạo product cho controller qua input port.
     @Bean
     CreateProductUseCase createProductUseCase(ProductService productService) {
+        return productService;
+    }
+
+    // Cung cấp use case xóa sản phẩm cho controller.
+    @Bean
+    DeleteProductUseCase deleteProductUseCase(ProductService productService) {
+        return productService;
+    }
+
+    // Cung cấp use case xóa phân loại cho controller.
+    @Bean
+    DeleteProductvariantUseCase deleteProductvariantUseCase(ProductService productService) {
         return productService;
     }
 

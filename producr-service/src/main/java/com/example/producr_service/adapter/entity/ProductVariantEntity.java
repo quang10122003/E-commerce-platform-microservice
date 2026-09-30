@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -47,10 +48,12 @@ public class ProductVariantEntity {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @BatchSize(size = 50)
     @OneToMany(mappedBy = "variant", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<VariantImageEntity> images = new ArrayList<>();
 
+    @BatchSize(size = 50)
     @ManyToMany
     @JoinTable(
             name = "variant_attribute_values",

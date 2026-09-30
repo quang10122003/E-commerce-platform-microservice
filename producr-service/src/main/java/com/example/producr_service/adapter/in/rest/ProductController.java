@@ -1,4 +1,4 @@
-package com.example.producr_service.adapter.in;
+package com.example.producr_service.adapter.in.rest;
 
 import com.example.common.response.PageQuery;
 import com.example.common.response.PageResponse;
@@ -10,6 +10,8 @@ import com.example.producr_service.application.dto.response.ProductResponse;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
 import com.example.producr_service.application.dto.response.SellerProductItemResponse;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
+import com.example.producr_service.application.port.in.DeleteProductUseCase;
+import com.example.producr_service.application.port.in.DeleteProductvariantUseCase;
 import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
 import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
 import jakarta.validation.Valid;
@@ -39,6 +41,8 @@ public class ProductController {
     GetProductsCatalogUseCase getProductsCatalogUseCase;
     ProductMultipartCommandMapper productMultipartCommandMapper;
     GetSellerProductsUseCase getSellerProductsUseCase;
+    DeleteProductUseCase deleteProductUseCase;
+    DeleteProductvariantUseCase deleteProductvariantUseCase;
 
 
     //  api tạo sản phẩm của shop
@@ -96,5 +100,19 @@ public class ProductController {
                 PageQuery.builder().page(page).size(size).build(), categoryId, status, keyword);
         return ResponseEntity.ok(getSellerProductsUseCase.getSellerProducts(sellerProductFilter));
     }
+
+    // Xóa sản phẩm của shop và ghi tác vụ dọn ảnh, chỉ mục vào outbox.
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable("productId") Long productId) {
+        deleteProductUseCase.deleteProduct(productId);
+        return ResponseEntity.accepted().build();
+    }
+
+    @DeleteMapping("/{productId}/variants/{variantId}")
+    public  ResponseEntity<Void> deleteProductvariant(@PathVariable("productId") Long productId,@PathVariable("variantId") Long variantsId){
+        deleteProductvariantUseCase.deleteProductvariant(productId, variantsId);
+        return ResponseEntity.accepted().build();
+    }
+
 
 }

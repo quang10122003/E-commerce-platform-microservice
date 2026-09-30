@@ -31,11 +31,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.common.untill.JsonUtils;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 // Triển khai các use case nghiệp vụ thuộc phạm vi product.
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase {
+public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase {
     ProductImageRollbackPort productImageRollbackPort;
     ProductImageUploadService productImageUploadService;
     ProductCreationService productCreationService;
@@ -122,5 +123,108 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     }
 
 
+    @Transactional
+    @Override
+    public void deleteProduct(Long productId) {
+        UserInternaInfoRespone userInternaInfoRespone =  currentUserPort.getUserInfo();
 
+        // lấy id user sở hứu sản phẩm và check xem có phải cùng user request k , khóa sản phẩm lock
+        productHelper.validateProductOwnership(productId, userInternaInfoRespone.userId());
+        // lấy và khóa ProductVariant thuộc product
+        List<ProductVariant> variants = productVariantRepoPort.findByProductIdForUpdate(productId);
+
+
+        // Giữ thông tin ảnh phân loại trước khi xóa bản ghi để dọn storage sau commit.
+        List<StoredFile> variantFiles = productVariantRepoPort.findStoredFilesByVariantIds(
+                variants.stream().map(ProductVariant::getId).toList()
+        );
+
+        // Giữ thông tin ảnh bìa trước khi xóa bản ghi sản phẩm.
+        StoredFile coverFile = productRepositoryPort.findCoverFile(productId);
+
+        List<StoredFile> filesToDelete = productHelper.prepareFilesForDeletion(
+                productId,
+                Stream.concat(Stream.of(coverFile), variantFiles.stream()).toList()
+        );
+        saveProductDeletionOutboxEvents(productId, filesToDelete);
+
+        // Xóa aggregate và các bản ghi liên quan bằng cascade trong cùng transaction với outbox.
+        productRepositoryPort.deleteById(productId);
+    }
+
+    // Lưu công việc dọn ảnh và xóa document tìm kiếm trong cùng transaction xóa sản phẩm.
+    private void saveProductDeletionOutboxEvents(Long productId, List<StoredFile> filesToDelete) {
+        String aggregateId = String.valueOf(productId);
+        ProductImagesDeleteOutboxPayload imagesPayload = new ProductImagesDeleteOutboxPayload(filesToDelete);
+        outboxPort.save(new OutboxEventDto(
+                UUID.randomUUID(),
+                Constant.PRODUCT,
+                aggregateId,
+                ProductImagesDeleteOutboxPayload.EVENT_TYPE,
+                jsonUtils.toJson(imagesPayload)
+        ));
+
+        ProductDeletedOutboxPayload deletedPayload = new ProductDeletedOutboxPayload(productId);
+        outboxPort.save(new OutboxEventDto(
+                UUID.randomUUID(),
+                Constant.PRODUCT,
+                aggregateId,
+                ProductDeletedOutboxPayload.EVENT_TYPE,
+                jsonUtils.toJson(deletedPayload)
+        ));
+    }
+
+    @Transactional
+    @Override
+    public void deleteProductvariant(Long productId, Long variantId) {
+        UserInternaInfoRespone userInternaInfoRespone =  currentUserPort.getUserInfo();
+        // Khóa sản phẩm và xác nhận quyền sở hữu trước khi khóa phân loại.
+        productHelper.validateProductOwnership(productId, userInternaInfoRespone.userId());
+        // Chỉ khóa phân loại thuộc đúng sản phẩm cần xử lý.
+        productVariantRepoPort.findByProductIdAndIdForUpdate(productId, variantId)
+                .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND));
+        // Đếm sau khi giữ khóa product để chặn hai lần xóa đồng thời phân loại cuối.
+        long countVariants = productVariantRepoPort.countByProduct_Id(productId);
+        // Giữ lại ít nhất một phân loại cho sản phẩm.
+       if(countVariants <=1 ){
+           throw  new BusinessException(ProductError.CANNOT_DELETE_LAST_VARIANT);
+       }
+        // Giữ metadata ảnh trước khi xóa bản ghi phân loại.
+        List<StoredFile> variantFiles = productVariantRepoPort.findStoredFilesByVariantIds(List.of(variantId));
+
+        // Kiểm tra metadata và loại ảnh trùng trước khi ghi outbox.
+        List<StoredFile> filesToDelete = productHelper.prepareFilesForDeletion(
+                productId,
+                 variantFiles
+        );
+
+        // Lưu tác vụ dọn ảnh cùng transaction xóa phân loại.
+        saveProductvariantDeletionOutboxEvents(variantId, filesToDelete,userInternaInfoRespone.shopAddress(),productId);
+        productVariantRepoPort.deleteById(variantId);
+
+    }
+
+    private  void saveProductvariantDeletionOutboxEvents(Long variantId, List<StoredFile> filesToDelete,String shopAddress,Long productId){
+        String aggregateId = String.valueOf(variantId);
+        ProductvariantImagesDeleteOutboxPayload productvariantImagesDeleteOutboxPayload = new ProductvariantImagesDeleteOutboxPayload(filesToDelete);
+        ProductvariantDeleteOutboxPayload productvariantDeleteOutboxPayload = new ProductvariantDeleteOutboxPayload(
+                productId, productHelper.extractProvinceNameFromAddress(shopAddress)
+        );
+        outboxPort.save(new OutboxEventDto(
+                UUID.randomUUID(),
+                Constant.VARIANT,
+                aggregateId,
+                ProductvariantImagesDeleteOutboxPayload.EVENT_TYPE,
+                jsonUtils.toJson(productvariantImagesDeleteOutboxPayload)
+        ));
+
+        outboxPort.save(new OutboxEventDto(
+                UUID.randomUUID(),
+                Constant.VARIANT,
+                aggregateId,
+                ProductvariantDeleteOutboxPayload.EVENT_TYPE,
+                jsonUtils.toJson(productvariantDeleteOutboxPayload)
+        ));
+
+    }
 }

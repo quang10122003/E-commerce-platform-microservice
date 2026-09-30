@@ -81,6 +81,7 @@ public class ProductEntity {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AttributeEntity> attributes = new ArrayList<>();
 
+    @BatchSize(size = 50)
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductVariantEntity> variants = new ArrayList<>();
 
