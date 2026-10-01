@@ -148,7 +148,7 @@ public class ProductMapper implements ShopProductDetailMapperPort {
             variant.getImages().removeIf(image -> image.getId() != null
                     && !retainedImageIds.contains(image.getId()));
         }
-        // Gỡ value cũ sau khi mọi phân loại đã chuyển sang tổ hợp mới.
+        // Gỡ value và nhóm cũ sau khi mọi phân loại đã chuyển sang tổ hợp mới.
         retainedValueIdsByAttribute.forEach((attribute, retainedValueIds) ->
                 attribute.getValues().removeIf(value -> value.getId() != null
                         && !retainedValueIds.contains(value.getId())));

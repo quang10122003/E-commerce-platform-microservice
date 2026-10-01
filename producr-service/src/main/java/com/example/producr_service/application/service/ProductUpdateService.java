@@ -69,7 +69,6 @@ public class ProductUpdateService {
                 .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
         UpdateProductData request = command.productRequest();
         validateVariantSet(request, lockedVariants);
-        validateAttributeRemoval(request, current);
         validateImageMapping(request, command.variantImages());
 
         Category category = categoryRepoPort.findById(request.categoryId())
@@ -100,7 +99,7 @@ public class ProductUpdateService {
         // Chỉ đánh dấu ảnh bìa cũ để dọn sau commit khi có ảnh mới thay thế.
         if (newCover != null) deleteFiles.add(new StoredFile(
                 StorageBucket.PRODUCT_IMAGES, current.getObjectPath(), current.getImageUrl()));
-        // Dựng tổ hợp cuối cùng để value bị bỏ chỉ được xóa khi không phân loại nào còn chọn.
+        // Dựng tổ hợp cuối cùng để nhóm/value bị bỏ không còn được chọn và các phân loại không trùng.
         buildVariants(request, current, updated, valuesByIndex, uploadedImages, deleteFiles);
 
         Product saved = productRepositoryPort.update(updated);
@@ -132,34 +131,6 @@ public class ProductUpdateService {
         }
         // So sánh toàn bộ ID cũ để PUT không vô tình xóa phân loại bị thiếu trong form.
         if (!keptIds.equals(currentIds)) throw invalid("Phai giu tat ca variant cu trong request");
-    }
-
-    // Chỉ xóa nhóm thuộc tính khi không phân loại đã lưu nào dùng giá trị của nhóm.
-    private void validateAttributeRemoval(UpdateProductData request, Product current) {
-        Set<Long> retainedAttributeIds = new HashSet<>();
-        for (UpdateProductData.Attribute attribute : request.attributes()) {
-            if (attribute.id() != null) retainedAttributeIds.add(attribute.id());
-        }
-        // Kiểm tra tham chiếu đang lưu, không dựa vào lựa chọn mới client gửi lên.
-        Set<Long> usedValueIds = collectUsedValueIds(current);
-        for (ProductAttribute attribute : current.getAttributes()) {
-            if (!retainedAttributeIds.contains(attribute.getId())) {
-                for (AttributeValue value : attribute.getValues()) {
-                    if (usedValueIds.contains(value.getId())) {
-                        throw new BusinessException(ProductError.ATTRIBUTE_IN_USE);
-                    }
-                }
-            }
-        }
-    }
-
-    // Lấy ID các giá trị đang gắn với phân loại đã lưu để chặn xóa nhầm.
-    private Set<Long> collectUsedValueIds(Product product) {
-        Set<Long> usedValueIds = new HashSet<>();
-        for (ProductVariant variant : product.getVariants()) {
-            for (AttributeValue value : variant.getAttributeValues()) usedValueIds.add(value.getId());
-        }
-        return usedValueIds;
     }
 
     // Đảm bảo mỗi ảnh mới có đúng một file theo vị trí, không gắn file cho ảnh cũ.
@@ -242,7 +213,7 @@ public class ProductUpdateService {
         return valuesByIndex;
     }
 
-    // Giữ hoặc tạo phân loại theo tổ hợp mới; thu thập ảnh bị bỏ để dọn sau commit.
+    // Giữ SKU của phân loại cũ, sinh SKU một lần cho phân loại mới và gom ảnh cần dọn.
     private void buildVariants(UpdateProductData request, Product current, Product updated,
                                List<List<AttributeValue>> valuesByIndex,
                                Map<ImagePosition, StoredFile> uploadedImages,
@@ -251,18 +222,19 @@ public class ProductUpdateService {
         for (ProductVariant variant : current.getVariants()) oldVariants.put(variant.getId(), variant);
         Set<Set<AttributeValue>> combinations = new HashSet<>();
         Set<String> skus = new HashSet<>();
+        current.getVariants().forEach(variant -> skus.add(variant.getSku()));
         for (int index = 0; index < request.variants().size(); index++) {
             UpdateProductData.Variant data = request.variants().get(index);
             List<AttributeValue> selections = resolveSelections(data, valuesByIndex);
             if (!combinations.add(Set.copyOf(selections))) {
                 throw new BusinessException(ProductError.DUPLICATE_VARIANT_ATTRIBUTE_COMBINATION);
             }
-            String sku = productHelper.generateUniqueSku(request.name(),
-                    selections.stream().map(AttributeValue::getValue).toList(), data.id(), skus);
+            ProductVariant old = data.id() == null ? null : oldVariants.get(data.id());
+            String sku = old == null ? productHelper.generateUniqueSku(request.name(),
+                    selections.stream().map(AttributeValue::getValue).toList(), null, skus) : old.getSku();
             ProductVariant variant = new ProductVariant(data.id(), sku,
                     Money.of(data.price()), data.stockQuantity());
             selections.forEach(variant::linkAttributeValue);
-            ProductVariant old = data.id() == null ? null : oldVariants.get(data.id());
             addImages(index, data.images(), old, variant, uploadedImages, obsoleteFiles);
             updated.addVariant(variant);
         }
