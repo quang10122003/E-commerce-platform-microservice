@@ -100,7 +100,7 @@ public class ProductUpdateService {
         // Chỉ đánh dấu ảnh bìa cũ để dọn sau commit khi có ảnh mới thay thế.
         if (newCover != null) deleteFiles.add(new StoredFile(
                 StorageBucket.PRODUCT_IMAGES, current.getObjectPath(), current.getImageUrl()));
-        // Dựng các phân loại và gom ảnh phân loại cũ không còn được sử dụng.
+        // Dựng tổ hợp cuối cùng để value bị bỏ chỉ được xóa khi không phân loại nào còn chọn.
         buildVariants(request, current, updated, valuesByIndex, uploadedImages, deleteFiles);
 
         Product saved = productRepositoryPort.update(updated);
@@ -196,7 +196,7 @@ public class ProductUpdateService {
         return result;
     }
 
-    // Giữ ID thuộc tính cũ, thêm giá trị mới và từ chối ID của sản phẩm khác.
+    // Giữ ID thuộc tính cũ, thêm giá trị mới và đối chiếu ID với sản phẩm hiện tại.
     private List<List<AttributeValue>> buildAttributes(
             UpdateProductData request, Product current, Product updated) {
         Map<Long, ProductAttribute> oldAttributes = new HashMap<>();
@@ -207,7 +207,6 @@ public class ProductUpdateService {
         }
         Set<Long> usedAttributes = new HashSet<>();
         Set<Long> usedValues = new HashSet<>();
-        Set<Long> usedValueIds = collectUsedValueIds(current);
         Set<String> attributeNames = new HashSet<>();
         List<List<AttributeValue>> valuesByIndex = new ArrayList<>();
         for (UpdateProductData.Attribute data : request.attributes()) {
@@ -236,12 +235,6 @@ public class ProductUpdateService {
                 AttributeValue value = new AttributeValue(valueData.id(), valueData.value());
                 attribute.addValue(value);
                 values.add(value);
-            }
-            // Chỉ bỏ value cũ khi không phân loại đã lưu nào đang tham chiếu value đó.
-            if (data.id() != null && oldAttributes.get(data.id()).getValues().stream()
-                    .anyMatch(value -> !usedValues.contains(value.getId())
-                            && usedValueIds.contains(value.getId()))) {
-                throw new BusinessException(ProductError.ATTRIBUTE_IN_USE);
             }
             updated.addAttribute(attribute);
             valuesByIndex.add(values);

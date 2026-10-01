@@ -82,6 +82,7 @@ public class ProductMapper implements ShopProductDetailMapperPort {
         Map<Long, AttributeEntity> existingAttributes = new HashMap<>();
         for (AttributeEntity attribute : entity.getAttributes()) existingAttributes.put(attribute.getId(), attribute);
         Set<Long> retainedAttributeIds = new HashSet<>();
+        Map<AttributeEntity, Set<Long>> retainedValueIdsByAttribute = new IdentityHashMap<>();
         Map<AttributeValue, AttributeValueEntity> values = new IdentityHashMap<>();
         for (ProductAttribute source : product.getAttributes()) {
             AttributeEntity attribute = source.getId() == null ? null : existingAttributes.get(source.getId());
@@ -108,8 +109,7 @@ public class ProductMapper implements ShopProductDetailMapperPort {
                 }
                 values.put(sourceValue, value);
             }
-            attribute.getValues().removeIf(value -> value.getId() != null
-                    && !retainedValueIds.contains(value.getId()));
+            retainedValueIdsByAttribute.put(attribute, retainedValueIds);
         }
 
         Map<Long, ProductVariantEntity> existingVariants = new HashMap<>();
@@ -148,6 +148,10 @@ public class ProductMapper implements ShopProductDetailMapperPort {
             variant.getImages().removeIf(image -> image.getId() != null
                     && !retainedImageIds.contains(image.getId()));
         }
+        // Gỡ value cũ sau khi mọi phân loại đã chuyển sang tổ hợp mới.
+        retainedValueIdsByAttribute.forEach((attribute, retainedValueIds) ->
+                attribute.getValues().removeIf(value -> value.getId() != null
+                        && !retainedValueIds.contains(value.getId())));
         entity.getAttributes().removeIf(attribute -> attribute.getId() != null
                 && !retainedAttributeIds.contains(attribute.getId()));
     }
