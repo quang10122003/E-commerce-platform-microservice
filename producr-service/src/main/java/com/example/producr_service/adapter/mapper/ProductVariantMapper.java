@@ -3,11 +3,16 @@ package com.example.producr_service.adapter.mapper;
 import com.example.producr_service.adapter.entity.AttributeValueEntity;
 import com.example.producr_service.adapter.entity.ProductVariantEntity;
 import com.example.producr_service.adapter.entity.VariantImageEntity;
+import com.example.producr_service.application.dto.response.CartInfoRepone;
+import com.example.producr_service.application.dto.response.VariantCartView;
 import com.example.producr_service.domain.model.AttributeValue;
 import com.example.producr_service.domain.model.Money;
 import com.example.producr_service.domain.model.ProductVariant;
 import com.example.producr_service.domain.model.VariantImage;
 import org.springframework.stereotype.Component;
+
+import java.util.Comparator;
+import java.util.List;
 
 @Component
 public class ProductVariantMapper {
@@ -54,5 +59,26 @@ public class ProductVariantMapper {
     private VariantImage toDomain(VariantImageEntity entity) {
         return new VariantImage(entity.getId(), entity.getImageUrl(),
                 entity.getObjectPath(), entity.isPrimary());
+    }
+
+    // Chỉ đổi hình dạng dữ liệu cho giỏ hàng; không sắp xếp, không chọn ảnh.
+    public VariantCartView toCartView(ProductVariantEntity variant) {
+        return new VariantCartView(
+                variant.getId(),
+                variant.getProduct().getId(),
+                variant.getProduct().getName(),
+                variant.getProduct().getImageUrl(),
+                variant.getProduct().getStatus(),
+                variant.getPrice(),
+                variant.getStockQuantity(),
+                variant.getAttributeValues().stream()
+                        .map(value -> new VariantCartView.OptionView(
+                                value.getAttribute().getId(), value.getId(),
+                                value.getAttribute().getName(), value.getValue()))
+                        .toList(),
+                variant.getImages().stream()
+                        .map(image -> new VariantCartView.ImageView(
+                                image.getId(), image.getImageUrl(), image.isPrimary()))
+                        .toList());
     }
 }

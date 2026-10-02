@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Optional;
 
 import jakarta.persistence.LockModeType;
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.producr_service.adapter.entity.ProductVariantEntity;
-import com.example.producr_service.adapter.entity.VariantImageEntity;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -42,7 +42,7 @@ public interface ProductVariantJpa
 
     long countByProduct_Id(Long productId);
 
-    @Query("select variantImageEntity from VariantImageEntity variantImageEntity where variantImageEntity.variant.id in :variantIds")
-    List<VariantImageEntity> findVariantImagesByVariantIds(@Param("variantIds") Collection<Long> variantIds);
-
+    @EntityGraph(attributePaths = {"attributeValues", "attributeValues.attribute","product"})
+    @Override
+    List<ProductVariantEntity> findAllById(@NonNull Iterable<Long> longs);
 }

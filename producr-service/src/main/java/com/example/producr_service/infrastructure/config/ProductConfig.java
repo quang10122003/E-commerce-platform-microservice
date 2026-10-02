@@ -5,6 +5,7 @@ import com.example.producr_service.application.port.out.ShopProductDetailMapperP
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
 import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
+import com.example.producr_service.application.port.in.GetCartInfoUseCase;
 import com.example.producr_service.application.port.in.UpdateProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductvariantUseCase;
@@ -34,6 +35,7 @@ import com.example.producr_service.application.service.ShopProductPageAssembler;
 import com.example.producr_service.application.service.ProductOutboxStatusService;
 import com.example.producr_service.application.service.ProductImageUploadService;
 import com.example.producr_service.application.service.ProductService;
+import com.example.producr_service.application.service.ProductInternalService;
 import com.example.producr_service.application.service.ProductUpdateService;
 import com.example.producr_service.application.service.ProductHelper;
 import com.example.producr_service.application.service.CategoryService;
@@ -57,6 +59,12 @@ import java.util.List;
 
 @Configuration
 public class ProductConfig {
+
+    // Cung cấp use case đọc thông tin variant cho API giỏ hàng nội bộ.
+    @Bean
+    GetCartInfoUseCase getCartInfoUseCase(ProductVariantRepoPort productVariantRepoPort) {
+        return new ProductInternalService(productVariantRepoPort);
+    }
 
     // Đăng ký adapter lấy thông tin user hiện tại từ Auth service qua Feign.
     @Bean

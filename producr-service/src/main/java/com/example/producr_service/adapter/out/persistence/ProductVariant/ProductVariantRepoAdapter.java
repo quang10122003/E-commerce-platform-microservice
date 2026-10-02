@@ -1,7 +1,10 @@
 package com.example.producr_service.adapter.out.persistence.ProductVariant;
 
 import com.example.producr_service.adapter.mapper.ProductVariantMapper;
+import com.example.producr_service.adapter.entity.ProductVariantEntity;
 import com.example.producr_service.adapter.entity.VariantImageEntity;
+import com.example.producr_service.application.dto.response.CartInfoRepone;
+import com.example.producr_service.application.dto.response.VariantCartView;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.domain.model.ProductVariant;
@@ -72,7 +75,8 @@ public class ProductVariantRepoAdapter implements ProductVariantRepoPort {
         if (variantIds.isEmpty()) {
             return List.of();
         }
-        return productVariantJpa.findVariantImagesByVariantIds(variantIds).stream()
+        return productVariantJpa.findAllById(variantIds).stream()
+                .flatMap(variant -> variant.getImages().stream())
                 .map(this::toStoredFile)
                 .toList();
     }
@@ -86,4 +90,17 @@ public class ProductVariantRepoAdapter implements ProductVariantRepoPort {
     public void deleteById(Long variantId) {
         productVariantJpa.deleteById(variantId);
     }
+//   / Đọc dữ liệu thô của variant và product
+    @Override
+    public List<VariantCartView> findCartViewsByVariantIds(Collection<Long> variantIds) {
+        if (variantIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<ProductVariantEntity> variants = productVariantJpa.findAllById(variantIds);
+        return variants.stream()
+                .map(productVariantMapper::toCartView)
+                .toList();
+    }
+
 }

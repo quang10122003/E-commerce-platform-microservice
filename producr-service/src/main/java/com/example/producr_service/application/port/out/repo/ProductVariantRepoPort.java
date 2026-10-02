@@ -1,6 +1,8 @@
 package com.example.producr_service.application.port.out.repo;
 
+import com.example.producr_service.application.dto.response.VariantCartView;
 import com.example.producr_service.domain.model.ProductVariant;
+import com.example.producr_service.application.dto.response.CartInfoRepone;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 
 import java.util.Collection;
@@ -24,4 +26,6 @@ public interface ProductVariantRepoPort {
     List<StoredFile> findStoredFilesByVariantIds(Collection<Long> variantIds);
 
     void deleteById(Long variantId);
+/// Trả dữ liệu thô phục vụ giỏ hàng
+    List<VariantCartView> findCartViewsByVariantIds(Collection<Long> variantIds);
 }
