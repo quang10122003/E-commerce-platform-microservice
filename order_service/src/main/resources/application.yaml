@@ -26,3 +26,7 @@ eureka:
     prefer-ip-address: true
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
+
+app:
+  jwt:
+    public-key: ${JWT_PUBLIC_KEY}
