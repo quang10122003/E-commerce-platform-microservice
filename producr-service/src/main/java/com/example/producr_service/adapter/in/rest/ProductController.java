@@ -18,6 +18,7 @@ import com.example.producr_service.application.port.in.GetProductsCatalogUseCase
 import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
 import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
 import com.example.producr_service.application.port.in.UpdateProductUseCase;
+import lombok.extern.slf4j.Slf4j;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.DecimalMin;
@@ -38,6 +39,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
+@Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class ProductController {
 
@@ -59,6 +61,10 @@ public class ProductController {
             @RequestPart(value = "variantImages", required = false) List<MultipartFile> variantImages,
             @RequestPart(value = "variantImageMeta", required = false) @Valid List<VariantImageMeta> variantImageMeta
     ) throws IOException {
+        int variantCount = request.getVariants() == null ? 0 : request.getVariants().size();
+        int variantImageCount = variantImages == null ? 0 : variantImages.size();
+        log.info("Nhận yêu cầu tạo sản phẩm variantCount={}, variantImageCount={}",
+                variantCount, variantImageCount);
         ProductResponse response = createProductUseCase.createProduct(
                 productMultipartCommandMapper.toCommand(
                         request,
@@ -67,6 +73,7 @@ public class ProductController {
                         variantImageMeta
                 )
         );
+        log.info("Đã tạo sản phẩm productId={}", response.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -86,9 +93,15 @@ public class ProductController {
             @RequestPart(value = "variantImages", required = false) List<MultipartFile> variantImages,
             @RequestPart(value = "variantImageMeta", required = false) @Valid List<VariantImageMeta> variantImageMeta
     ) throws IOException {
-        return ResponseEntity.ok(updateProductUseCase.updateProduct(productId,
+        int variantCount = request.getVariants() == null ? 0 : request.getVariants().size();
+        int variantImageCount = variantImages == null ? 0 : variantImages.size();
+        log.info("Nhận yêu cầu cập nhật sản phẩm productId={}, variantCount={}, variantImageCount={}",
+                productId, variantCount, variantImageCount);
+        ShopProductDetailResponse response = updateProductUseCase.updateProduct(productId,
                 productMultipartCommandMapper.toUpdateCommand(
-                        request, productImage, variantImages, variantImageMeta)));
+                        request, productImage, variantImages, variantImageMeta));
+        log.info("Đã cập nhật sản phẩm productId={}", productId);
+        return ResponseEntity.ok(response);
     }
 
 
@@ -131,13 +144,17 @@ public class ProductController {
     // Xóa sản phẩm của shop và ghi tác vụ dọn ảnh, chỉ mục vào outbox.
     @DeleteMapping("/{productId}")
     public ResponseEntity<Void> deleteProduct(@PathVariable("productId") Long productId) {
+        log.info("Nhận yêu cầu xóa sản phẩm productId={}", productId);
         deleteProductUseCase.deleteProduct(productId);
+        log.info("Đã xử lý yêu cầu xóa sản phẩm productId={}", productId);
         return ResponseEntity.accepted().build();
     }
 
     @DeleteMapping("/{productId}/variants/{variantId}")
     public  ResponseEntity<Void> deleteProductvariant(@PathVariable("productId") Long productId,@PathVariable("variantId") Long variantsId){
+        log.info("Nhận yêu cầu xóa phân loại productId={}, variantId={}", productId, variantsId);
         deleteProductvariantUseCase.deleteProductvariant(productId, variantsId);
+        log.info("Đã xử lý yêu cầu xóa phân loại productId={}, variantId={}", productId, variantsId);
         return ResponseEntity.accepted().build();
     }
 

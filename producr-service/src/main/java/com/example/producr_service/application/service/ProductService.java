@@ -28,6 +28,7 @@ import com.example.producr_service.domain.model.Product;
 import com.example.producr_service.domain.model.ProductVariant;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.experimental.FieldDefaults;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.common.untill.JsonUtils;
@@ -37,6 +38,7 @@ import java.util.stream.Stream;
 
 // Triển khai các use case nghiệp vụ thuộc phạm vi product.
 @RequiredArgsConstructor
+@Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase {
     ProductImageRollbackPort productImageRollbackPort;
@@ -64,36 +66,52 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ShopProductDetailResponse updateProduct(Long productId, UpdateProductCommand command) {
-        return productUpdateService.updateProduct(productId, command);
+        log.info("Bắt đầu cập nhật sản phẩm productId={}", productId);
+        try {
+            ShopProductDetailResponse response = productUpdateService.updateProduct(productId, command);
+            log.info("Cập nhật sản phẩm thành công productId={}", productId);
+            return response;
+        } catch (RuntimeException exception) {
+            log.error("Cập nhật sản phẩm thất bại productId={}", productId, exception);
+            throw exception;
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public ProductResponse createProduct(CreateProductCommand command) {
-        CreateProductData request = command.productRequest();
-        List<VariantImageUploadCommand> variantImages = command.variantImages() == null
-                ? List.of()
-                : command.variantImages();
+        log.info("Bắt đầu tạo sản phẩm có phân loại");
+        try {
+            CreateProductData request = command.productRequest();
+            List<VariantImageUploadCommand> variantImages = command.variantImages() == null
+                    ? List.of()
+                    : command.variantImages();
 
-        List<StoredFile> storedFiles = new ArrayList<>();
-        // Đăng ký trước khi upload để cả lỗi upload dở dang cũng được dọn sau rollback.
-        productImageRollbackPort.deleteImageStore(storedFiles);
+            List<StoredFile> storedFiles = new ArrayList<>();
+            // Đăng ký trước khi upload để cả lỗi upload dở dang cũng được dọn sau rollback.
+            productImageRollbackPort.deleteImageStore(storedFiles);
 
-        // Validate, upload ảnh và gắn metadata vào request trước khi tạo product.
-        productImageUploadService.uploadAndApplyImageUrls(
-                request,
-                command.productImage(),
-                variantImages,
-                storedFiles
-        );
+            // Validate, upload ảnh và gắn metadata vào request trước khi tạo product.
+            productImageUploadService.uploadAndApplyImageUrls(
+                    request,
+                    command.productImage(),
+                    variantImages,
+                    storedFiles
+            );
 
-        UserInternaInfoRespone userInternaInfoRespone = currentUserPort.getUserInfo();
-        Product product = productCreationService.createProduct(userInternaInfoRespone, request);
+            UserInternaInfoRespone userInternaInfoRespone = currentUserPort.getUserInfo();
+            Product product = productCreationService.createProduct(userInternaInfoRespone, request);
 
-        // lưu outbox
-        saveProductCreatedOutboxEvent(product,userInternaInfoRespone);
+            // lưu outbox
+            saveProductCreatedOutboxEvent(product,userInternaInfoRespone);
 
-        return ProductResponse.from(product);
+            log.info("Tạo sản phẩm thành công productId={}, variantCount={}",
+                    product.getId(), product.getVariants().size());
+            return ProductResponse.from(product);
+        } catch (RuntimeException exception) {
+            log.error("Tạo sản phẩm thất bại", exception);
+            throw exception;
+        }
     }
 
     // Tạo event outbox tối đẩy lên db
@@ -143,30 +161,37 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     @Transactional
     @Override
     public void deleteProduct(Long productId) {
-        UserInternaInfoRespone userInternaInfoRespone =  currentUserPort.getUserInfo();
+        log.info("Bắt đầu xóa sản phẩm productId={}", productId);
+        try {
+            UserInternaInfoRespone userInternaInfoRespone = currentUserPort.getUserInfo();
 
-        // lấy id user sở hứu sản phẩm và check xem có phải cùng user request k , khóa sản phẩm lock
-        productHelper.validateProductOwnership(productId, userInternaInfoRespone.userId());
-        // lấy và khóa ProductVariant thuộc product
-        List<ProductVariant> variants = productVariantRepoPort.findByProductIdForUpdate(productId);
+            // lấy id user sở hứu sản phẩm và check xem có phải cùng user request k , khóa sản phẩm lock
+            productHelper.validateProductOwnership(productId, userInternaInfoRespone.userId());
+            // lấy và khóa ProductVariant thuộc product
+            List<ProductVariant> variants = productVariantRepoPort.findByProductIdForUpdate(productId);
 
 
-        // Giữ thông tin ảnh phân loại trước khi xóa bản ghi để dọn storage sau commit.
-        List<StoredFile> variantFiles = productVariantRepoPort.findStoredFilesByVariantIds(
-                variants.stream().map(ProductVariant::getId).toList()
-        );
+            // Giữ thông tin ảnh phân loại trước khi xóa bản ghi để dọn storage sau commit.
+            List<StoredFile> variantFiles = productVariantRepoPort.findStoredFilesByVariantIds(
+                    variants.stream().map(ProductVariant::getId).toList()
+            );
 
-        // Giữ thông tin ảnh bìa trước khi xóa bản ghi sản phẩm.
-        StoredFile coverFile = productRepositoryPort.findCoverFile(productId);
+            // Giữ thông tin ảnh bìa trước khi xóa bản ghi sản phẩm.
+            StoredFile coverFile = productRepositoryPort.findCoverFile(productId);
 
-        List<StoredFile> filesToDelete = productHelper.prepareFilesForDeletion(
-                productId,
-                Stream.concat(Stream.of(coverFile), variantFiles.stream()).toList()
-        );
-        saveProductDeletionOutboxEvents(productId, filesToDelete);
+            List<StoredFile> filesToDelete = productHelper.prepareFilesForDeletion(
+                    productId,
+                    Stream.concat(Stream.of(coverFile), variantFiles.stream()).toList()
+            );
+            saveProductDeletionOutboxEvents(productId, filesToDelete);
 
-        // Xóa aggregate và các bản ghi liên quan bằng cascade trong cùng transaction với outbox.
-        productRepositoryPort.deleteById(productId);
+            // Xóa aggregate và các bản ghi liên quan bằng cascade trong cùng transaction với outbox.
+            productRepositoryPort.deleteById(productId);
+            log.info("Xóa sản phẩm thành công productId={}", productId);
+        } catch (RuntimeException exception) {
+            log.error("Xóa sản phẩm thất bại productId={}", productId, exception);
+            throw exception;
+        }
     }
 
     // Lưu công việc dọn ảnh và xóa document tìm kiếm trong cùng transaction xóa sản phẩm.
@@ -194,31 +219,38 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     @Transactional
     @Override
     public void deleteProductvariant(Long productId, Long variantId) {
-        UserInternaInfoRespone userInternaInfoRespone =  currentUserPort.getUserInfo();
-        // Khóa sản phẩm và xác nhận quyền sở hữu trước khi khóa phân loại.
-        productHelper.validateProductOwnership(productId, userInternaInfoRespone.userId());
-        // Chỉ khóa phân loại thuộc đúng sản phẩm cần xử lý.
-        productVariantRepoPort.findByProductIdAndIdForUpdate(productId, variantId)
-                .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND));
-        // Đếm sau khi giữ khóa product để chặn hai lần xóa đồng thời phân loại cuối.
-        long countVariants = productVariantRepoPort.countByProduct_Id(productId);
-        // Giữ lại ít nhất một phân loại cho sản phẩm.
-       if(countVariants <=1 ){
-           throw  new BusinessException(ProductError.CANNOT_DELETE_LAST_VARIANT);
-       }
-        // Giữ metadata ảnh trước khi xóa bản ghi phân loại.
-        List<StoredFile> variantFiles = productVariantRepoPort.findStoredFilesByVariantIds(List.of(variantId));
+        log.info("Bắt đầu xóa phân loại productId={}, variantId={}", productId, variantId);
+        try {
+            UserInternaInfoRespone userInternaInfoRespone = currentUserPort.getUserInfo();
+            // Khóa sản phẩm và xác nhận quyền sở hữu trước khi khóa phân loại.
+            productHelper.validateProductOwnership(productId, userInternaInfoRespone.userId());
+            // Chỉ khóa phân loại thuộc đúng sản phẩm cần xử lý.
+            productVariantRepoPort.findByProductIdAndIdForUpdate(productId, variantId)
+                    .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND));
+            // Đếm sau khi giữ khóa product để chặn hai lần xóa đồng thời phân loại cuối.
+            long countVariants = productVariantRepoPort.countByProduct_Id(productId);
+            // Giữ lại ít nhất một phân loại cho sản phẩm.
+            if (countVariants <= 1) {
+                throw new BusinessException(ProductError.CANNOT_DELETE_LAST_VARIANT);
+            }
+            // Giữ metadata ảnh trước khi xóa bản ghi phân loại.
+            List<StoredFile> variantFiles = productVariantRepoPort.findStoredFilesByVariantIds(List.of(variantId));
 
-        // Kiểm tra metadata và loại ảnh trùng trước khi ghi outbox.
-        List<StoredFile> filesToDelete = productHelper.prepareFilesForDeletion(
-                productId,
-                 variantFiles
-        );
+            // Kiểm tra metadata và loại ảnh trùng trước khi ghi outbox.
+            List<StoredFile> filesToDelete = productHelper.prepareFilesForDeletion(
+                    productId,
+                    variantFiles
+            );
 
-        // Lưu tác vụ dọn ảnh cùng transaction xóa phân loại.
-        saveProductvariantDeletionOutboxEvents(variantId, filesToDelete,userInternaInfoRespone.shopAddress(),productId);
-        productVariantRepoPort.deleteById(variantId);
-
+            // Lưu tác vụ dọn ảnh cùng transaction xóa phân loại.
+            saveProductvariantDeletionOutboxEvents(
+                    variantId, filesToDelete, userInternaInfoRespone.shopAddress(), productId);
+            productVariantRepoPort.deleteById(variantId);
+            log.info("Xóa phân loại thành công productId={}, variantId={}", productId, variantId);
+        } catch (RuntimeException exception) {
+            log.error("Xóa phân loại thất bại productId={}, variantId={}", productId, variantId, exception);
+            throw exception;
+        }
     }
 
     private  void saveProductvariantDeletionOutboxEvents(Long variantId, List<StoredFile> filesToDelete,String shopAddress,Long productId){
