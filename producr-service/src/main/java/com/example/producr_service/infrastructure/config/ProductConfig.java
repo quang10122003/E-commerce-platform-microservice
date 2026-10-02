@@ -171,13 +171,11 @@ public class ProductConfig {
             FileUploader fileUploader,
             ProductImageRollbackPort productImageRollbackPort,
             OutboxPort outboxPort,
-            JsonUtils jsonUtils,
-            ShopProductDetailMapperPort shopProductDetailMapperPort
+            JsonUtils jsonUtils
     ) {
         return new ProductUpdateService(productRepositoryPort, productVariantRepoPort,
                 categoryRepoPort, brandRepositoryPort, currentUserPort, productHelper,
-                fileUploader, productImageRollbackPort, outboxPort, jsonUtils,
-                shopProductDetailMapperPort);
+                fileUploader, productImageRollbackPort, outboxPort, jsonUtils);
     }
 
     // Đăng ký handler dọn ảnh sản phẩm sau khi event xóa được xử lý.

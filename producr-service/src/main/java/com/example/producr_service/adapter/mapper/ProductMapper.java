@@ -3,8 +3,6 @@ import com.example.producr_service.adapter.DTO.documentElasticsearch.ProductSear
 import com.example.producr_service.adapter.entity.*;
 import com.example.common.response.PageResponse;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
-import com.example.producr_service.application.dto.response.ShopProductDetailResponse;
-import com.example.producr_service.application.port.out.ShopProductDetailMapperPort;
 import com.example.producr_service.application.port.out.storage.StorageBucket;
 import com.example.producr_service.domain.model.*;
 import lombok.AccessLevel;
@@ -25,49 +23,10 @@ import java.util.Set;
 @Component
 @FieldDefaults(makeFinal = true,level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
-public class ProductMapper implements ShopProductDetailMapperPort {
+public class ProductMapper {
 
     // Trả ID, SKU và ảnh cần cho form chỉnh sửa nhưng không lộ đường dẫn storage.
-    @Override
-    public ShopProductDetailResponse toShopProductDetailResponse(Product product) {
-        List<ProductAttribute> sourceAttributes = product.getAttributes();
-        List<ShopProductDetailResponse.Attribute> attributes = sourceAttributes.stream()
-                .map(attribute -> new ShopProductDetailResponse.Attribute(
-                        attribute.getId(), attribute.getName(),
-                        attribute.getValues().stream()
-                                .map(value -> new ShopProductDetailResponse.Value(
-                                        value.getId(), value.getValue()))
-                                .toList()))
-                .toList();
-        List<ShopProductDetailResponse.Variant> variants = product.getVariants().stream()
-                .map(variant -> toShopVariantResponse(variant, sourceAttributes))
-                .toList();
-        return new ShopProductDetailResponse(product.getId(), product.getCategoryId(),
-                product.getBrandId(), product.getName(), product.getDescription(),
-                product.getImageUrl(), attributes, variants);
-    }
-
     // Tìm vị trí từng giá trị đã chọn để frontend gửi lại đúng tổ hợp phân loại.
-    private ShopProductDetailResponse.Variant toShopVariantResponse(
-            ProductVariant variant, List<ProductAttribute> attributes) {
-        List<ShopProductDetailResponse.Selection> selections = new ArrayList<>();
-        for (int attributeIndex = 0; attributeIndex < attributes.size(); attributeIndex++) {
-            List<AttributeValue> values = attributes.get(attributeIndex).getValues();
-            for (int valueIndex = 0; valueIndex < values.size(); valueIndex++) {
-                if (variant.getAttributeValues().contains(values.get(valueIndex))) {
-                    selections.add(new ShopProductDetailResponse.Selection(attributeIndex, valueIndex));
-                }
-            }
-        }
-        return new ShopProductDetailResponse.Variant(
-                variant.getId(), variant.getSku(), variant.getPrice().getAmount(),
-                variant.getStockQuantity(), selections,
-                variant.getImages().stream()
-                        .map(image -> new ShopProductDetailResponse.Image(
-                                image.getId(), image.getImageUrl(), image.isPrimary()))
-                        .toList());
-    }
-
     // Cập nhật entity đang quản lý để giữ ID phân loại, thuộc tính và ảnh còn dùng.
     public void updateEntity(Product product, ProductEntity entity,
                              CategoryEntity category, BrandEntity brand) {

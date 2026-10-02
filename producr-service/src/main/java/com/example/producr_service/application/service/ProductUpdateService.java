@@ -13,9 +13,9 @@ import com.example.producr_service.application.dto.outbox.ProductUpdatedOutboxPa
 import com.example.producr_service.application.dto.request.UpdateProductData;
 import com.example.producr_service.application.dto.response.ShopProductDetailResponse;
 import com.example.producr_service.application.dto.response.UserInternaInfoRespone;
+import com.example.producr_service.application.mapper.ShopProductDetailMapper;
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
-import com.example.producr_service.application.port.out.ShopProductDetailMapperPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
@@ -46,7 +46,7 @@ public class ProductUpdateService {
     ProductImageRollbackPort productImageRollbackPort;
     OutboxPort outboxPort;
     JsonUtils jsonUtils;
-    ShopProductDetailMapperPort shopProductDetailMapperPort;
+    ShopProductDetailMapper shopProductDetailMapper = new ShopProductDetailMapper();
 
     // Đọc sản phẩm thuộc người dùng hiện tại thành dữ liệu dùng cho form.
     public ShopProductDetailResponse getShopProductDetail(Long productId) {
@@ -55,7 +55,7 @@ public class ProductUpdateService {
         if (!product.getUserId().equals(currentUserPort.getUserInfo().userId())) {
             throw new BusinessException(AuthorizationError.ACCESS_DENIED);
         }
-        return shopProductDetailMapperPort.toShopProductDetailResponse(product);
+        return shopProductDetailMapper.toShopProductDetailResponse(product);
     }
 
     // Khóa sản phẩm và các phân loại trước khi kiểm tra, rồi lưu thay đổi cùng outbox.
@@ -113,7 +113,7 @@ public class ProductUpdateService {
                 String.valueOf(productId), ProductUpdatedOutboxPayload.EVENT_TYPE,
                 jsonUtils.toJson(new ProductUpdatedOutboxPayload(productId,
                         productHelper.extractProvinceNameFromAddress(user.shopAddress())))));
-        return shopProductDetailMapperPort.toShopProductDetailResponse(saved);
+        return shopProductDetailMapper.toShopProductDetailResponse(saved);
     }
 
     // Buộc mọi phân loại cũ có mặt trong request vì API này không xử lý xóa phân loại.
