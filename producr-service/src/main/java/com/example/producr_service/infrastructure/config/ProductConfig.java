@@ -1,7 +1,6 @@
 package com.example.producr_service.infrastructure.config;
 
 import com.example.producr_service.application.port.out.storage.FileStoragePort;
-import com.example.producr_service.application.port.out.ShopProductDetailMapperPort;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
 import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
@@ -27,6 +26,8 @@ import com.example.producr_service.application.registry.UploadStrategyRegistry;
 import com.example.producr_service.application.registry.OutboxEventHandlerRegistry;
 import com.example.producr_service.adapter.client.AuthUserFeignClient;
 import com.example.producr_service.adapter.out.openFeign.AuthUserAdapter;
+import com.example.producr_service.adapter.out.openFeign.ShopInfoClientAdapter;
+import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
 import com.example.producr_service.application.service.FileUploader;
 import com.example.producr_service.application.service.StoredFileCleaner;
 import com.example.producr_service.application.service.DeleteStoredFilesService;
@@ -62,8 +63,15 @@ public class ProductConfig {
 
     // Cung cấp use case đọc thông tin variant cho API giỏ hàng nội bộ.
     @Bean
-    GetCartInfoUseCase getCartInfoUseCase(ProductVariantRepoPort productVariantRepoPort) {
-        return new ProductInternalService(productVariantRepoPort);
+    GetCartInfoUseCase getCartInfoUseCase(ProductVariantRepoPort productVariantRepoPort,
+                                           ShopInfoClientPort shopInfoClientPort) {
+        return new ProductInternalService(productVariantRepoPort, shopInfoClientPort);
+    }
+
+    // Cung cấp port tra cứu tên shop từ Auth service theo lô.
+    @Bean
+    ShopInfoClientPort shopInfoClientPort(AuthUserFeignClient authUserFeignClient) {
+        return new ShopInfoClientAdapter(authUserFeignClient);
     }
 
     // Đăng ký adapter lấy thông tin user hiện tại từ Auth service qua Feign.

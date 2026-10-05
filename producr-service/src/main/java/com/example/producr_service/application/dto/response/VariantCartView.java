@@ -8,6 +8,7 @@ import java.util.List;
 public record VariantCartView(
         Long variantId,
         Long productId,
+        Long shopId,
         String productName,
         // ảnh của product
         String productImageUrl,

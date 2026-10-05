@@ -11,6 +11,8 @@ import java.util.List;
 public record CartInfoRepone(
         Long productVariantId,
         Long productId,
+        Long shopId,
+        String shopName,
         String productName,
         String imageUrl,
         boolean hasOption,

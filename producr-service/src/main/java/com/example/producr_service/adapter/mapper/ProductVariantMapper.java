@@ -66,6 +66,7 @@ public class ProductVariantMapper {
         return new VariantCartView(
                 variant.getId(),
                 variant.getProduct().getId(),
+                variant.getProduct().getUserId(),
                 variant.getProduct().getName(),
                 variant.getProduct().getImageUrl(),
                 variant.getProduct().getStatus(),

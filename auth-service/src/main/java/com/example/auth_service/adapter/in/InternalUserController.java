@@ -1,11 +1,15 @@
 package com.example.auth_service.adapter.in;
 
+import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
 import com.example.auth_service.application.DTO.repone.UserInternaInfoRespone;
 import com.example.auth_service.application.port.in.InternalGetUserInfoUseCase;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import java.util.List;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +23,12 @@ public class InternalUserController {
     @GetMapping("getInfoUser")
     UserInternaInfoRespone getInfoUser(@RequestHeader("Authorization") String authorizationHeader){
         return internalGetUserInfoUseCase.getInfoUserInternal(authorizationHeader);
+    }
+
+    // Tra cứu tên shop theo lô để tránh gọi Auth service cho từng sản phẩm.
+    @PostMapping("shop-info")
+    List<ShopInfoResponse> getShopInfos(@RequestBody List<Long> userIds) {
+        return internalGetUserInfoUseCase.getShopInfos(userIds);
     }
 
 }
