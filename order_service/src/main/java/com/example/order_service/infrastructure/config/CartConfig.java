@@ -1,6 +1,9 @@
 package com.example.order_service.infrastructure.config;
 
+import com.example.order_service.cart.application.port.in.AddCartItemUseCase;
 import com.example.order_service.cart.application.port.in.GetCartUseCase;
+import com.example.order_service.cart.application.port.in.RemoveCartItemUseCase;
+import com.example.order_service.cart.application.port.in.UpdateCartItemQuantityUseCase;
 import com.example.order_service.cart.application.port.out.client.CurrentUserPort;
 import com.example.order_service.cart.application.port.out.client.ProductClientPort;
 import com.example.order_service.cart.application.port.out.repo.CartRepoPort;
@@ -10,12 +13,36 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class CartConfig {
-    // Đăng ký use case giỏ hàng thông qua input port.
+    // Khởi tạo application service từ các output port của luồng giỏ hàng.
     @Bean
-    GetCartUseCase getCartUseCase(
+    CartService cartService(
             CurrentUserPort currentUserPort,
             CartRepoPort cartRepoPort,
             ProductClientPort productClientPort) {
         return new CartService(currentUserPort, cartRepoPort, productClientPort);
+    }
+
+    // Đăng ký use case giỏ hàng thông qua input port.
+    @Bean
+    GetCartUseCase getCartUseCase(CartService cartService) {
+        return cartService;
+    }
+
+    // Đăng ký use case thêm sản phẩm qua input port.
+    @Bean
+    AddCartItemUseCase addCartItemUseCase(CartService cartService) {
+        return cartService;
+    }
+
+    // Đăng ký use case cập nhật số lượng item qua input port.
+    @Bean
+    UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase(CartService cartService) {
+        return cartService;
+    }
+
+    // Đăng ký use case xóa sản phẩm khỏi giỏ qua input port.
+    @Bean
+    RemoveCartItemUseCase removeCartItemUseCase(CartService cartService) {
+        return cartService;
     }
 }

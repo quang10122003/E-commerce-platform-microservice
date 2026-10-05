@@ -2,12 +2,17 @@ package com.example.order_service.cart.application.service;
 
 import com.example.order_service.cart.application.dto.repone.CartInfoRepone;
 import com.example.order_service.cart.application.dto.repone.CartRepone;
+import com.example.order_service.cart.application.port.in.AddCartItemUseCase;
 import com.example.order_service.cart.application.port.in.GetCartUseCase;
+import com.example.order_service.cart.application.port.in.RemoveCartItemUseCase;
+import com.example.order_service.cart.application.port.in.UpdateCartItemQuantityUseCase;
 import com.example.order_service.cart.application.port.out.client.CurrentUserPort;
 import com.example.order_service.cart.application.port.out.client.ProductClientPort;
 import com.example.order_service.cart.application.port.out.repo.CartRepoPort;
 import com.example.order_service.cart.domain.model.Cart;
 import com.example.order_service.cart.domain.model.CartItem;
+import com.example.common.exception.BusinessException;
+import com.example.order_service.cart.domain.error.CartDomainError;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,11 +25,13 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class CartService implements GetCartUseCase {
+public class CartService implements GetCartUseCase, AddCartItemUseCase,
+        UpdateCartItemQuantityUseCase, RemoveCartItemUseCase {
     CurrentUserPort currentUserPort;
     CartRepoPort cartRepoPort;
     ProductClientPort productClientPort;
 
+    // lấy giở hàng
     @Override
     public CartRepone getCart() {
         Long userId = currentUserPort.getInfo().userId();
@@ -93,6 +100,8 @@ public class CartService implements GetCartUseCase {
                 .cartItemId(cartItem.getId())
                 .productId(productInfo.productId())
                 .productVariantId(productInfo.productVariantId())
+                .shopId(productInfo.shopId())
+                .shopName(productInfo.shopName())
                 .productName(productInfo.productName())
                 .imageUrl(productInfo.imageUrl())
                 .hasOption(productInfo.hasOption())
@@ -102,5 +111,43 @@ public class CartService implements GetCartUseCase {
                 .stockQuantity(productInfo.stockQuantity())
                 .status(productInfo.status())
                 .build();
+    }
+
+    // thêm sản phâm vào giỏ
+    @Override
+    public void  addCartItem(Long productVariantId) {
+        Long userId = currentUserPort.getInfo().userId();
+
+        Cart cart;
+        Optional<Cart> optionalCart = cartRepoPort.findByUserId(userId);
+        // k giỏ thì tạo và thêm sản phẩm
+        if (optionalCart.isEmpty()) {
+            cart = Cart.create(userId);
+            cart.addItem(productVariantId);
+        } else {
+            cart = optionalCart.get();
+            cart.addItem(productVariantId);
+        }
+        cartRepoPort.save(cart);
+    }
+
+    // Cập nhật số lượng biến thể trong giỏ của người dùng hiện tại.
+    @Override
+    public void updateCartItemQuantity(Long productVariantId, int quantity) {
+        Long userId = currentUserPort.getInfo().userId();
+        Cart cart = cartRepoPort.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(CartDomainError.ITEM_NOT_FOUND));
+        cart.updateItemQuantity(productVariantId, quantity);
+        cartRepoPort.save(cart);
+    }
+
+    // Xóa biến thể khỏi giỏ của người dùng hiện tại.
+    @Override
+    public void removeCartItem(Long productVariantId) {
+        Long userId = currentUserPort.getInfo().userId();
+        Cart cart = cartRepoPort.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(CartDomainError.ITEM_NOT_FOUND));
+        cart.removeItem(productVariantId);
+        cartRepoPort.save(cart);
     }
 }

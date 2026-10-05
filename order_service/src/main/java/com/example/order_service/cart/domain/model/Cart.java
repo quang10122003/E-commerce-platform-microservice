@@ -13,8 +13,6 @@ import java.util.Optional;
 @Getter
 public class Cart {
 
-    public static final int MAX_QUANTITY_PER_ITEM = 99;
-
     private final Long id;
     private final Long userId;
     private final LocalDateTime createdAt;
@@ -27,7 +25,7 @@ public class Cart {
             throw new BusinessException(CartDomainError.USER_ID_REQUIRED);
         }
         this.id = id;
-        this.userId = userId;          // <-- thêm dòng này
+        this.userId = userId;         
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.items = new ArrayList<>(items == null ? List.of() : items);
@@ -36,17 +34,22 @@ public class Cart {
     // Tạo giỏ mới với danh sách sản phẩm rỗng.
     public static Cart create(Long userId) {
         LocalDateTime now = LocalDateTime.now();
-        return new Cart(null, userId, now, now, List.of());
+        return new Cart(null, userId, now, now, new ArrayList<>());
     }
 
     // Dựng aggregate từ dữ liệu đã lưu.
     public static Cart reconstitute(Long id, Long userId, LocalDateTime createdAt,
                                     LocalDateTime updatedAt, List<CartItem> items) {
-        return new Cart(id, userId, createdAt, updatedAt, items == null ? List.of() : items);
+        return new Cart(id, userId, createdAt, updatedAt,
+                items == null ? new ArrayList<>() : items);
+    }
+    // Thêm 1 sản phẩm (số lượng mặc định là 1).
+    public void addItem(Long productVariantId) {
+        addItem(productVariantId, 1);
     }
 
     // Thêm biến thể mới hoặc cộng dồn số lượng của biến thể đã có.
-    public void addItem(Long productVariantId, int quantity) {
+    public void addItem(Long productVariantId, int quantity ) {
         if (productVariantId == null || productVariantId <= 0) {
             throw new BusinessException(CartDomainError.PRODUCT_VARIANT_ID_REQUIRED);
         }
@@ -62,6 +65,16 @@ public class Cart {
             items.add(new CartItem(null, productVariantId, quantity, now, now));
         }
         updatedAt = now;
+    }
+
+    // Cập nhật số lượng chính xác cho biến thể đã có trong giỏ.
+    public void updateItemQuantity(Long productVariantId, int quantity) {
+        if (quantity <= 0) {
+            throw new BusinessException(CartDomainError.QUANTITY_INVALID);
+        }
+        CartItem item = getItemOrThrow(productVariantId);
+        item.updateQuantity(quantity);
+        updatedAt = LocalDateTime.now();
     }
 
     // Xóa biến thể khỏi giỏ; báo lỗi nếu giỏ không chứa biến thể đó.

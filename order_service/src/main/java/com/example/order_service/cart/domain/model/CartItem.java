@@ -46,6 +46,13 @@ public class CartItem {
         updatedAt = LocalDateTime.now();
     }
 
+    // Gán số lượng mới cho item.
+    void updateQuantity(int quantity) {
+        requirePositive(quantity);
+        this.quantity = quantity;
+        updatedAt = LocalDateTime.now();
+    }
+
     // Giảm số lượng item; Cart chịu trách nhiệm xóa item nếu lượng giảm chạm về 0.
     void decreaseQuantity(int amount) {
         requirePositive(amount);

@@ -31,11 +31,13 @@ spring:
               filters:
                 - name: ApiResponse
 
-        # Order Service
-        # - id: order-service
-        #   uri: lb://order-service
-        #   predicates:
-        #     - Path=/api/orders/**
+            # Chuyển tiếp các API giỏ hàng đến order-service.
+            - id: order-service
+              uri: lb://order-service
+              predicates:
+                - Path=/api/cart,/api/cart/**
+              filters:
+                - name: ApiResponse
   data:
     redis:
       host: ${REDIS_HOST:localhost}

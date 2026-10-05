@@ -17,7 +17,8 @@ public record CartRepone(Long CartId, int totalItems, int totalQuantity, List<Ca
 
     @Builder
     // thông tin của sản phẩm trong giỏ hàng
-    public record CartItemInfo(Long cartItemId, Long productId, Long productVariantId, String productName,
+    public record CartItemInfo(Long cartItemId, Long productId, Long productVariantId,
+                               Long shopId, String shopName, String productName,
                                String imageUrl, boolean hasOption,
                                List<VariantOptions> variantOptions, BigDecimal price, int quantity, int stockQuantity,
                                ProductStatus status) {
