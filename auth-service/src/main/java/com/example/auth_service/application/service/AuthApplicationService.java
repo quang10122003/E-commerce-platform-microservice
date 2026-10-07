@@ -1,6 +1,7 @@
 package com.example.auth_service.application.service;
 
 import java.time.Duration;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
@@ -47,6 +48,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
     UserRepositoryPort userRepositoryPort;
     OutboxEventPort outboxEventPort;
     AccessControlCachePort accessControlCachePort;
+    Clock clock;
 
     @Transactional(readOnly = true)
     @Override
@@ -162,10 +164,11 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
     private void publishUserRegisteredEvent(User user) {
         UUID eventId = UUID.randomUUID();
         EventType eventType = EventType.USER_REGISTERED;
+        LocalDateTime now = LocalDateTime.now(clock);
         outboxEventPort.save(new OutboxEvent(
                 eventId, Constant.USER, String.valueOf(user.getId()), eventType,
                 new UserRegisteredEventDto(eventId, eventType.getValue(),
-                        user.getId(), user.getEmail(), user.getFullName(), LocalDateTime.now())));
+                        user.getId(), user.getEmail(), user.getFullName(), now), now));
     }
 
     // core tạo user mới cho đăng ký

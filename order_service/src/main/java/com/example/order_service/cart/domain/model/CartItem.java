@@ -38,29 +38,29 @@ public class CartItem {
     }
 
     // Cộng số lượng của một item.
-    void increaseQuantity(int amount) {
+    void increaseQuantity(int amount, LocalDateTime now) {
         requirePositive(amount);
         // Dùng long để tránh tràn int khi cộng dồn
 
         quantity += amount;
-        updatedAt = LocalDateTime.now();
+        updatedAt = now;
     }
 
     // Gán số lượng mới cho item.
-    void updateQuantity(int quantity) {
+    void updateQuantity(int quantity, LocalDateTime now) {
         requirePositive(quantity);
         this.quantity = quantity;
-        updatedAt = LocalDateTime.now();
+        updatedAt = now;
     }
 
     // Giảm số lượng item; Cart chịu trách nhiệm xóa item nếu lượng giảm chạm về 0.
-    void decreaseQuantity(int amount) {
+    void decreaseQuantity(int amount, LocalDateTime now) {
         requirePositive(amount);
         if (amount >= quantity) {
             throw new BusinessException(CartDomainError.QUANTITY_INVALID);
         }
         quantity -= amount;
-        updatedAt = LocalDateTime.now();
+        updatedAt = now;
     }
 
     private static void requirePositive(int value) {

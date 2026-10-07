@@ -1,5 +1,6 @@
 package com.example.auth_service.adapter.out.persistence.outbox;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,7 @@ public class OutboxEventRepoAdapter implements OutboxEventPort {
     private final OutboxEventRepoJpaJpa outboxEventRepoJpaJpa;
     private final OutboxEventMapper outboxEventMapper;
     private final JsonUtils jsonUtils;
+    private final Clock clock;
 
     @Override
     public void save(OutboxEvent event) {
@@ -53,7 +55,7 @@ public class OutboxEventRepoAdapter implements OutboxEventPort {
     public void markPublished(UUID eventId) {
         outboxEventRepoJpaJpa.findByEventId(eventId.toString()).ifPresent(event -> {
             event.setStatus(OutboxEventEntity.Status.PUBLISHED);
-            event.setPublishedAt(LocalDateTime.now());
+            event.setPublishedAt(LocalDateTime.now(clock));
             event.setErrorMessage(null);
         });
     }

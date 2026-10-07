@@ -137,3 +137,115 @@ CREATE INDEX idx_attributes_by_product ON attributes(products_id);
 CREATE INDEX idx_values_by_attribute ON attribute_values(attributes_id);
 CREATE INDEX idx_images_by_variant ON variant_images(product_variants_id);
 CREATE INDEX idx_link_by_value ON variant_attribute_values(attribute_values_id);
+
+-- ============================================================
+-- FLASH SALE
+-- ============================================================
+
+-- Lưu chương trình Flash Sale do Admin quản lý.
+CREATE TABLE flash_sale_campaigns (
+    -- Mã chương trình.
+    id BIGINT NOT NULL AUTO_INCREMENT,
+
+    -- Tên chương trình.
+    name VARCHAR(255) NOT NULL,
+
+    -- Mô tả nội dung chương trình.
+    description TEXT NULL,
+
+    -- Hạn cuối Shop được đăng ký, sửa hoặc rút variant.
+    registration_deadline DATETIME NOT NULL,
+
+    -- Thời điểm bắt đầu áp dụng giá sale.
+    starts_at DATETIME NOT NULL,
+
+    -- Thời điểm kết thúc áp dụng giá sale.
+    ends_at DATETIME NOT NULL,
+
+    -- DRAFT: Shop đăng ký trước hạn; PUBLISHED: công bố cho người mua.
+    -- CANCELLED: đã hủy; DONE: đã hoàn thành. Giá sale chỉ áp dụng trong giờ chạy.
+    status ENUM('DRAFT', 'PUBLISHED', 'CANCELLED', 'DONE')
+        NOT NULL DEFAULT 'DRAFT',
+
+    -- ID Admin thuộc Auth service, không tạo khóa ngoại xuyên service.
+    created_by BIGINT NOT NULL,
+
+    -- Thời điểm tạo chương trình.
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    -- Thời điểm cập nhật gần nhất.
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+
+    -- Hạn đăng ký phải trước bắt đầu; kết thúc phải sau bắt đầu.
+    CONSTRAINT chk_flash_sale_campaign_time
+        CHECK (
+            registration_deadline < starts_at
+            AND starts_at < ends_at
+        )
+) ENGINE=InnoDB
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+
+-- Lưu variant và điều kiện sale do Shop đăng ký.
+CREATE TABLE flash_sale_items (
+    -- Mã đăng ký.
+    id BIGINT NOT NULL AUTO_INCREMENT,
+
+    -- Chương trình mà variant tham gia.
+    flash_sale_campaigns_id BIGINT NOT NULL,
+
+    -- Variant tham gia; Shop được xác định qua product sở hữu variant.
+    product_variants_id INT NOT NULL,
+
+    -- Phần trăm giảm do Shop nhập; giá sale tính từ giá hiện tại của variant.
+    discount_percent DECIMAL(5,2) NOT NULL,
+
+    -- Hạn mức đăng ký, chưa phải tồn kho được giữ.
+    registered_quantity INT NOT NULL,
+
+    -- Đang đăng ký, Shop đã rút hoặc bị vô hiệu hóa.
+    status ENUM('REGISTERED', 'WITHDRAWN', 'DISABLED')
+        NOT NULL DEFAULT 'REGISTERED',
+
+    -- Thời điểm tạo đăng ký.
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    -- Thời điểm cập nhật đăng ký gần nhất.
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+
+    -- Mỗi variant chỉ có một bản ghi trong một chương trình.
+    CONSTRAINT uk_flash_sale_campaign_variant
+        UNIQUE (flash_sale_campaigns_id, product_variants_id),
+
+    -- Không xóa chương trình khi còn đăng ký tham chiếu.
+    CONSTRAINT fk_flash_sale_item_campaign
+        FOREIGN KEY (flash_sale_campaigns_id)
+        REFERENCES flash_sale_campaigns(id)
+        ON DELETE RESTRICT,
+
+    -- Không xóa variant khi còn đăng ký tham chiếu.
+    CONSTRAINT fk_flash_sale_item_variant
+        FOREIGN KEY (product_variants_id)
+        REFERENCES product_variants(id)
+        ON DELETE RESTRICT,
+
+    -- Phần trăm giảm phải lớn hơn 0 và nhỏ hơn 100.
+    CONSTRAINT chk_flash_sale_item_discount
+        CHECK (discount_percent > 0 AND discount_percent < 100),
+
+    -- Hạn mức đăng ký phải lớn hơn 0.
+    CONSTRAINT chk_flash_sale_item_quantity
+        CHECK (registered_quantity > 0),
+
+    -- Hỗ trợ tra cứu đăng ký theo variant.
+    INDEX idx_flash_sale_item_variant (product_variants_id)
+) ENGINE=InnoDB
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;

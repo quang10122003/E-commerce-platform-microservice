@@ -11,15 +11,25 @@ import com.example.order_service.cart.application.service.CartService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Clock;
+import java.time.ZoneId;
+
 @Configuration
 public class CartConfig {
+    // Cung cấp nguồn thời gian theo múi giờ Việt Nam.
+    @Bean
+    Clock clock() {
+        return Clock.system(ZoneId.of("Asia/Ho_Chi_Minh"));
+    }
+
     // Khởi tạo application service từ các output port của luồng giỏ hàng.
     @Bean
     CartService cartService(
             CurrentUserPort currentUserPort,
             CartRepoPort cartRepoPort,
-            ProductClientPort productClientPort) {
-        return new CartService(currentUserPort, cartRepoPort, productClientPort);
+            ProductClientPort productClientPort,
+            Clock clock) {
+        return new CartService(currentUserPort, cartRepoPort, productClientPort, clock);
     }
 
     // Đăng ký use case giỏ hàng thông qua input port.

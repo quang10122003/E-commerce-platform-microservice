@@ -7,6 +7,7 @@ import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +20,7 @@ public class OutboxEventRepoAdapter implements OutboxPort {
 
     private final OutboxEventJpa outboxEventJpa;
     private final OutboxEventMapper outboxEventMapper;
+    private final Clock clock;
 
     @Override
     public void save(OutboxEventDto event) {
@@ -30,7 +32,7 @@ public class OutboxEventRepoAdapter implements OutboxPort {
         return outboxEventJpa
                 .findByStatusAndNextAttemptAtLessThanEqualOrderByIdAsc(
                         OutboxEventEntity.Status.PENDING,
-                        LocalDateTime.now()
+                        LocalDateTime.now(clock)
                 )
                 .stream()
                 .map(outboxEventMapper::toDto)
@@ -39,7 +41,7 @@ public class OutboxEventRepoAdapter implements OutboxPort {
 
     @Override
     public Optional<OutboxEventDto> lockPendingEvent(UUID eventId) {
-        return outboxEventJpa.lockPendingEvent(eventId.toString(), LocalDateTime.now())
+        return outboxEventJpa.lockPendingEvent(eventId.toString(), LocalDateTime.now(clock))
                 .map(outboxEventMapper::toDto);
     }
 
@@ -47,7 +49,7 @@ public class OutboxEventRepoAdapter implements OutboxPort {
     public void markPublished(UUID eventId) {
         outboxEventJpa.findByEventId(eventId.toString()).ifPresent(event -> {
             event.setStatus(OutboxEventEntity.Status.PUBLISHED);
-            event.setPublishedAt(LocalDateTime.now());
+            event.setPublishedAt(LocalDateTime.now(clock));
             event.setErrorMessage(null);
         });
     }
@@ -64,7 +66,7 @@ public class OutboxEventRepoAdapter implements OutboxPort {
                 event.setStatus(OutboxEventEntity.Status.FAILED);
             } else {
                 long delaySeconds = Math.min(300L, 5L * (1L << Math.min(retryCount - 1, 5)));
-                event.setNextAttemptAt(LocalDateTime.now().plusSeconds(delaySeconds));
+                event.setNextAttemptAt(LocalDateTime.now(clock).plusSeconds(delaySeconds));
             }
         });
     }

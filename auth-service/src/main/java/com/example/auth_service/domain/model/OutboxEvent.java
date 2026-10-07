@@ -24,7 +24,8 @@ public record OutboxEvent(
             String aggregateType,
             String aggregateId,
             EventType eventType,
-            Object payload) {
+            Object payload,
+            LocalDateTime now) {
         this(
                 eventId,
                 aggregateType,
@@ -34,7 +35,7 @@ public record OutboxEvent(
                 OutboxStatus.PENDING,
                 0,
                 5,
-                LocalDateTime.now(),
+                now,
                 null,
                 null);
     }

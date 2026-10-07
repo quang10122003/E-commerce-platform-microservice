@@ -3,6 +3,12 @@ package com.example.producr_service.infrastructure.config;
 import com.example.producr_service.application.port.out.storage.FileStoragePort;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
+import com.example.producr_service.application.port.in.CreateFlashSaleCampaignUseCase;
+import com.example.producr_service.application.port.in.GetFlashSaleCampaignsUseCase;
+import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRepositoryPort;
+import com.example.producr_service.application.service.FlashSaleCampaignService;
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.example.producr_service.application.port.in.CancelFlashSaleCampaignUseCase;
 import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
 import com.example.producr_service.application.port.in.GetCartInfoUseCase;
 import com.example.producr_service.application.port.in.UpdateProductUseCase;
@@ -56,10 +62,47 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import com.example.common.untill.JsonUtils;
 
+import java.time.Clock;
+import java.time.ZoneId;
 import java.util.List;
 
 @Configuration
 public class ProductConfig {
+
+    // Cung cấp nguồn thời gian theo múi giờ Việt Nam.
+    @Bean
+    Clock clock() {
+        return Clock.system(ZoneId.of("Asia/Ho_Chi_Minh"));
+    }
+
+    // Khởi tạo service dùng chung cho các use case chương trình Flash Sale.
+    @Bean
+    FlashSaleCampaignService flashSaleCampaignService(
+            CurrentUserPort currentUserPort,
+            FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort,
+            Clock clock
+    ) {
+        return new FlashSaleCampaignService(currentUserPort, flashSaleCampaignRepositoryPort, clock);
+    }
+
+    // Cung cấp use case tạo chương trình Flash Sale qua input port.
+    @Bean
+    CreateFlashSaleCampaignUseCase createFlashSaleCampaignUseCase(@Qualifier("flashSaleCampaignService") FlashSaleCampaignService service) {
+        return service;
+    }
+
+    // Cung cấp use case đọc danh sách chương trình cho controller.
+    @Bean
+    GetFlashSaleCampaignsUseCase getFlashSaleCampaignsUseCase(@Qualifier("flashSaleCampaignService") FlashSaleCampaignService service) {
+        return service;
+    }
+
+    // Cung cấp use case hủy chương trình qua input port.
+    @Bean
+    CancelFlashSaleCampaignUseCase cancelFlashSaleCampaignUseCase(
+            @Qualifier("flashSaleCampaignService") FlashSaleCampaignService service) {
+        return service;
+    }
 
     // Cung cấp use case đọc thông tin variant cho API giỏ hàng nội bộ.
     @Bean
@@ -179,11 +222,12 @@ public class ProductConfig {
             FileUploader fileUploader,
             ProductImageRollbackPort productImageRollbackPort,
             OutboxPort outboxPort,
-            JsonUtils jsonUtils
+            JsonUtils jsonUtils,
+            Clock clock
     ) {
         return new ProductUpdateService(productRepositoryPort, productVariantRepoPort,
                 categoryRepoPort, brandRepositoryPort, currentUserPort, productHelper,
-                fileUploader, productImageRollbackPort, outboxPort, jsonUtils);
+                fileUploader, productImageRollbackPort, outboxPort, jsonUtils, clock);
     }
 
     // Đăng ký handler dọn ảnh sản phẩm sau khi event xóa được xử lý.
@@ -247,7 +291,8 @@ public class ProductConfig {
         ShopProductPageAssembler sellerProductPageAssembler,
         ProductRepositoryPort productRepositoryPort,
         ProductVariantRepoPort productVariantRepoPort,
-        ProductUpdateService productUpdateService
+        ProductUpdateService productUpdateService,
+        Clock clock
     ) {
         return new ProductService(
                 productImageRollbackPort,
@@ -261,7 +306,8 @@ public class ProductConfig {
                 sellerProductPageAssembler,
                 productRepositoryPort,
                 productVariantRepoPort,
-                productUpdateService
+                productUpdateService,
+                clock
         );
     }
 

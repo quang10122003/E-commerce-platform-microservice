@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,6 +25,7 @@ import java.util.Set;
 @FieldDefaults(makeFinal = true,level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
 public class ProductMapper {
+    Clock clock;
 
     // Trả ID, SKU và ảnh cần cho form chỉnh sửa nhưng không lộ đường dẫn storage.
     // Tìm vị trí từng giá trị đã chọn để frontend gửi lại đúng tổ hợp phân loại.
@@ -36,7 +38,7 @@ public class ProductMapper {
         entity.setDescription(product.getDescription());
         entity.setImageUrl(product.getImageUrl());
         entity.setObjectPath(product.getObjectPath());
-        entity.setUpdatedAt(LocalDateTime.now());
+        entity.setUpdatedAt(LocalDateTime.now(clock));
 
         Map<Long, AttributeEntity> existingAttributes = new HashMap<>();
         for (AttributeEntity attribute : entity.getAttributes()) existingAttributes.put(attribute.getId(), attribute);
@@ -77,7 +79,7 @@ public class ProductMapper {
             ProductVariantEntity variant = source.getId() == null ? null : existingVariants.get(source.getId());
             if (variant == null) {
                 variant = ProductVariantEntity.builder().product(entity).sku(source.getSku())
-                        .createdAt(LocalDateTime.now()).images(new ArrayList<>())
+                        .createdAt(LocalDateTime.now(clock)).images(new ArrayList<>())
                         .attributeValues(new HashSet<>()).build();
                 entity.addVariant(variant);
             }
@@ -128,8 +130,8 @@ public class ProductMapper {
                 .storageBucket(StorageBucket.PRODUCT_IMAGES)
                 .totalSold(product.getTotalSold())
                 .status(product.getStatus())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(clock))
+                .updatedAt(LocalDateTime.now(clock))
                 .attributes(new ArrayList<>())
                 .variants(new ArrayList<>())
                 .build();
@@ -161,7 +163,7 @@ public class ProductMapper {
                     .sku(productVariant.getSku())
                     .price(productVariant.getPrice().getAmount())
                     .stockQuantity(productVariant.getStockQuantity())
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now(clock))
                     .images(new ArrayList<>())
                     .attributeValues(new HashSet<>())
                     .build();

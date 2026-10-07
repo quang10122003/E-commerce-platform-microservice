@@ -5,10 +5,12 @@ import com.example.common.error.ErrorCode;
 import com.example.common.exception.BusinessException;
 import com.example.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ public class GlobalExceptionHandler {
     // Ghi nhận lỗi binding/validation xảy ra trước khi controller được gọi.
     @ExceptionHandler({
             MethodArgumentNotValidException.class,
+            MethodArgumentTypeMismatchException.class,
             MissingServletRequestPartException.class,
             HttpMessageNotReadableException.class,
             MultipartException.class
@@ -41,6 +44,15 @@ public class GlobalExceptionHandler {
         log.warn("Request không hợp lệ: type={}, message={}",
                 ex.getClass().getSimpleName(), ex.getMessage());
         return badRequest("BAD_REQUEST", "Request không hợp lệ: " + ex.getMessage());
+    }
+
+    // Trả 405 và header Allow khi client gọi sai HTTP method, thay vì báo lỗi hệ thống.
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
+        String message = "HTTP method không được hỗ trợ cho endpoint này";
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .headers(ex.getHeaders())
+                .body(ApiResponse.error(message, new ApiErrorDto("METHOD_NOT_ALLOWED", message)));
     }
 
     // Tạo response 400 thống nhất cho lỗi request từ phía client.

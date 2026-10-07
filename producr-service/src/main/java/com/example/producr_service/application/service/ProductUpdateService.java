@@ -30,6 +30,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.*;
 
 // Đối chiếu dữ liệu chỉnh sửa với sản phẩm hiện có; ProductService giữ transaction.
@@ -46,6 +48,7 @@ public class ProductUpdateService {
     ProductImageRollbackPort productImageRollbackPort;
     OutboxPort outboxPort;
     JsonUtils jsonUtils;
+    Clock clock;
     ShopProductDetailMapper shopProductDetailMapper = new ShopProductDetailMapper();
 
     // Đọc sản phẩm thuộc người dùng hiện tại thành dữ liệu dùng cho form.
@@ -107,12 +110,12 @@ public class ProductUpdateService {
         if (!filesToDelete.isEmpty()) {
             outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
                     String.valueOf(productId), ProductImagesDeleteOutboxPayload.EVENT_TYPE,
-                    jsonUtils.toJson(new ProductImagesDeleteOutboxPayload(filesToDelete))));
+                    jsonUtils.toJson(new ProductImagesDeleteOutboxPayload(filesToDelete)), LocalDateTime.now(clock)));
         }
         outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
                 String.valueOf(productId), ProductUpdatedOutboxPayload.EVENT_TYPE,
                 jsonUtils.toJson(new ProductUpdatedOutboxPayload(productId,
-                        productHelper.extractProvinceNameFromAddress(user.shopAddress())))));
+                        productHelper.extractProvinceNameFromAddress(user.shopAddress()))), LocalDateTime.now(clock)));
         return shopProductDetailMapper.toShopProductDetailResponse(saved);
     }
 

@@ -78,6 +78,39 @@ public enum DomainProductError implements ErrorCode {
             "Số tiền không được âm",
             400
     ),
+    FLASH_SALE_CANNOT_CANCEL(
+            "FLASH_SALE_CANNOT_CANCEL", "Không thể hủy chương trình Flash Sale đã hoàn thành", 409
+    ),
+    FLASH_SALE_NAME_INVALID(
+            "FLASH_SALE_NAME_INVALID",
+            "Tên chương trình Flash Sale phải có từ 1 đến 255 ký tự",
+            400
+    ),
+    FLASH_SALE_TIME_INVALID(
+            "FLASH_SALE_TIME_INVALID",
+            "Hạn đăng ký phải trước thời điểm bắt đầu và thời điểm kết thúc",
+            400
+    ),
+    FLASH_SALE_REGISTRATION_DEADLINE_PASSED(
+            "FLASH_SALE_REGISTRATION_DEADLINE_PASSED",
+            "Hạn đăng ký Flash Sale phải ở tương lai",
+            400
+    ),
+    FLASH_SALE_START_TOO_SOON(
+            "FLASH_SALE_START_TOO_SOON",
+            "Thời điểm bắt đầu Flash Sale phải cách hiện tại ít nhất 3 tiếng",
+            400
+    ),
+    FLASH_SALE_REGISTRATION_GAP_TOO_SHORT(
+            "FLASH_SALE_REGISTRATION_GAP_TOO_SHORT",
+            "Hạn đăng ký phải trước thời điểm bắt đầu Flash Sale ít nhất 30 phút",
+            400
+    ),
+    FLASH_SALE_CREATOR_INVALID(
+            "FLASH_SALE_CREATOR_INVALID",
+            "ID người tạo chương trình Flash Sale phải lớn hơn 0",
+            400
+    ),
     PRODUCT_USER_REQUIRED(
             "PRODUCT_USER_REQUIRED",
             "sản phẩm phải sở hữu bởi 1 user",

@@ -3,6 +3,27 @@ package com.example.producr_service.application.error;
 import com.example.common.error.ErrorCode;
 
 public enum ProductError implements ErrorCode  {
+    FLASH_SALE_CAMPAIGN_NOT_FOUND(
+            "FLASH_SALE_CAMPAIGN_NOT_FOUND", "Không tìm thấy chương trình Flash Sale", 404
+    ),
+    INVALID_FLASH_SALE_CAMPAIGN_ID(
+            "INVALID_FLASH_SALE_CAMPAIGN_ID", "ID chương trình Flash Sale khong hop le ", 400
+    ),
+    INVALID_FLASH_SALE_TIME_FILTER(
+            "INVALID_FLASH_SALE_TIME_FILTER",
+            "Khoảng thời gian phải có đủ from và to, với from không sau to",
+            400
+    ),
+    INVALID_FLASH_SALE_PAGINATION(
+            "INVALID_FLASH_SALE_PAGINATION",
+            "Trang phải từ 1 trở lên và kích thước trang phải từ 10 đến 30",
+            400
+    ),
+    FLASH_SALE_SCHEDULE_CONFLICT(
+            "FLASH_SALE_SCHEDULE_CONFLICT",
+            "Thời gian chương trình Flash Sale trùng với chương trình khác",
+            409
+    ),
     CATEGORY_NOT_FOUND(
             "CATEGORY_NOT_FOUND",
             "Category not found",

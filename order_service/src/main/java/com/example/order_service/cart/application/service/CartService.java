@@ -17,6 +17,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,6 +32,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
     CurrentUserPort currentUserPort;
     CartRepoPort cartRepoPort;
     ProductClientPort productClientPort;
+    Clock clock;
 
     // lấy giở hàng
     @Override
@@ -70,7 +73,8 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 .filter(variantId -> !returnedVariantIds.contains(variantId))
                 .toList();
         // gọi method xóa sản phẩm khỏi giỏ ( hành đôngj doamin ) chưa truy vấn
-        missingVariantIds.forEach(cart::removeItem);
+        LocalDateTime now = LocalDateTime.now(clock);
+        missingVariantIds.forEach(variantId -> cart.removeItem(variantId, now));
 
         // nếu có sản phẩm bị xóa thì gọi đê cập nhật giỏ trong db
         if (!missingVariantIds.isEmpty()) {
@@ -118,15 +122,16 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
     public void  addCartItem(Long productVariantId) {
         Long userId = currentUserPort.getInfo().userId();
 
+        LocalDateTime now = LocalDateTime.now(clock);
         Cart cart;
         Optional<Cart> optionalCart = cartRepoPort.findByUserId(userId);
         // k giỏ thì tạo và thêm sản phẩm
         if (optionalCart.isEmpty()) {
-            cart = Cart.create(userId);
-            cart.addItem(productVariantId);
+            cart = Cart.create(userId, now);
+            cart.addItem(productVariantId, now);
         } else {
             cart = optionalCart.get();
-            cart.addItem(productVariantId);
+            cart.addItem(productVariantId, now);
         }
         cartRepoPort.save(cart);
     }
@@ -137,7 +142,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
         Long userId = currentUserPort.getInfo().userId();
         Cart cart = cartRepoPort.findByUserId(userId)
                 .orElseThrow(() -> new BusinessException(CartDomainError.ITEM_NOT_FOUND));
-        cart.updateItemQuantity(productVariantId, quantity);
+        cart.updateItemQuantity(productVariantId, quantity, LocalDateTime.now(clock));
         cartRepoPort.save(cart);
     }
 
@@ -147,7 +152,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
         Long userId = currentUserPort.getInfo().userId();
         Cart cart = cartRepoPort.findByUserId(userId)
                 .orElseThrow(() -> new BusinessException(CartDomainError.ITEM_NOT_FOUND));
-        cart.removeItem(productVariantId);
+        cart.removeItem(productVariantId, LocalDateTime.now(clock));
         cartRepoPort.save(cart);
     }
 }

@@ -33,6 +33,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.common.untill.JsonUtils;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -54,6 +56,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     ProductRepositoryPort productRepositoryPort;
     ProductVariantRepoPort productVariantRepoPort;
     ProductUpdateService productUpdateService;
+    Clock clock;
 
     // Giữ phiên đọc để lấy đủ thuộc tính, phân loại và ảnh cho form chỉnh sửa.
     @Override
@@ -126,7 +129,8 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                 Constant.PRODUCT,
                 String.valueOf(product.getId()),
                 ProductCreatedOutboxPayload.EVENT_TYPE,
-                jsonUtils.toJson(payload)
+                jsonUtils.toJson(payload),
+                LocalDateTime.now(clock)
         ));
     }
 
@@ -203,7 +207,8 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                 Constant.PRODUCT,
                 aggregateId,
                 ProductImagesDeleteOutboxPayload.EVENT_TYPE,
-                jsonUtils.toJson(imagesPayload)
+                jsonUtils.toJson(imagesPayload),
+                LocalDateTime.now(clock)
         ));
 
         ProductDeletedOutboxPayload deletedPayload = new ProductDeletedOutboxPayload(productId);
@@ -212,7 +217,8 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                 Constant.PRODUCT,
                 aggregateId,
                 ProductDeletedOutboxPayload.EVENT_TYPE,
-                jsonUtils.toJson(deletedPayload)
+                jsonUtils.toJson(deletedPayload),
+                LocalDateTime.now(clock)
         ));
     }
 
@@ -264,7 +270,8 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                 Constant.VARIANT,
                 aggregateId,
                 ProductvariantImagesDeleteOutboxPayload.EVENT_TYPE,
-                jsonUtils.toJson(productvariantImagesDeleteOutboxPayload)
+                jsonUtils.toJson(productvariantImagesDeleteOutboxPayload),
+                LocalDateTime.now(clock)
         ));
 
         outboxPort.save(new OutboxEventDto(
@@ -272,7 +279,8 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                 Constant.VARIANT,
                 aggregateId,
                 ProductvariantDeleteOutboxPayload.EVENT_TYPE,
-                jsonUtils.toJson(productvariantDeleteOutboxPayload)
+                jsonUtils.toJson(productvariantDeleteOutboxPayload),
+                LocalDateTime.now(clock)
         ));
 
     }
