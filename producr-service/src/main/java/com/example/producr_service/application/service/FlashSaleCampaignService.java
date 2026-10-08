@@ -15,10 +15,16 @@ import com.example.producr_service.domain.model.FlashSaleCampaign;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.producr_service.application.port.in.CancelFlashSaleCampaignUseCase;
+import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignsUseCase;
+import com.example.producr_service.application.dto.request.ShopFlashSaleCampaignFilter;
+import com.example.producr_service.application.dto.response.ShopFlashSaleCampaignResponse;
+import com.example.producr_service.application.dto.response.FlashSaleCampaignView;
+import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
+import java.time.OffsetDateTime;
 import java.time.Clock;
 import java.time.LocalDateTime;
 
-public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase, GetFlashSaleCampaignsUseCase, CancelFlashSaleCampaignUseCase {
+public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase, GetFlashSaleCampaignsUseCase, CancelFlashSaleCampaignUseCase, GetShopFlashSaleCampaignsUseCase {
     private final CurrentUserPort currentUserPort;
     private final FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort;
     private final Clock clock;
@@ -49,21 +55,14 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
     @Override
     @Transactional(readOnly = true)
     public PageResponse<FlashSaleCampaignResponse> getCampaigns(FlashSaleCampaignFilter filter) {
-        if (filter.page() < 1 || filter.size() < 10 || filter.size() > 30) {
-            throw new BusinessException(ProductError.INVALID_FLASH_SALE_PAGINATION);
-        }
-        // Khoảng lọc phải có đủ hai đầu form phỉa trc to
-        if ((filter.from() == null) != (filter.to() == null)
-                || (filter.from() != null && filter.from().toInstant().isAfter(filter.to().toInstant()))) {
-            throw new BusinessException(ProductError.INVALID_FLASH_SALE_TIME_FILTER);
-        }
+        validateCampaignFilter(filter.page(), filter.size(), filter.from(), filter.to());
         LocalDateTime from = filter.from() == null ? null
                 : filter.from().atZoneSameInstant(clock.getZone()).toLocalDateTime();
         LocalDateTime to = filter.to() == null ? null
                 : filter.to().atZoneSameInstant(clock.getZone()).toLocalDateTime();
-        PageResponse<FlashSaleCampaign> campaigns = flashSaleCampaignRepositoryPort.findAll(
+        PageResponse<FlashSaleCampaignView> campaigns = flashSaleCampaignRepositoryPort.findAll(
                 new PageQuery(filter.page(), filter.size()), from, to, filter.status(),
-                LocalDateTime.now(clock));
+                LocalDateTime.now(clock), null);
         return new PageResponse<>(
                 campaigns.items().stream()
                         .map(campaign -> FlashSaleCampaignResponse.from(campaign, clock.getZone()))
@@ -73,6 +72,35 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
                 campaigns.totalItems(),
                 campaigns.totalPages()
         );
+    }
+
+    // Chỉ lấy DRAFT, dùng cùng now cho filter, sắp xếp và trạng thái còn hạn đăng ký.
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<ShopFlashSaleCampaignResponse> getShopCampaigns(ShopFlashSaleCampaignFilter filter) {
+        validateCampaignFilter(filter.page(), filter.size(), filter.from(), filter.to());
+        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime from = filter.from() == null ? null
+                : filter.from().atZoneSameInstant(clock.getZone()).toLocalDateTime();
+        LocalDateTime to = filter.to() == null ? null
+                : filter.to().atZoneSameInstant(clock.getZone()).toLocalDateTime();
+        PageResponse<FlashSaleCampaignView> campaigns = flashSaleCampaignRepositoryPort.findAll(
+                new PageQuery(filter.page(), filter.size()), from, to, FlashSaleCampaignStatus.DRAFT,
+                now, filter.registrationOpen());
+        return new PageResponse<>(campaigns.items().stream()
+                .map(campaign -> ShopFlashSaleCampaignResponse.from(campaign, clock.getZone(), now)).toList(),
+                campaigns.page(), campaigns.pageSize(), campaigns.totalItems(), campaigns.totalPages());
+    }
+
+    // Kiểm tra phân trang và khoảng thời gian dùng chung cho Admin và Shop.
+    private void validateCampaignFilter(int page, int size, OffsetDateTime from, OffsetDateTime to) {
+        if (page < 1 || size < 10 || size > 30) {
+            throw new BusinessException(ProductError.INVALID_FLASH_SALE_PAGINATION);
+        }
+        // Cho phép lọc từng mốc; chỉ kiểm tra thứ tự khi có đủ hai thời điểm.
+        if (from != null && to != null && from.toInstant().isAfter(to.toInstant())) {
+            throw new BusinessException(ProductError.INVALID_FLASH_SALE_TIME_FILTER);
+        }
     }
 
     // Tạo DRAFT cho Shop đăng ký; lịch sale không được trùng DRAFT hoặc PUBLISHED.

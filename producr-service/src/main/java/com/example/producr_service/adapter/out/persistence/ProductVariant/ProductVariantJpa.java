@@ -17,6 +17,10 @@ import org.springframework.data.repository.query.Param;
 public interface ProductVariantJpa
         extends JpaRepository<ProductVariantEntity, Long> {
 
+    // Tải dữ liệu tạo snapshot bằng EntityGraph, không khóa product hoặc variant.
+    @EntityGraph(attributePaths = {"product", "attributeValues", "attributeValues.attribute"})
+    Optional<ProductVariantEntity> findSnapshotById(Long id);
+
     boolean existsBySku(String sku);
     boolean existsBySkuAndIdNot(String sku, Long variantId);
 

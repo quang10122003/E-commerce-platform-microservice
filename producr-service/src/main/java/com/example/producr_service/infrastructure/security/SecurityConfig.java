@@ -44,6 +44,7 @@ public class SecurityConfig {
                         // Cho phép Spring xử lý lỗi tại /error để giữ đúng mã lỗi gốc của API.
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers("/api/shop/flash-sales", "/api/shop/flash-sales/**").hasAuthority("ROLE_SHOP")
                         .anyRequest().authenticated()
                 )
                 // Trả lỗi xác thực và phân quyền theo định dạng API dùng chung.

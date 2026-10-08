@@ -1,6 +1,5 @@
 package com.example.producr_service.application.dto.response;
 
-import com.example.producr_service.domain.model.FlashSaleCampaign;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 
 import java.time.OffsetDateTime;
@@ -21,18 +20,18 @@ public record FlashSaleCampaignResponse(
         OffsetDateTime updatedAt
 ) {
     // Gắn múi giờ lưu trữ vào thời gian local, giữ đúng thời điểm chương trình.
-    public static FlashSaleCampaignResponse from(FlashSaleCampaign campaign, ZoneId zoneId) {
+    public static FlashSaleCampaignResponse from(FlashSaleCampaignView campaign, ZoneId zoneId) {
         return new FlashSaleCampaignResponse(
-                campaign.getId(),
-                campaign.getName(),
-                campaign.getDescription(),
-                campaign.getRegistrationDeadline().atZone(zoneId).toOffsetDateTime(),
-                campaign.getStartsAt().atZone(zoneId).toOffsetDateTime(),
-                campaign.getEndsAt().atZone(zoneId).toOffsetDateTime(),
-                campaign.getStatus(),
-                campaign.getCreatedBy(),
-                campaign.getCreatedAt().atZone(zoneId).toOffsetDateTime(),
-                campaign.getUpdatedAt().atZone(zoneId).toOffsetDateTime()
+                campaign.id(),
+                campaign.name(),
+                campaign.description(),
+                campaign.registrationDeadline().atZone(zoneId).toOffsetDateTime(),
+                campaign.startsAt().atZone(zoneId).toOffsetDateTime(),
+                campaign.endsAt().atZone(zoneId).toOffsetDateTime(),
+                campaign.status(),
+                campaign.createdBy(),
+                campaign.createdAt().atZone(zoneId).toOffsetDateTime(),
+                campaign.updatedAt().atZone(zoneId).toOffsetDateTime()
         );
     }
 }

@@ -9,6 +9,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.FetchType;
+import org.hibernate.annotations.BatchSize;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,6 +31,12 @@ public class FlashSaleCampaignEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // Tải theo lô; xóa item khỏi collection sẽ xóa bản ghi, Admin block vẫn giữ item.
+    @BatchSize(size = 50)
+    @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FlashSaleItemEntity> items = new ArrayList<>();
 
     @Column(nullable = false, length = 255)
     private String name;

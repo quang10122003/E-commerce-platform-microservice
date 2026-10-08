@@ -1,7 +1,9 @@
 package com.example.producr_service.adapter.out.persistence.FlashSaleCampaign;
 
 import com.example.producr_service.adapter.mapper.FlashSaleCampaignMapper;
+import com.example.producr_service.adapter.out.persistence.ProductVariant.ProductVariantJpa;
 import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRepositoryPort;
+import com.example.producr_service.application.dto.response.FlashSaleCampaignView;
 import com.example.producr_service.domain.model.FlashSaleCampaign;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 import lombok.AccessLevel;
@@ -23,6 +25,7 @@ import java.util.Optional;
 public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepositoryPort {
     FlashSaleCampaignJpa flashSaleCampaignJpa;
     FlashSaleCampaignMapper flashSaleCampaignMapper;
+    ProductVariantJpa productVariantJpa;
 
     // Kiểm tra lịch trùng, bỏ qua chương trình đã hủy hoặc hoàn thành.
     @Override
@@ -33,15 +36,15 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
 
     // Tái sử dụng index trang của PageQuery; thứ tự và bộ lọc được áp dụng ngay trong DB.
     @Override
-    public PageResponse<FlashSaleCampaign> findAll(PageQuery pageQuery, LocalDateTime from,
+    public PageResponse<FlashSaleCampaignView> findAll(PageQuery pageQuery, LocalDateTime from,
                                                  LocalDateTime to, FlashSaleCampaignStatus status,
-                                                 LocalDateTime now) {
+                                                 LocalDateTime now, Boolean registrationOpen) {
         var entityPage = flashSaleCampaignJpa.findCampaigns(
-                from, to, status == null ? null : status.name(), now,
+                from, to, status == null ? null : status.name(), now, registrationOpen,
                 PageRequest.of(pageQuery.pageIndex(), pageQuery.size())
         );
         return new PageResponse<>(
-                entityPage.getContent().stream().map(flashSaleCampaignMapper::toDomain).toList(),
+                entityPage.getContent().stream().map(flashSaleCampaignMapper::toView).toList(),
                 entityPage.getNumber() + 1,
                 entityPage.getSize(),
                 entityPage.getTotalElements(),
@@ -49,15 +52,28 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
         );
     }
 
-    // Giữ lock trong transaction của application, rồi chuyển entity thành domain.
+    // Khóa parent trước khi tải items để các request cập nhật không ghi đè nhau.
     @Override
     public Optional<FlashSaleCampaign> findByIdForUpdate(Long campaignId) {
         return flashSaleCampaignJpa.findByIdForUpdate(campaignId).map(flashSaleCampaignMapper::toDomain);
     }
 
-    // Chuyển domain thành entity và lưu chương trình.
+    // Khóa chia sẻ trong transaction rồi chuyển dữ liệu thành domain.
+    @Override
+    public Optional<FlashSaleCampaign> findByIdForShare(Long campaignId) {
+        return flashSaleCampaignJpa.findByIdForShare(campaignId).map(flashSaleCampaignMapper::toDomain);
+    }
+
+    // Đồng bộ aggregate đầy đủ trên entity đang quản lý, giữ ID và lịch sử của item.
     @Override
     public void save(FlashSaleCampaign campaign) {
-        flashSaleCampaignJpa.save(flashSaleCampaignMapper.toEntity(campaign));
+        if (campaign.getId() == null) {
+            flashSaleCampaignJpa.save(flashSaleCampaignMapper.toEntity(campaign, productVariantJpa::getReferenceById));
+            return;
+        }
+        var entity = flashSaleCampaignJpa.findById(campaign.getId())
+                .orElseThrow(() -> new IllegalStateException("Chương trình đã tải không còn tồn tại"));
+        flashSaleCampaignMapper.updateEntity(campaign, entity, productVariantJpa::getReferenceById);
+        flashSaleCampaignJpa.save(entity);
     }
 }

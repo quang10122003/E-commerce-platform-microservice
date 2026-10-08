@@ -3,6 +3,9 @@ package com.example.producr_service.application.error;
 import com.example.common.error.ErrorCode;
 
 public enum ProductError implements ErrorCode  {
+    PRODUCT_ACCESS_DENIED("PRODUCT_ACCESS_DENIED", "Bạn không có quyền truy cập sản phẩm này", 403),
+    FLASH_SALE_ITEM_ALREADY_EXISTS("FLASH_SALE_ITEM_ALREADY_EXISTS", "Variant đã có đăng ký trong chương trình", 409),
+    FLASH_SALE_PRODUCT_INACTIVE("FLASH_SALE_PRODUCT_INACTIVE", "Sản phẩm đã bị khóa, không thể đăng ký sale", 409),
     FLASH_SALE_CAMPAIGN_NOT_FOUND(
             "FLASH_SALE_CAMPAIGN_NOT_FOUND", "Không tìm thấy chương trình Flash Sale", 404
     ),
@@ -11,7 +14,7 @@ public enum ProductError implements ErrorCode  {
     ),
     INVALID_FLASH_SALE_TIME_FILTER(
             "INVALID_FLASH_SALE_TIME_FILTER",
-            "Khoảng thời gian phải có đủ from và to, với from không sau to",
+            "Thời điểm from không được sau thời điểm to",
             400
     ),
     INVALID_FLASH_SALE_PAGINATION(

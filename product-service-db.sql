@@ -198,8 +198,17 @@ CREATE TABLE flash_sale_items (
     -- Chương trình mà variant tham gia.
     flash_sale_campaigns_id BIGINT NOT NULL,
 
-    -- Variant tham gia; Shop được xác định qua product sở hữu variant.
-    product_variants_id INT NOT NULL,
+    -- Variant tham gia; giữ đăng ký khi variant bị xóa.
+    product_variants_id INT NULL,
+
+    -- ID chủ Shop thuộc Auth service, giữ quyền sở hữu khi variant bị xóa.
+    shop_id BIGINT NOT NULL,
+
+    -- Tên sản phẩm tại thời điểm đăng ký.
+    product_name VARCHAR(255) NOT NULL,
+
+    -- Thuộc tính tại thời điểm đăng ký, lưu JSON dạng [{"name":"...","value":"..."}].
+    variant_attributes TEXT NOT NULL,
 
     -- Phần trăm giảm do Shop nhập; giá sale tính từ giá hiện tại của variant.
     discount_percent DECIMAL(5,2) NOT NULL,
@@ -207,8 +216,11 @@ CREATE TABLE flash_sale_items (
     -- Hạn mức đăng ký, chưa phải tồn kho được giữ.
     registered_quantity INT NOT NULL,
 
-    -- Đang đăng ký, Shop đã rút hoặc bị vô hiệu hóa.
-    status ENUM('REGISTERED', 'WITHDRAWN', 'DISABLED')
+    -- Số lượng đã đặt mua trong sale, không giảm khi hủy hoặc hoàn đơn.
+    sold_quantity BIGINT NOT NULL DEFAULT 0,
+
+    -- REGISTERED: đang đăng ký; DISABLED: Admin block. Shop xóa sẽ xóa bản ghi.
+    status ENUM('REGISTERED', 'DISABLED')
         NOT NULL DEFAULT 'REGISTERED',
 
     -- Thời điểm tạo đăng ký.
@@ -220,7 +232,7 @@ CREATE TABLE flash_sale_items (
 
     PRIMARY KEY (id),
 
-    -- Mỗi variant chỉ có một bản ghi trong một chương trình.
+    -- Mỗi variant còn tồn tại chỉ có một bản ghi trong một chương trình.
     CONSTRAINT uk_flash_sale_campaign_variant
         UNIQUE (flash_sale_campaigns_id, product_variants_id),
 
@@ -230,11 +242,11 @@ CREATE TABLE flash_sale_items (
         REFERENCES flash_sale_campaigns(id)
         ON DELETE RESTRICT,
 
-    -- Không xóa variant khi còn đăng ký tham chiếu.
+    -- Xóa variant chỉ ngắt liên kết, giữ thông tin lịch sử đăng ký.
     CONSTRAINT fk_flash_sale_item_variant
         FOREIGN KEY (product_variants_id)
         REFERENCES product_variants(id)
-        ON DELETE RESTRICT,
+        ON DELETE SET NULL,
 
     -- Phần trăm giảm phải lớn hơn 0 và nhỏ hơn 100.
     CONSTRAINT chk_flash_sale_item_discount
@@ -243,6 +255,13 @@ CREATE TABLE flash_sale_items (
     -- Hạn mức đăng ký phải lớn hơn 0.
     CONSTRAINT chk_flash_sale_item_quantity
         CHECK (registered_quantity > 0),
+
+    -- Số lượng đã đặt mua không được âm.
+    CONSTRAINT chk_flash_sale_item_sold_quantity
+        CHECK (sold_quantity >= 0),
+
+    -- Hỗ trợ lấy đăng ký của Shop trong từng chương trình.
+    INDEX idx_flash_sale_item_shop_campaign (shop_id, flash_sale_campaigns_id),
 
     -- Hỗ trợ tra cứu đăng ký theo variant.
     INDEX idx_flash_sale_item_variant (product_variants_id)

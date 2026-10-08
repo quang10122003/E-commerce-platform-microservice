@@ -4,6 +4,8 @@ import com.example.producr_service.adapter.entity.FlashSaleCampaignEntity;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
@@ -14,8 +16,14 @@ import org.springframework.data.domain.Pageable;
 
 public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEntity, Long> {
 
+    // Khóa chia sẻ theo khóa chính, phối hợp với khóa độc quyền của thao tác hủy.
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("select c from FlashSaleCampaignEntity c where c.id = :campaignId")
+    Optional<FlashSaleCampaignEntity> findByIdForShare(@Param("campaignId") Long campaignId);
+
     // Khóa độc quyền theo khóa chính; chờ các transaction mua giữ FOR SHARE hoàn tất.
-    @Query(value = "select * from flash_sale_campaigns where id = :campaignId for update", nativeQuery = true)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from FlashSaleCampaignEntity c where c.id = :campaignId")
     Optional<FlashSaleCampaignEntity> findByIdForUpdate(@Param("campaignId") Long campaignId);
 
     // Lọc trước phân trang; ưu tiên trạng thái rồi khoảng cách thời gian cả trước và sau now.
@@ -25,6 +33,9 @@ public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEnt
             where (:fromTime is null or c.starts_at >= :fromTime)
               and (:toTime is null or c.starts_at <= :toTime)
               and (:status is null or c.status = :status)
+              and (:registrationOpen is null
+                   or (:registrationOpen = true and c.status = 'DRAFT' and c.registration_deadline > :now)
+                   or (:registrationOpen = false and (c.status <> 'DRAFT' or c.registration_deadline <= :now)))
             order by case c.status
                          when 'PUBLISHED' then 0
                          when 'DRAFT' then 1
@@ -42,6 +53,9 @@ public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEnt
             where (:fromTime is null or c.starts_at >= :fromTime)
               and (:toTime is null or c.starts_at <= :toTime)
               and (:status is null or c.status = :status)
+              and (:registrationOpen is null
+                   or (:registrationOpen = true and c.status = 'DRAFT' and c.registration_deadline > :now)
+                   or (:registrationOpen = false and (c.status <> 'DRAFT' or c.registration_deadline <= :now)))
             """,
             nativeQuery = true)
     Page<FlashSaleCampaignEntity> findCampaigns(
@@ -49,6 +63,7 @@ public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEnt
             @Param("toTime") LocalDateTime to,
             @Param("status") String status,
             @Param("now") LocalDateTime now,
+            @Param("registrationOpen") Boolean registrationOpen,
             Pageable pageable
     );
 

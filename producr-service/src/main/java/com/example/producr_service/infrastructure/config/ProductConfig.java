@@ -9,6 +9,7 @@ import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRe
 import com.example.producr_service.application.service.FlashSaleCampaignService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import com.example.producr_service.application.port.in.CancelFlashSaleCampaignUseCase;
+import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignsUseCase;
 import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
 import com.example.producr_service.application.port.in.GetCartInfoUseCase;
 import com.example.producr_service.application.port.in.UpdateProductUseCase;
@@ -62,12 +63,37 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import com.example.common.untill.JsonUtils;
 
+import com.example.producr_service.application.service.FlashSaleItemService;
+import com.example.producr_service.application.port.in.RegisterFlashSaleItemUseCase;
+import com.example.producr_service.application.port.in.PreviewFlashSalePriceUseCase;
+import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import java.time.Clock;
 import java.time.ZoneId;
 import java.util.List;
 
 @Configuration
 public class ProductConfig {
+
+    // Lắp ghép các port cho đăng ký variant và tính giá sale dự kiến.
+    @Bean
+    FlashSaleItemService flashSaleItemService(CurrentUserPort currentUser,
+            FlashSaleCampaignRepositoryPort campaigns, FlashSaleItemRepositoryPort items, Clock clock) {
+        return new FlashSaleItemService(currentUser, campaigns, items, clock);
+    }
+
+    // Cung cấp input port đăng ký variant cho controller.
+    @Bean
+    RegisterFlashSaleItemUseCase registerFlashSaleItemUseCase(
+            @Qualifier("flashSaleItemService") FlashSaleItemService service) {
+        return service;
+    }
+
+    // Cung cấp input port tính giá dự kiến cho controller.
+    @Bean
+    PreviewFlashSalePriceUseCase previewFlashSalePriceUseCase(
+            @Qualifier("flashSaleItemService") FlashSaleItemService service) {
+        return service;
+    }
 
     // Cung cấp nguồn thời gian theo múi giờ Việt Nam.
     @Bean
@@ -94,6 +120,13 @@ public class ProductConfig {
     // Cung cấp use case đọc danh sách chương trình cho controller.
     @Bean
     GetFlashSaleCampaignsUseCase getFlashSaleCampaignsUseCase(@Qualifier("flashSaleCampaignService") FlashSaleCampaignService service) {
+        return service;
+    }
+
+    // Cung cấp use case đọc chương trình cho Shop từ service Flash Sale dùng chung.
+    @Bean
+    GetShopFlashSaleCampaignsUseCase getShopFlashSaleCampaignsUseCase(
+            @Qualifier("flashSaleCampaignService") FlashSaleCampaignService service) {
         return service;
     }
 

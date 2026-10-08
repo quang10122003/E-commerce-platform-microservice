@@ -1,6 +1,7 @@
 package com.example.producr_service.application.port.out.repo;
 
 import com.example.producr_service.domain.model.FlashSaleCampaign;
+import com.example.producr_service.application.dto.response.FlashSaleCampaignView;
 import com.example.common.response.PageQuery;
 import com.example.common.response.PageResponse;
 
@@ -14,12 +15,15 @@ public interface FlashSaleCampaignRepositoryPort {
     boolean existsOverlapping(LocalDateTime startsAt, LocalDateTime endsAt);
 
     // Lọc và sắp xếp theo nhóm trạng thái, độ gần thời điểm hiện tại trước khi phân trang.
-    PageResponse<FlashSaleCampaign> findAll(PageQuery pageQuery, LocalDateTime from, LocalDateTime to,
-                                        FlashSaleCampaignStatus status, LocalDateTime now);
+    PageResponse<FlashSaleCampaignView> findAll(PageQuery pageQuery, LocalDateTime from, LocalDateTime to,
+                                        FlashSaleCampaignStatus status, LocalDateTime now, Boolean registrationOpen);
 
-    // Đọc và khóa độc quyền chương trình đến khi transaction kết thúc.
+    // Khóa chương trình trước khi tải aggregate đầy đủ để cập nhật an toàn.
     Optional<FlashSaleCampaign> findByIdForUpdate(Long campaignId);
 
-    // Lưu chương trình Flash Sale.
+    // Tải aggregate đầy đủ và giữ khóa chia sẻ để ngăn hủy trong transaction mua.
+    Optional<FlashSaleCampaign> findByIdForShare(Long campaignId);
+
+    // Lưu aggregate đầy đủ; dữ liệu đọc danh sách không dùng port này.
     void save(FlashSaleCampaign campaign);
 }

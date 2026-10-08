@@ -27,7 +27,7 @@ spring:
             - id: product-service
               uri: lb://producr-service
               predicates:
-                - Path=/api/products/**,/api/categories/**,/api/brands/**,/api/internal/**,/api/admin/flash-sales,/api/admin/flash-sales/**
+                - Path=/api/products/**,/api/categories/**,/api/brands/**,/api/internal/**,/api/admin/flash-sales,/api/admin/flash-sales/**,/api/shop/flash-sales,/api/shop/flash-sales/**
               filters:
                 - name: ApiResponse
 
