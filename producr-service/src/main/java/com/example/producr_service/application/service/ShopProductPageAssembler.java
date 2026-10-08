@@ -2,6 +2,7 @@ package com.example.producr_service.application.service;
 
 import com.example.common.response.PageResponse;
 import com.example.producr_service.application.dto.response.SellerProductItemResponse;
+import com.example.producr_service.application.dto.response.ShopFlashSaleProductResponse;
 import com.example.producr_service.domain.model.AttributeValue;
 import com.example.producr_service.domain.model.Product;
 import com.example.producr_service.domain.model.ProductAttribute;
@@ -41,6 +42,15 @@ public class ShopProductPageAssembler {
         return products.stream()
                 .map(product -> toSellerItem(product,
                         variantsByProductId.getOrDefault(product.getId(), List.of())))
+                .toList();
+    }
+
+    // Dùng cùng cách dựng trạng thái, phân loại với API quản lý sản phẩm.
+    public List<ShopFlashSaleProductResponse> buildFlashSaleProducts(
+            List<Product> products, Map<Long, List<ProductVariant>> variantsByProductId) {
+        return buildListSellerProductItemResponse(products, variantsByProductId).stream()
+                .map(product -> new ShopFlashSaleProductResponse(product.id(), product.name(),
+                        product.categoryName(), product.status(), product.variants()))
                 .toList();
     }
 

@@ -27,6 +27,12 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
     FlashSaleCampaignMapper flashSaleCampaignMapper;
     ProductVariantJpa productVariantJpa;
 
+    // Dùng findById có sẵn của JPA, chỉ map thông tin chương trình.
+    @Override
+    public Optional<FlashSaleCampaignView> findViewById(Long campaignId) {
+        return flashSaleCampaignJpa.findById(campaignId).map(flashSaleCampaignMapper::toView);
+    }
+
     // Kiểm tra lịch trùng, bỏ qua chương trình đã hủy hoặc hoàn thành.
     @Override
     public boolean existsOverlapping(LocalDateTime startsAt, LocalDateTime endsAt) {

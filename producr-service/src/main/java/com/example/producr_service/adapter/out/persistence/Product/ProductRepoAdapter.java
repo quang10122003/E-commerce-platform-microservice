@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Optional;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +35,14 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     CategoryJpa categoryJpa;
     BrandJpa brandJpa;
     ProductMapper productMapper;
+
+    // Tái sử dụng mapper quản lý sản phẩm, không tải phân loại và ảnh phân loại tại đây.
+    @Override
+    public List<Product> findAllByUserId(Long userId) {
+        return productJpa.findAllByUserId(userId).stream()
+                .map(productMapper::toSellerDomain)
+                .toList();
+    }
 
     // Lưu aggregate sản phẩm cùng thuộc tính, phân loại và ảnh rồi trả về domain đã có ID.
     @Override

@@ -11,6 +11,8 @@ import com.example.producr_service.application.dto.command.VariantImageUploadCom
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
 import com.example.producr_service.application.dto.request.SellerProductFilter;
 import com.example.producr_service.application.dto.response.ProductResponse;
+import com.example.producr_service.application.dto.response.ShopFlashSaleProductResponse;
+import com.example.producr_service.application.port.in.GetShopFlashSaleProductsUseCase;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
 import com.example.producr_service.application.dto.response.SellerProductItemResponse;
 import com.example.producr_service.application.dto.response.ShopProductDetailResponse;
@@ -42,7 +44,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase {
+public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase, GetShopFlashSaleProductsUseCase {
     ProductImageRollbackPort productImageRollbackPort;
     ProductImageUploadService productImageUploadService;
     ProductCreationService productCreationService;
@@ -57,6 +59,19 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     ProductVariantRepoPort productVariantRepoPort;
     ProductUpdateService productUpdateService;
     Clock clock;
+
+    // Chỉ đọc sản phẩm của Shop đang đăng nhập, không nhận shopId từ client.
+    @Override
+    @Transactional(readOnly = true)
+    public List<ShopFlashSaleProductResponse> getShopFlashSaleProducts() {
+        Long userId = currentUserPort.getUserInfo().userId();
+        List<Product> products = productRepositoryPort.findAllByUserId(userId);
+        List<Long> productIds = sellerProductPageAssembler.getListIdProduct(products);
+        // Tái sử dụng truy vấn phân loại theo lô của API quản lý sản phẩm.
+        Map<Long, List<ProductVariant>> variantsByProductId = productIds.isEmpty()
+                ? Map.of() : productVariantRepoPort.findByProduct_IdIn(productIds);
+        return sellerProductPageAssembler.buildFlashSaleProducts(products, variantsByProductId);
+    }
 
     // Giữ phiên đọc để lấy đủ thuộc tính, phân loại và ảnh cho form chỉnh sửa.
     @Override

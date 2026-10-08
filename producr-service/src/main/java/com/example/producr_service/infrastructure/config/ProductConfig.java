@@ -10,6 +10,7 @@ import com.example.producr_service.application.service.FlashSaleCampaignService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import com.example.producr_service.application.port.in.CancelFlashSaleCampaignUseCase;
 import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignsUseCase;
+import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignDetailUseCase;
 import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
 import com.example.producr_service.application.port.in.GetCartInfoUseCase;
 import com.example.producr_service.application.port.in.UpdateProductUseCase;
@@ -19,6 +20,7 @@ import com.example.producr_service.application.port.in.GetCategoriesUseCase;
 import com.example.producr_service.application.port.in.GetBrandsUseCase;
 import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
 import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
+import com.example.producr_service.application.port.in.GetShopFlashSaleProductsUseCase;
 import com.example.producr_service.application.port.in.ProcessProductOutboxUseCase;
 import com.example.producr_service.application.port.in.DeleteStoredFilesUseCase;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
@@ -126,6 +128,13 @@ public class ProductConfig {
     // Cung cấp use case đọc chương trình cho Shop từ service Flash Sale dùng chung.
     @Bean
     GetShopFlashSaleCampaignsUseCase getShopFlashSaleCampaignsUseCase(
+            @Qualifier("flashSaleCampaignService") FlashSaleCampaignService service) {
+        return service;
+    }
+
+    // Lắp ghép use case đọc chi tiết cho biểu mẫu đăng ký của Shop.
+    @Bean
+    GetShopFlashSaleCampaignDetailUseCase getShopFlashSaleCampaignDetailUseCase(
             @Qualifier("flashSaleCampaignService") FlashSaleCampaignService service) {
         return service;
     }
@@ -377,6 +386,12 @@ public class ProductConfig {
     // Cung cấp use case lấy catalog product cho controller qua input port.
     @Bean
     GetProductsCatalogUseCase getProductsCatalogUseCase(ProductService productService) {
+        return productService;
+    }
+
+    // Lắp ghép input port chọn sản phẩm Flash Sale với service sản phẩm hiện có.
+    @Bean
+    GetShopFlashSaleProductsUseCase getShopFlashSaleProductsUseCase(ProductService productService) {
         return productService;
     }
 

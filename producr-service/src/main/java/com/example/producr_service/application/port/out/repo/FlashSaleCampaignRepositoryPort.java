@@ -11,6 +11,9 @@ import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 
 public interface FlashSaleCampaignRepositoryPort {
 
+    // Đọc thông tin chương trình không tải items và không khóa bản ghi.
+    Optional<FlashSaleCampaignView> findViewById(Long campaignId);
+
     // Kiểm tra lịch trùng, bỏ qua chương trình đã hủy hoặc hoàn thành.
     boolean existsOverlapping(LocalDateTime startsAt, LocalDateTime endsAt);
 

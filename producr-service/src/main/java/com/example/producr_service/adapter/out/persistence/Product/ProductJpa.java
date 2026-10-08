@@ -12,8 +12,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.util.List;
 
 public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
+    // Tải sản phẩm cùng danh mục, thương hiệu; phân loại được đọc theo lô riêng.
+    @EntityGraph(attributePaths = {"category", "brand"})
+    List<ProductEntity> findAllByUserId(Long userId);
+
     // Tải tên danh mục và thương hiệu cùng trang sản phẩm.
     @EntityGraph(attributePaths = {"category", "brand"})
     @Query(

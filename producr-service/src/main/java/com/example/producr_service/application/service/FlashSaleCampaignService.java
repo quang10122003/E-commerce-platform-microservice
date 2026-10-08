@@ -21,10 +21,13 @@ import com.example.producr_service.application.dto.response.ShopFlashSaleCampaig
 import com.example.producr_service.application.dto.response.FlashSaleCampaignView;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 import java.time.OffsetDateTime;
+import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignDetailUseCase;
+import com.example.producr_service.application.dto.response.ShopFlashSaleCampaignDetailResponse;
+import com.example.producr_service.domain.error.DomainProductError;
 import java.time.Clock;
 import java.time.LocalDateTime;
 
-public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase, GetFlashSaleCampaignsUseCase, CancelFlashSaleCampaignUseCase, GetShopFlashSaleCampaignsUseCase {
+public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase, GetFlashSaleCampaignsUseCase, CancelFlashSaleCampaignUseCase, GetShopFlashSaleCampaignsUseCase, GetShopFlashSaleCampaignDetailUseCase {
     private final CurrentUserPort currentUserPort;
     private final FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort;
     private final Clock clock;
@@ -35,6 +38,22 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
         this.currentUserPort = currentUserPort;
         this.flashSaleCampaignRepositoryPort = flashSaleCampaignRepositoryPort;
         this.clock = clock;
+    }
+
+    // Cho phép đọc DRAFT đã hết hạn để FE hiển thị và chặn đăng ký theo deadline.
+    @Override
+    @Transactional(readOnly = true)
+    public ShopFlashSaleCampaignDetailResponse getShopCampaignDetail(Long campaignId) {
+        if (campaignId == null || campaignId <= 0) {
+            throw new BusinessException(ProductError.INVALID_FLASH_SALE_CAMPAIGN_ID);
+        }
+        var campaign = flashSaleCampaignRepositoryPort.findViewById(campaignId)
+                .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
+        if (campaign.status() != FlashSaleCampaignStatus.DRAFT) {
+            throw new BusinessException(DomainProductError.FLASH_SALE_REGISTRATION_CLOSED);
+        }
+        return new ShopFlashSaleCampaignDetailResponse(campaign.name(),
+                campaign.registrationDeadline().atZone(clock.getZone()).toOffsetDateTime());
     }
 
     // Khóa trước khi kiểm tra và hủy để phối hợp với shared lock của luồng mua.

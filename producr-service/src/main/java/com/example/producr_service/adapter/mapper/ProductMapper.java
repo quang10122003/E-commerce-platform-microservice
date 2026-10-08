@@ -193,7 +193,7 @@ public class ProductMapper {
     }
 
     // Tải thuộc tính của sản phẩm nhưng để phân loại được truy vấn theo lô riêng.
-    private Product toSellerDomain(ProductEntity productEntity) {
+    public Product toSellerDomain(ProductEntity productEntity) {
         return toDomain(productEntity, false);
     }
 

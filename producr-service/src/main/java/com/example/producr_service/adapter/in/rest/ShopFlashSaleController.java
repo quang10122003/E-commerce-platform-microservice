@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import java.time.OffsetDateTime;
+import java.util.List;
+import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignDetailUseCase;
+import com.example.producr_service.application.dto.response.ShopFlashSaleCampaignDetailResponse;
+import com.example.producr_service.application.port.in.GetShopFlashSaleProductsUseCase;
+import com.example.producr_service.application.dto.response.ShopFlashSaleProductResponse;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +34,22 @@ public class ShopFlashSaleController {
     private final GetShopFlashSaleCampaignsUseCase getShopFlashSaleCampaignsUseCase;
     private final RegisterFlashSaleItemUseCase registerFlashSaleItemUseCase;
     private final PreviewFlashSalePriceUseCase previewFlashSalePriceUseCase;
+    private final GetShopFlashSaleProductsUseCase getShopFlashSaleProductsUseCase;
+
+    private final GetShopFlashSaleCampaignDetailUseCase getShopFlashSaleCampaignDetailUseCase;
+
+    // Đọc tên và deadline có offset để form dùng được khi mở link trực tiếp.
+    @GetMapping("/{campaignId}")
+    public ResponseEntity<ShopFlashSaleCampaignDetailResponse> getCampaignDetail(@PathVariable Long campaignId) {
+        return ResponseEntity.ok(getShopFlashSaleCampaignDetailUseCase.getShopCampaignDetail(campaignId));
+    }
+
+    // Trả toàn bộ sản phẩm của Shop để chọn trong biểu mẫu đăng ký sale.
+    @GetMapping("/products")
+    public ResponseEntity<List<ShopFlashSaleProductResponse>> getProducts() {
+        return ResponseEntity.ok(getShopFlashSaleProductsUseCase.getShopFlashSaleProducts());
+    }
+
     // Đăng ký một variant vào chương trình, thành công không trả nội dung.
     @PostMapping("/{campaignId}/items")
     public ResponseEntity<Void> register(@PathVariable Long campaignId,
