@@ -82,4 +82,24 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
         flashSaleCampaignMapper.updateEntity(campaign, entity, productVariantJpa::getReferenceById);
         flashSaleCampaignJpa.save(entity);
     }
+
+    // Chỉ đọc ID để lỗi dữ liệu của một chương trình không chặn cả lượt job.
+    @Override
+    public List<Long> findIdsDueForStatusTransition(LocalDateTime now) {
+        return flashSaleCampaignJpa.findIdsDueForStatusTransition(now);
+    }
+
+    // Dựng phần chương trình cho handler; kết quả chỉ được lưu qua saveStatus.
+    @Override
+    public Optional<FlashSaleCampaign> findStatusByIdForSkip(Long id) {
+        return flashSaleCampaignJpa.findByIdForUpdateSkipLocked(id)
+                .map(flashSaleCampaignMapper::toStatusDomain);
+    }
+
+    @Override
+    public void saveStatus(Long id, FlashSaleCampaignStatus status) {
+        var entity = flashSaleCampaignJpa.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Chương trình đã khóa không còn tồn tại"));
+        entity.setStatus(status);
+    }
 }

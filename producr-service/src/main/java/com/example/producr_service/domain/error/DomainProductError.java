@@ -87,6 +87,12 @@ public enum DomainProductError implements ErrorCode {
     FLASH_SALE_CANNOT_CANCEL(
             "FLASH_SALE_CANNOT_CANCEL", "Không thể hủy chương trình Flash Sale đã hoàn thành", 409
     ),
+    FLASH_SALE_STATUS_REQUIRED(
+            "FLASH_SALE_STATUS_REQUIRED", "Trạng thái chương trình Flash Sale không được để trống", 400
+    ),
+    FLASH_SALE_STATUS_TRANSITION_INVALID(
+            "FLASH_SALE_STATUS_TRANSITION_INVALID", "Không được phép chuyển sang trạng thái Flash Sale yêu cầu", 409
+    ),
     FLASH_SALE_NAME_INVALID(
             "FLASH_SALE_NAME_INVALID",
             "Tên chương trình Flash Sale phải có từ 1 đến 255 ký tự",

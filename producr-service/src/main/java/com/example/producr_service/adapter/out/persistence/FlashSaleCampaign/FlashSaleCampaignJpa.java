@@ -10,11 +10,27 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEntity, Long> {
+
+    // Chỉ đọc ID các lịch đến hạn chuyển trạng thái cho lượt job.
+    @Query(value = """
+            select id from flash_sale_campaigns
+            where (status = 'DRAFT' and starts_at <= :now)
+               or (status = 'PUBLISHED' and ends_at <= :now)
+            order by id asc
+            """, nativeQuery = true)
+    List<Long> findIdsDueForStatusTransition(@Param("now") LocalDateTime now);
+
+    // Khóa độc quyền cho job và bỏ qua chương trình đang được transaction khác giữ khóa.
+    @Query(value = """
+            select * from flash_sale_campaigns where id = :id for update skip locked
+            """, nativeQuery = true)
+    Optional<FlashSaleCampaignEntity> findByIdForUpdateSkipLocked(@Param("id") Long id);
 
     // Khóa chia sẻ theo khóa chính, phối hợp với khóa độc quyền của thao tác hủy.
     @Lock(LockModeType.PESSIMISTIC_READ)

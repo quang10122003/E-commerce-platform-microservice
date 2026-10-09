@@ -19,3 +19,6 @@ AGENTS.md
 .vscode/
 .idea/
 .playwright-mcp/
+
+# Bỏ qua toàn bộ tài liệu Markdown.
+*.[mM][dD]

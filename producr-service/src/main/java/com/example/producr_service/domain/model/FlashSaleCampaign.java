@@ -139,6 +139,24 @@ public class FlashSaleCampaign {
         return status == FlashSaleCampaignStatus.DRAFT && now.isBefore(registrationDeadline);
     }
 
+    // Chỉ cho phép chuyển trạng thái theo vòng đời; không xử lý mốc thời gian.
+    public void updateStatus(FlashSaleCampaignStatus nextStatus) {
+        if (nextStatus == null) {
+            throw new BusinessException(DomainProductError.FLASH_SALE_STATUS_REQUIRED);
+        }
+        boolean allowed = switch (status) {
+            case DRAFT -> nextStatus == FlashSaleCampaignStatus.PUBLISHED
+                    || nextStatus == FlashSaleCampaignStatus.CANCELLED;
+            case PUBLISHED -> nextStatus == FlashSaleCampaignStatus.CANCELLED
+                    || nextStatus == FlashSaleCampaignStatus.DONE;
+            case CANCELLED, DONE -> false;
+        };
+        if (!allowed) {
+            throw new BusinessException(DomainProductError.FLASH_SALE_STATUS_TRANSITION_INVALID);
+        }
+        status = nextStatus;
+    }
+
     // Hủy chương trình chưa hoàn thành; trả true khi thay đổi, gọi lại giữ nguyên updatedAt.
     public boolean cancel(LocalDateTime now) {
         Objects.requireNonNull(now, "Thời điểm hiện tại không được null");

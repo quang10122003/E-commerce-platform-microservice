@@ -5,6 +5,7 @@ import com.example.producr_service.application.dto.request.ShopFlashSaleCampaign
 import com.example.producr_service.application.dto.response.ShopFlashSaleCampaignResponse;
 import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignsUseCase;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +31,7 @@ import com.example.producr_service.application.dto.response.FlashSalePriceRespon
 @RestController
 @RequestMapping("/api/shop/flash-sales")
 @RequiredArgsConstructor
+@Slf4j
 public class ShopFlashSaleController {
     private final GetShopFlashSaleCampaignsUseCase getShopFlashSaleCampaignsUseCase;
     private final RegisterFlashSaleItemUseCase registerFlashSaleItemUseCase;
@@ -38,13 +40,13 @@ public class ShopFlashSaleController {
 
     private final GetShopFlashSaleCampaignDetailUseCase getShopFlashSaleCampaignDetailUseCase;
 
-    // Đọc tên và deadline có offset để form dùng được khi mở link trực tiếp.
+    // lấy snap shot tên và thông tin dealline đnagw ký của 1 sale để fe dùng
     @GetMapping("/{campaignId}")
     public ResponseEntity<ShopFlashSaleCampaignDetailResponse> getCampaignDetail(@PathVariable Long campaignId) {
         return ResponseEntity.ok(getShopFlashSaleCampaignDetailUseCase.getShopCampaignDetail(campaignId));
     }
 
-    // Trả toàn bộ sản phẩm của Shop để chọn trong biểu mẫu đăng ký sale.
+    // Trả thông tin toàn bộ sản phẩm của Shop để chọn trong biểu mẫu đăng ký sale.
     @GetMapping("/products")
     public ResponseEntity<List<ShopFlashSaleProductResponse>> getProducts() {
         return ResponseEntity.ok(getShopFlashSaleProductsUseCase.getShopFlashSaleProducts());
@@ -55,6 +57,8 @@ public class ShopFlashSaleController {
     public ResponseEntity<Void> register(@PathVariable Long campaignId,
             @Valid @RequestBody RegisterFlashSaleItemRequest request) {
         registerFlashSaleItemUseCase.register(campaignId, request);
+        log.info("Đăng ký variant vào Flash Sale thành công: campaignId={}, variantId={}",
+                campaignId, request.variantId());
         return ResponseEntity.noContent().build();
     }
 

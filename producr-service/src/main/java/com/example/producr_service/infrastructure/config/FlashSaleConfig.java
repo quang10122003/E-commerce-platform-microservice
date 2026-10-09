@@ -19,7 +19,14 @@ import com.example.producr_service.application.port.in.PreviewFlashSalePriceUseC
 import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import java.time.Clock;
 
+import com.example.producr_service.application.port.in.ProcessFlashSaleCampaignStatusUseCase;
+import com.example.producr_service.application.service.ProcessFlashSaleCampaignStatuService;
+import com.example.producr_service.application.registry.FlashSaleCampaignStatuRegistry;
+import com.example.producr_service.application.strategy.FlashSaleCampaign.FlashSaleCampaignStatuHandler;
+import com.example.producr_service.application.strategy.FlashSaleCampaign.FlashSaleCampaignDraftHandler;
+import com.example.producr_service.application.strategy.FlashSaleCampaign.FlashSaleCampaignPublishedHandler;
 
+import java.util.List;
 
 @Configuration
 public class FlashSaleConfig {
@@ -94,4 +101,29 @@ public class FlashSaleConfig {
         return productService;
     }
 
+    // Đăng ký handler DRAFT qua interface của application.
+    @Bean
+    FlashSaleCampaignStatuHandler flashSaleCampaignDraftHandler(Clock clock) {
+        return new FlashSaleCampaignDraftHandler(clock);
+    }
+
+    // Đăng ký handler PUBLISHED qua interface của application.
+    @Bean
+    FlashSaleCampaignStatuHandler flashSaleCampaignPublishedHandler(Clock clock) {
+        return new FlashSaleCampaignPublishedHandler(clock);
+    }
+
+    // Gom các handler và phát hiện trạng thái bị đăng ký trùng.
+    @Bean
+    FlashSaleCampaignStatuRegistry flashSaleCampaignStatuRegistry(
+            List<FlashSaleCampaignStatuHandler> handlers) {
+        return new FlashSaleCampaignStatuRegistry(handlers);
+    }
+
+    // Lắp ghép input port xử lý trạng thái cho scheduler.
+    @Bean
+    ProcessFlashSaleCampaignStatusUseCase processFlashSaleCampaignStatusUseCase(
+            FlashSaleCampaignRepositoryPort campaigns, FlashSaleCampaignStatuRegistry registry, Clock clock) {
+        return new ProcessFlashSaleCampaignStatuService(campaigns, registry, clock);
+    }
 }

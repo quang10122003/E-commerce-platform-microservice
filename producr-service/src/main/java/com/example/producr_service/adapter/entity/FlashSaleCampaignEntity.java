@@ -64,6 +64,7 @@ public class FlashSaleCampaignEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    // DB tự cập nhật thời gian khi bản ghi thay đổi.
+    @Column(name = "updated_at", nullable = false, updatable = false)
     private LocalDateTime updatedAt;
 }

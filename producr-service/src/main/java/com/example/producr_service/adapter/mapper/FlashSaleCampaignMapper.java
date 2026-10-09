@@ -54,6 +54,14 @@ public class FlashSaleCampaignMapper {
         );
     }
 
+    // Dùng cho job đổi trạng thái, không tải items; chỉ lưu qua saveStatus, không dùng save aggregate.
+    public FlashSaleCampaign toStatusDomain(FlashSaleCampaignEntity entity) {
+        return FlashSaleCampaign.reconstitute(
+                entity.getId(), entity.getName(), entity.getDescription(), entity.getRegistrationDeadline(),
+                entity.getStartsAt(), entity.getEndsAt(), entity.getStatus(), entity.getCreatedBy(),
+                entity.getCreatedAt(), entity.getUpdatedAt(), java.util.List.of());
+    }
+
     // Đọc phần chương trình mà không truy cập collection LAZY khi phân trang.
     public FlashSaleCampaignView toView(FlashSaleCampaignEntity entity) {
         return new FlashSaleCampaignView(entity.getId(), entity.getName(), entity.getDescription(),
