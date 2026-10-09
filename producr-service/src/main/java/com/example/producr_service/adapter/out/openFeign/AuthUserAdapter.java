@@ -6,7 +6,9 @@ import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.stereotype.Component;
 
+@Component("currentUserPort")
 @FieldDefaults(makeFinal = true,level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
 public class AuthUserAdapter implements CurrentUserPort {
