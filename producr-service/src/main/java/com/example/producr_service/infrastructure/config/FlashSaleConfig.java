@@ -2,9 +2,9 @@ package com.example.producr_service.infrastructure.config;
 
 import com.example.producr_service.application.port.in.CreateFlashSaleCampaignUseCase;
 import com.example.producr_service.application.port.in.GetFlashSaleCampaignsUseCase;
+import com.example.producr_service.application.port.in.GetUserFlashSaleItemsUseCase;
 import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRepositoryPort;
 import com.example.producr_service.application.service.FlashSaleCampaignService;
-import org.springframework.beans.factory.annotation.Qualifier;
 import com.example.producr_service.application.port.in.CancelFlashSaleCampaignUseCase;
 import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignsUseCase;
 import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignDetailUseCase;
@@ -41,15 +41,21 @@ public class FlashSaleConfig {
     // Cung cấp input port đăng ký variant cho controller.
     @Bean
     RegisterFlashSaleItemUseCase registerFlashSaleItemUseCase(
-            @Qualifier("flashSaleItemService") FlashSaleItemService service) {
-        return service;
+            FlashSaleItemService flashSaleItemService) {
+        return flashSaleItemService;
     }
 
     // Cung cấp input port tính giá dự kiến cho controller.
     @Bean
     PreviewFlashSalePriceUseCase previewFlashSalePriceUseCase(
-            @Qualifier("flashSaleItemService") FlashSaleItemService service) {
-        return service;
+            FlashSaleItemService flashSaleItemService) {
+        return flashSaleItemService;
+    }
+
+    // Cung cấp input port lấy card sale theo phân loại cho controller phía user.
+    @Bean
+    GetUserFlashSaleItemsUseCase getUserFlashSaleItemsUseCase(FlashSaleItemService flashSaleItemService) {
+        return flashSaleItemService;
     }
 
     // Khởi tạo service dùng chung cho các use case chương trình Flash Sale.
@@ -64,35 +70,35 @@ public class FlashSaleConfig {
 
     // Cung cấp use case tạo chương trình Flash Sale qua input port.
     @Bean
-    CreateFlashSaleCampaignUseCase createFlashSaleCampaignUseCase(@Qualifier("flashSaleCampaignService") FlashSaleCampaignService service) {
-        return service;
+    CreateFlashSaleCampaignUseCase createFlashSaleCampaignUseCase(FlashSaleCampaignService flashSaleCampaignService) {
+        return flashSaleCampaignService;
     }
 
     // Cung cấp use case đọc danh sách chương trình cho controller.
     @Bean
-    GetFlashSaleCampaignsUseCase getFlashSaleCampaignsUseCase(@Qualifier("flashSaleCampaignService") FlashSaleCampaignService service) {
-        return service;
+    GetFlashSaleCampaignsUseCase getFlashSaleCampaignsUseCase(FlashSaleCampaignService flashSaleCampaignService) {
+        return flashSaleCampaignService;
     }
 
     // Cung cấp use case đọc chương trình cho Shop từ service Flash Sale dùng chung.
     @Bean
     GetShopFlashSaleCampaignsUseCase getShopFlashSaleCampaignsUseCase(
-            @Qualifier("flashSaleCampaignService") FlashSaleCampaignService service) {
-        return service;
+            FlashSaleCampaignService flashSaleCampaignService) {
+        return flashSaleCampaignService;
     }
 
     // Lắp ghép use case đọc chi tiết cho biểu mẫu đăng ký của Shop.
     @Bean
     GetShopFlashSaleCampaignDetailUseCase getShopFlashSaleCampaignDetailUseCase(
-            @Qualifier("flashSaleCampaignService") FlashSaleCampaignService service) {
-        return service;
+            FlashSaleCampaignService flashSaleCampaignService) {
+        return flashSaleCampaignService;
     }
 
     // Cung cấp use case hủy chương trình qua input port.
     @Bean
     CancelFlashSaleCampaignUseCase cancelFlashSaleCampaignUseCase(
-            @Qualifier("flashSaleCampaignService") FlashSaleCampaignService service) {
-        return service;
+            FlashSaleCampaignService flashSaleCampaignService) {
+        return flashSaleCampaignService;
     }
 
     // Lắp ghép input port chọn sản phẩm Flash Sale với service sản phẩm hiện có.

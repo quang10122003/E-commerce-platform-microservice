@@ -3,16 +3,21 @@ package com.example.producr_service.adapter.mapper;
 import com.example.common.untill.JsonUtils;
 import com.example.producr_service.adapter.entity.*;
 import com.example.producr_service.application.dto.response.FlashSaleVariantSnapshot;
+import com.example.producr_service.application.dto.response.UserFlashSaleItemView;
 import com.example.producr_service.domain.model.FlashSaleItem;
 import com.example.producr_service.domain.model.ProductStatus;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 import java.util.Comparator;
 
 @Component
 @RequiredArgsConstructor
+@FieldDefaults(makeFinal = true,level = AccessLevel.PRIVATE)
 public class FlashSaleItemMapper {
-    private final JsonUtils jsonUtils;
+     JsonUtils jsonUtils;
+     ProductVariantMapper productVariantMapper;
 
     // Chuyển dữ liệu JPA thành snapshot phục vụ kiểm tra và lưu đăng ký.
     public FlashSaleVariantSnapshot toSnapshot(ProductVariantEntity variant) {
@@ -69,5 +74,10 @@ public class FlashSaleItemMapper {
                 entity.getVariant() == null ? null : entity.getVariant().getId(), entity.getShopId(),
                 entity.getProductName(), attributes, entity.getDiscountPercent(), entity.getRegisteredQuantity(),
                 entity.getSoldQuantity(), entity.getStatus(), entity.getCreatedAt(), entity.getUpdatedAt());
+    }
+
+
+    public UserFlashSaleItemView toUserFlashSaleItemView(FlashSaleItemEntity  flashSaleItemEntity){
+        return new UserFlashSaleItemView(productVariantMapper.toCartView(flashSaleItemEntity.getVariant()),flashSaleItemEntity.getDiscountPercent(),flashSaleItemEntity.getRegisteredQuantity(),flashSaleItemEntity.getSoldQuantity(),flashSaleItemEntity.getCampaign().getEndsAt());
     }
 }
