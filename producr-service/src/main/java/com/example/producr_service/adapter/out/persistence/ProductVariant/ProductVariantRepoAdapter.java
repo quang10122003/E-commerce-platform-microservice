@@ -5,6 +5,7 @@ import com.example.producr_service.adapter.entity.ProductVariantEntity;
 import com.example.producr_service.adapter.entity.VariantImageEntity;
 import com.example.producr_service.application.dto.response.CartInfoRepone;
 import com.example.producr_service.application.dto.response.VariantCartView;
+import com.example.producr_service.application.dto.response.VariantPriceView;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.domain.model.ProductVariant;
@@ -22,6 +23,12 @@ import java.util.stream.Collectors;
 public class ProductVariantRepoAdapter implements ProductVariantRepoPort {
     private final ProductVariantJpa productVariantJpa;
     private final ProductVariantMapper productVariantMapper;
+
+    // Đọc projection giá và tồn kho, không dựng aggregate hoặc tải collection.
+    @Override
+    public Optional<VariantPriceView> findPriceView(Long productId, Long variantId) {
+        return productVariantJpa.findPriceView(productId, variantId);
+    }
 
     // Kiểm tra SKU đã tồn tại trước khi tạo phân loại mới.
     @Override

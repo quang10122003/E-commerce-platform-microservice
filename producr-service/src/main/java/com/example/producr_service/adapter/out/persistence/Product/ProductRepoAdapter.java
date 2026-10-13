@@ -36,6 +36,18 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     BrandJpa brandJpa;
     ProductMapper productMapper;
 
+    // Đọc ID chủ sản phẩm bằng projection, không tải dữ liệu liên quan.
+    @Override
+    public Optional<Long> findOwnerIdById(Long productId) {
+        return productJpa.findOwnerIdById(productId);
+    }
+
+    // Dùng truy vấn tồn tại của JPA, không tải dữ liệu sản phẩm và phân loại.
+    @Override
+    public boolean existsById(Long productId) {
+        return productJpa.existsById(productId);
+    }
+
     // Tái sử dụng mapper quản lý sản phẩm, không tải phân loại và ảnh phân loại tại đây.
     @Override
     public List<Product> findAllByUserId(Long userId) {

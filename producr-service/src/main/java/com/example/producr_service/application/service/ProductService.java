@@ -11,6 +11,10 @@ import com.example.producr_service.application.dto.command.VariantImageUploadCom
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
 import com.example.producr_service.application.dto.request.SellerProductFilter;
 import com.example.producr_service.application.dto.response.ProductResponse;
+import com.example.producr_service.application.dto.response.ProductExistsResponse;
+import com.example.producr_service.application.dto.response.ProductShopIdResponse;
+import com.example.producr_service.application.dto.response.UserProductDetailResponse;
+import com.example.producr_service.application.mapper.UserProductDetailMapper;
 import com.example.producr_service.application.dto.response.ShopFlashSaleProductResponse;
 import com.example.producr_service.application.port.in.GetShopFlashSaleProductsUseCase;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
@@ -44,7 +48,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase, GetShopFlashSaleProductsUseCase {
+public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase, GetShopFlashSaleProductsUseCase, CheckProductExistsUseCase, GetProductShopIdUseCase, GetUserProductDetailUseCase {
     ProductImageRollbackPort productImageRollbackPort;
     ProductImageUploadService productImageUploadService;
     ProductCreationService productCreationService;
@@ -59,6 +63,31 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     ProductVariantRepoPort productVariantRepoPort;
     ProductUpdateService productUpdateService;
     Clock clock;
+
+    // Giữ phiên đọc cho ảnh và thuộc tính; trả cả trạng thái product để FE xử lý hiển thị.
+    @Override
+    @Transactional(readOnly = true)
+    public UserProductDetailResponse getUserProductDetail(Long productId) {
+        Product product = productRepositoryPort.findById(productId)
+                .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
+        return UserProductDetailMapper.toResponse(product);
+    }
+
+    // Lấy shop ID từ người tạo sản phẩm; sản phẩm không tồn tại trả lỗi 404.
+    @Override
+    @Transactional(readOnly = true)
+    public ProductShopIdResponse getShopId(Long productId) {
+        Long shopId = productRepositoryPort.findOwnerIdById(productId)
+                .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
+        return new ProductShopIdResponse(shopId);
+    }
+
+    // Kiểm tra sản phẩm còn trong DB, kể cả khi không còn ACTIVE.
+    @Override
+    @Transactional(readOnly = true)
+    public ProductExistsResponse checkExists(Long productId) {
+        return new ProductExistsResponse(productRepositoryPort.existsById(productId));
+    }
 
     // Chỉ đọc sản phẩm của Shop đang đăng nhập, không nhận shopId từ client.
     @Override
@@ -151,7 +180,10 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
 
     @Override
     public ProductCatalogSearchResponse getProducts(ProductScrollFilter filter) {
-        productHelper.validateSearchKeyword(filter.keyword());
+        // Cho phép tìm độc lập theo danh mục; ngoài ra vẫn yêu cầu từ khóa.
+        if (filter.categoryId() == null || filter.categoryId() <= 0) {
+            productHelper.validateSearchKeyword(filter.keyword());
+        }
         productHelper.validatePriceRange(filter.minPrice(), filter.maxPrice());
         return productSearchIndexPort.search(filter);
     }

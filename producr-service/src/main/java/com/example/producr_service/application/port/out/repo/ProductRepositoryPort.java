@@ -16,6 +16,12 @@ public interface ProductRepositoryPort {
     Product update(Product product);
     Optional<Product> findById(Long id);
 
+    // Kiểm tra bản ghi sản phẩm tồn tại, không lọc trạng thái hoặc tải aggregate.
+    boolean existsById(Long productId);
+
+    // Đọc ID người tạo sản phẩm, không khóa hoặc tải aggregate.
+    Optional<Long> findOwnerIdById(Long productId);
+
     PageResponse<Product> findProductsFillter(
             Long sellerUserId,
             SellerProductFilter filter

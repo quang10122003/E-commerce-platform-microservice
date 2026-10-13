@@ -16,6 +16,8 @@ import org.springframework.context.annotation.Configuration;
 import com.example.producr_service.application.service.FlashSaleItemService;
 import com.example.producr_service.application.port.in.RegisterFlashSaleItemUseCase;
 import com.example.producr_service.application.port.in.PreviewFlashSalePriceUseCase;
+import com.example.producr_service.application.port.in.GetVariantSaleUseCase;
+import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import java.time.Clock;
 
@@ -34,8 +36,15 @@ public class FlashSaleConfig {
     // Lắp ghép các port cho đăng ký variant và tính giá sale dự kiến.
     @Bean
     FlashSaleItemService flashSaleItemService(CurrentUserPort currentUser,
-            FlashSaleCampaignRepositoryPort campaigns, FlashSaleItemRepositoryPort items, Clock clock) {
-        return new FlashSaleItemService(currentUser, campaigns, items, clock);
+            FlashSaleCampaignRepositoryPort campaigns, FlashSaleItemRepositoryPort items, Clock clock,
+            ProductVariantRepoPort productVariantRepoPort) {
+        return new FlashSaleItemService(currentUser, campaigns, items, clock, productVariantRepoPort);
+    }
+
+    // Cung cấp use case kiểm tra ưu đãi variant cho API chi tiết công khai.
+    @Bean
+    GetVariantSaleUseCase getVariantSaleUseCase(FlashSaleItemService flashSaleItemService) {
+        return flashSaleItemService;
     }
 
     // Cung cấp input port đăng ký variant cho controller.

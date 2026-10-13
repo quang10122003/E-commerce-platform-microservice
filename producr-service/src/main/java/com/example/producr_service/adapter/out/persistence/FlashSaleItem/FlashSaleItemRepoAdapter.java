@@ -5,6 +5,7 @@ import com.example.producr_service.adapter.mapper.ProductVariantMapper;
 import com.example.producr_service.adapter.out.persistence.ProductVariant.ProductVariantJpa;
 import com.example.producr_service.application.dto.response.FlashSaleVariantSnapshot;
 import com.example.producr_service.application.dto.response.UserFlashSaleItemView;
+import com.example.producr_service.application.dto.response.FlashSaleOfferView;
 import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 import com.example.producr_service.domain.model.FlashSaleItemStatus;
@@ -26,6 +27,13 @@ public class FlashSaleItemRepoAdapter implements FlashSaleItemRepositoryPort {
      FlashSaleItemMapper flashSaleItemMapper;
      FlashSaleItemJpa flashSaleItemJpa;
      ProductVariantMapper productVariantMapper;
+
+    // Truy vấn projection ưu đãi, không khóa dữ liệu hoặc xử lý quota tại adapter.
+    @Override
+    public List<FlashSaleOfferView> findOngoingOffers(Long productId, Long variantId, LocalDateTime now) {
+        return flashSaleItemJpa.findOngoingOffers(productId, variantId, now, ProductStatus.ACTIVE,
+                FlashSaleItemStatus.REGISTERED, FlashSaleCampaignStatus.PUBLISHED);
+    }
 
     // Đọc sản phẩm và variant hiện có để tạo snapshot, không giữ khóa khi kiểm tra.
     @Override

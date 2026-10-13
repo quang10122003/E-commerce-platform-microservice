@@ -15,6 +15,10 @@ import java.util.Optional;
 import java.util.List;
 
 public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
+    // Chỉ đọc ID người tạo, không lọc trạng thái bán của sản phẩm.
+    @Query("select p.userId from ProductEntity p where p.id = :productId")
+    Optional<Long> findOwnerIdById(@Param("productId") Long productId);
+
     // Tải sản phẩm cùng danh mục, thương hiệu; phân loại được đọc theo lô riêng.
     @EntityGraph(attributePaths = {"category", "brand"})
     List<ProductEntity> findAllByUserId(Long userId);

@@ -1,6 +1,7 @@
 package com.example.producr_service.application.port.out.repo;
 
 import com.example.producr_service.application.dto.response.VariantCartView;
+import com.example.producr_service.application.dto.response.VariantPriceView;
 import com.example.producr_service.domain.model.ProductVariant;
 import com.example.producr_service.application.dto.response.CartInfoRepone;
 import com.example.producr_service.application.port.out.storage.StoredFile;
@@ -11,6 +12,9 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface ProductVariantRepoPort {
+    // Đọc giá và tồn kho theo cả product ID và variant ID, không khóa hoặc tải ảnh.
+    Optional<VariantPriceView> findPriceView(Long productId, Long variantId);
+
     boolean existsBySku(String sku);
     boolean existsBySkuAndIdNot(String sku, Long variantId);
 

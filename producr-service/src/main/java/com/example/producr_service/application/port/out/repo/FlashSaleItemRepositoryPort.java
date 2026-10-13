@@ -2,11 +2,15 @@ package com.example.producr_service.application.port.out.repo;
 
 import com.example.producr_service.application.dto.response.FlashSaleVariantSnapshot;
 import com.example.producr_service.application.dto.response.UserFlashSaleItemView;
+import com.example.producr_service.application.dto.response.FlashSaleOfferView;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface FlashSaleItemRepositoryPort {
+    // Đọc ưu đãi REGISTERED trong campaign đang chạy của đúng variant, không tải toàn bộ sale.
+    List<FlashSaleOfferView> findOngoingOffers(Long productId, Long variantId, LocalDateTime now);
+
     // Đọc thông tin variant và thuộc tính để tạo snapshot, không khóa dữ liệu.
     Optional<FlashSaleVariantSnapshot> findVariant(Long variantId);
 

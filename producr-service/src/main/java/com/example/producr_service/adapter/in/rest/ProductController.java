@@ -18,11 +18,16 @@ import com.example.producr_service.application.port.in.GetProductsCatalogUseCase
 import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
 import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
 import com.example.producr_service.application.port.in.UpdateProductUseCase;
+import com.example.producr_service.application.port.in.GetUserProductDetailUseCase;
+import com.example.producr_service.application.port.in.GetVariantSaleUseCase;
+import com.example.producr_service.application.dto.response.UserProductDetailResponse;
+import com.example.producr_service.application.dto.response.VariantSaleResponse;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -51,6 +56,23 @@ public class ProductController {
     DeleteProductvariantUseCase deleteProductvariantUseCase;
     GetShopProductDetailUseCase getShopProductDetailUseCase;
     UpdateProductUseCase updateProductUseCase;
+    GetUserProductDetailUseCase getUserProductDetailUseCase;
+    GetVariantSaleUseCase getVariantSaleUseCase;
+
+    // Đọc chi tiết product công khai cùng trạng thái và tổ hợp variant.
+    @GetMapping("/{productId}")
+    public ResponseEntity<UserProductDetailResponse> getUserProductDetail(
+            @PathVariable("productId") @Positive Long productId) {
+        return ResponseEntity.ok(getUserProductDetailUseCase.getUserProductDetail(productId));
+    }
+
+    // Chỉ trả ưu đãi sale hiện áp dụng cho variant đang chọn.
+    @GetMapping("/{productId}/variants/{variantId}/sale")
+    public ResponseEntity<VariantSaleResponse> getVariantSale(
+            @PathVariable("productId") @Positive Long productId,
+            @PathVariable("variantId") @Positive Long variantId) {
+        return ResponseEntity.ok(getVariantSaleUseCase.getVariantSale(productId, variantId));
+    }
 
 
     //  api tạo sản phẩm của shop
@@ -108,8 +130,8 @@ public class ProductController {
     // API lấy catalog product đang hoạt động bằng cơ chế infinity scroll.
     @GetMapping()
     public ResponseEntity<ProductCatalogSearchResponse> getProducts(
-            @RequestParam String keyword,
-            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) @Positive Long categoryId,
             @RequestParam(required = false) List<Long> brandIds,
             @RequestParam(required = false) @DecimalMin("0") BigDecimal minPrice,
             @RequestParam(required = false) @DecimalMin("0") BigDecimal maxPrice,

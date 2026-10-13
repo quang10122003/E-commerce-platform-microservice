@@ -23,4 +23,10 @@ public class UserFlashSaleController {
     ) {
         return ResponseEntity.ok(getUserFlashSaleItemsUseCase.getItems(categoryId));
     }
+
+    // Trả tối đa 5 card bán chạy còn AVAILABLE trong sale đang diễn ra.
+    @GetMapping("/items/top-selling")
+    public ResponseEntity<UserFlashSaleResponse> getTopSellingItems() {
+        return ResponseEntity.ok(getUserFlashSaleItemsUseCase.getTopSellingItems());
+    }
 }

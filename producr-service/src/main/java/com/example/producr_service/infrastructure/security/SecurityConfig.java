@@ -21,8 +21,12 @@ public class SecurityConfig {
             "/actuator/health",
             "/actuator/info",
             "/api/products",
+            "/api/products/{productId:-?[0-9]+}",
+            "/api/products/{productId:-?[0-9]+}/variants/{variantId:-?[0-9]+}/sale",
             "/api/categories",
-            "/api/brands"
+            "/api/brands",
+            "/api/user/flash-sales/items",
+            "/api/user/flash-sales/items/top-selling"
     };
 
     // Nhận filter JWT dùng chung để xác thực các API riêng tư.

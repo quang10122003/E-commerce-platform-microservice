@@ -1,6 +1,9 @@
 package com.example.producr_service.infrastructure.config;
 
 import com.example.producr_service.application.port.in.CreateProductUseCase;
+import com.example.producr_service.application.port.in.CheckProductExistsUseCase;
+import com.example.producr_service.application.port.in.GetProductShopIdUseCase;
+import com.example.producr_service.application.port.in.GetUserProductDetailUseCase;
 import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
 import com.example.producr_service.application.port.in.GetCartInfoUseCase;
 import com.example.producr_service.application.port.in.UpdateProductUseCase;
@@ -32,6 +35,24 @@ import java.time.Clock;
 
 @Configuration
 public class ProductConfig {
+
+    // Cung cấp use case đọc product công khai qua input port.
+    @Bean
+    GetUserProductDetailUseCase getUserProductDetailUseCase(ProductService productService) {
+        return productService;
+    }
+
+    // Cung cấp use case lấy shop ID cho controller internal.
+    @Bean
+    GetProductShopIdUseCase getProductShopIdUseCase(ProductService productService) {
+        return productService;
+    }
+
+    // Cung cấp input port kiểm tra tồn tại sản phẩm cho controller internal riêng.
+    @Bean
+    CheckProductExistsUseCase checkProductExistsUseCase(ProductService productService) {
+        return productService;
+    }
 
     // Cung cấp use case đọc thông tin variant cho API giỏ hàng nội bộ.
     @Bean

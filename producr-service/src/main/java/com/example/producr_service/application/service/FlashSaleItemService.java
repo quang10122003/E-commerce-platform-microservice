@@ -8,6 +8,7 @@ import com.example.producr_service.application.port.in.*;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.port.out.repo.*;
 import com.example.producr_service.domain.service.FlashSaleRules;
+import com.example.producr_service.domain.model.ProductStatus;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -21,11 +22,43 @@ import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, PreviewFlashSalePriceUseCase,GetUserFlashSaleItemsUseCase {
+public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, PreviewFlashSalePriceUseCase,GetUserFlashSaleItemsUseCase, GetVariantSaleUseCase {
      CurrentUserPort currentUser;
      FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort;
      FlashSaleItemRepositoryPort flashSaleItemRepositoryPort;
      Clock clock;
+     ProductVariantRepoPort productVariantRepoPort;
+
+    // Kiểm tra đúng product và variant trước khi xác định ưu đãi còn mua được.
+    @Override
+    @Transactional(readOnly = true)
+    public VariantSaleResponse getVariantSale(Long productId, Long variantId) {
+        VariantPriceView variant = productVariantRepoPort.findPriceView(productId, variantId)
+                .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND));
+        if (variant.productStatus() != ProductStatus.ACTIVE) {
+            throw new BusinessException(ProductError.PRODUCT_NOT_FOUND);
+        }
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        List<FlashSaleOfferView> offers = flashSaleItemRepositoryPort.findOngoingOffers(productId, variantId, now);
+        // Không chọn ngẫu nhiên ưu đãi khi dữ liệu vi phạm quy tắc lịch sale không chồng nhau.
+        if (offers.size() > 1) {
+            throw new BusinessException(ProductError.FLASH_SALE_SCHEDULE_CONFLICT);
+        }
+        if (offers.isEmpty()) {
+            return new VariantSaleResponse(variantId, null);
+        }
+
+        FlashSaleOfferView offer = offers.getFirst();
+        if (variant.stockQuantity() <= 0 || offer.soldQuantity() >= offer.registeredQuantity()) {
+            return new VariantSaleResponse(variantId, null);
+        }
+        return new VariantSaleResponse(variantId, new VariantSaleResponse.Sale(
+                offer.discountPercent(),
+                FlashSaleRules.calculateSalePrice(variant.price(), offer.discountPercent()),
+                offer.endsAt().atZone(clock.getZone()).toOffsetDateTime()
+        ));
+    }
 
     // Khóa campaign và tải đầy đủ items trước khi domain thêm đăng ký vào aggregate.
     @Override
@@ -69,16 +102,43 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
     @Transactional(readOnly = true)
     @Override
     public UserFlashSaleResponse getItems(Long categoryId) {
+        return getSaleItems(categoryId, false);
+    }
+
+    // Lấy tối đa 5 card bán chạy, bỏ qua item không còn mua được giá sale.
+    @Override
+    @Transactional(readOnly = true)
+    public UserFlashSaleResponse getTopSellingItems() {
+        return getSaleItems(null, true);
+    }
+
+    // lấy danh sách item đang của sale đang đc mở , nhận cờ topSellingOnly để lấy top sản phẩn sale
+    private UserFlashSaleResponse getSaleItems(Long categoryId, boolean topSellingOnly) {
         LocalDateTime now = LocalDateTime.now(clock);
         List<UserFlashSaleItemView> items = flashSaleItemRepositoryPort.findItemsInOngoingCampaigns(categoryId, now);
         if (items.isEmpty()) {
             return new UserFlashSaleResponse(null, List.of());
         }
 
+        List<UserFlashSaleItemResponse> cards;
+        if (topSellingOnly) {
+            // Lọc trước limit để item hết quota hoặc tồn kho không chiếm chỗ trong top 5.
+            cards = items.stream()
+                    .sorted(Comparator.comparingLong(UserFlashSaleItemView::soldQuantity)
+                            .reversed()
+                            .thenComparing(item -> item.variant().variantId()))
+                    .map(this::toUserItemResponse)
+                    .filter(item -> item.availability() == UserFlashSaleItemResponse.Availability.AVAILABLE)
+                    .limit(5)
+                    .toList();
+        } else {
+            cards = items.stream().map(this::toUserItemResponse).toList();
+        }
+
         // Lịch sale không chồng nhau nên các item có chung thời gian hết hạn.
         return new UserFlashSaleResponse(
                 items.getFirst().endsAt().atZone(clock.getZone()).toOffsetDateTime(),
-                items.stream().map(this::toUserItemResponse).toList()
+                cards
         );
     }
 
