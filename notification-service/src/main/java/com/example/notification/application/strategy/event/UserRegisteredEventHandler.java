@@ -3,7 +3,7 @@ package com.example.notification.application.strategy.event;
 import com.example.notification.application.dto.event.EventType;
 import com.example.notification.application.dto.event.UserRegisteredEvent;
 import com.example.notification.application.port.in.SendEmailUserRegisteredUseCase;
-import com.example.notification.application.port.out.UserRegisteredEventParserPort;
+import com.example.notification.application.port.out.objectMapper.UserRegisteredEventParserPort;
 
 // Xử lý event đăng ký người dùng và gửi email chào mừng.
 public class UserRegisteredEventHandler implements AuthEventHandler {

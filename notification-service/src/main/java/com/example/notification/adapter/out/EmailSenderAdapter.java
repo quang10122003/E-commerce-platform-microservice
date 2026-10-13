@@ -1,7 +1,7 @@
 package com.example.notification.adapter.out;
 
 import com.example.notification.application.dto.request.EmailMessage;
-import com.example.notification.application.port.out.EmailSenderPort;
+import com.example.notification.application.port.out.mail.EmailSenderPort;
 
 import lombok.extern.slf4j.Slf4j;
 

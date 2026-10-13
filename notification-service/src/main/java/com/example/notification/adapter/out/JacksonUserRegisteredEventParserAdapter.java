@@ -1,7 +1,7 @@
-package com.example.notification.adapter.in;
+package com.example.notification.adapter.out;
 
 import com.example.notification.application.dto.event.UserRegisteredEvent;
-import com.example.notification.application.port.out.UserRegisteredEventParserPort;
+import com.example.notification.application.port.out.objectMapper.UserRegisteredEventParserPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;

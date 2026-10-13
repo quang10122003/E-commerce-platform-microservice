@@ -1,4 +1,4 @@
-package com.example.notification.adapter.in;
+package com.example.notification.adapter.in.kafka;
 
 import com.example.notification.application.registry.AuthEventHandlerRegistry;
 import com.example.notification.application.strategy.event.AuthEventHandler;

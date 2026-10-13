@@ -1,4 +1,4 @@
-package com.example.notification.application.port.out;
+package com.example.notification.application.port.out.objectMapper;
 
 import com.example.notification.application.dto.event.UserRegisteredEvent;
 

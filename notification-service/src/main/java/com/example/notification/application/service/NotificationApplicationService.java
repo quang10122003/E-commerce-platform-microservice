@@ -3,7 +3,7 @@ package com.example.notification.application.service;
 import com.example.notification.application.dto.event.UserRegisteredEvent;
 import com.example.notification.application.dto.template.UserRegisteredEmailTemplate;
 import com.example.notification.application.port.in.SendEmailUserRegisteredUseCase;
-import com.example.notification.application.port.out.EmailSenderPort;
+import com.example.notification.application.port.out.mail.EmailSenderPort;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
