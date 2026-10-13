@@ -6,6 +6,11 @@ spring:
       # Nạp biến môi trường từ .env ở cả root project và thư mục cha của module
       - optional:file:.env[.properties]
       - optional:file:../.env[.properties]
+  datasource:
+    url: jdbc:mysql://localhost:3306/notifiservice_db
+    username: ${USERNAME_DATABASE}
+    password: ${PASSWORD_DATABASE}
+    driver-class-name: com.mysql.cj.jdbc.Driver
   application:
     name: notification-service
   kafka:
@@ -31,6 +36,8 @@ eureka:
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
 app:
+  jwt:
+    public-key: ${JWT_PUBLIC_KEY}
   kafka:
     topic:
       auth-events: auth-service.events
