@@ -14,7 +14,7 @@ public final class UserProductDetailMapper {
     private UserProductDetailMapper() {}
 
     // Dựng dữ liệu tổ hợp và chọn variant giá cao nhất, không loại variant hết hàng.
-    public static UserProductDetailResponse toResponse(Product product) {
+    public static UserProductDetailResponse toResponse(Product product, String location) {
         Long defaultVariantId = product.getVariants().stream()
                 .sorted(Comparator.comparing((ProductVariant variant) -> variant.getPrice().getAmount())
                         .reversed().thenComparing(ProductVariant::getId))
@@ -32,7 +32,7 @@ public final class UserProductDetailMapper {
 
         return new UserProductDetailResponse(
                 product.getId(), product.getUserId(), product.getName(), product.getDescription(),
-                product.getImageUrl(), product.getStatus(), product.getTotalSold(), defaultVariantId, attributes,
+                product.getImageUrl(), product.getStatus(), location, product.getTotalSold(), defaultVariantId, attributes,
                 product.getVariants().stream().sorted(Comparator.comparing(ProductVariant::getId))
                         .map(UserProductDetailMapper::toVariantResponse).toList()
         );

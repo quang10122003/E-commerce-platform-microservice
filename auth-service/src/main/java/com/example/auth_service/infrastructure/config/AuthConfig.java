@@ -1,6 +1,7 @@
 package com.example.auth_service.infrastructure.config;
 
 import com.example.auth_service.application.port.in.ChecktokenUseCase;
+import com.example.auth_service.application.port.in.GetPublicShopInfoUseCase;
 import com.example.auth_service.application.port.in.LoginUseCase;
 import com.example.auth_service.application.port.in.LogoutUserCase;
 import com.example.auth_service.application.port.in.RefreshTokenUseCase;
@@ -24,6 +25,12 @@ import java.time.ZoneId;
 
 @Configuration
 public class AuthConfig {
+    // Lắp ghép use case thông tin shop công khai, không thay flow internal hiện có.
+    @Bean
+    GetPublicShopInfoUseCase getPublicShopInfoUseCase(AuthServiceInternal authServiceInternal) {
+        return authServiceInternal;
+    }
+
     // Cung cấp nguồn thời gian theo múi giờ Việt Nam.
     @Bean
     Clock clock() {
@@ -60,11 +67,17 @@ public class AuthConfig {
     }
 
     @Bean
-    InternalGetUserInfoUseCase internalGetUserInfoUseCase(
+    AuthServiceInternal authServiceInternal(
             TokenServicePort tokenServicePort,
             UserRepositoryPort userRepositoryPort
     ) {
         return new AuthServiceInternal(tokenServicePort, userRepositoryPort);
+    }
+
+    // Cung cấp use case internal từ cùng instance phục vụ thông tin shop public.
+    @Bean
+    InternalGetUserInfoUseCase internalGetUserInfoUseCase(AuthServiceInternal authServiceInternal) {
+        return authServiceInternal;
     }
 
     @Bean

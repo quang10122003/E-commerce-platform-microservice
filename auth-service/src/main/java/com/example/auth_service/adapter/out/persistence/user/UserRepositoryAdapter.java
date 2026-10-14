@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import com.example.auth_service.adapter.mapper.UserMapper;
 import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
+import com.example.auth_service.application.DTO.repone.ShopAddressView;
+import com.example.auth_service.domain.until.RoleEnum;
 import com.example.auth_service.application.port.out.UserRepositoryPort;
 import com.example.auth_service.domain.model.User;
 
@@ -26,6 +28,12 @@ import lombok.experimental.FieldDefaults;
 public class UserRepositoryAdapter implements UserRepositoryPort {
     UserRepoJpa userRepoJpa;
     UserMapper userMapper;
+
+    // Dùng vai trò shop hiện có để tránh công khai thông tin tài khoản thường.
+    @Override
+    public Optional<ShopAddressView> findShopAddressById(Long shopId) {
+        return userRepoJpa.findShopAddressById(shopId, RoleEnum.SHOP.getName());
+    }
 
     @Override
     public Optional<User> findByEmail(String email) {

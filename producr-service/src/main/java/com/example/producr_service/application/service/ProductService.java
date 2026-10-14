@@ -24,6 +24,7 @@ import com.example.producr_service.application.dto.response.UserInternaInfoRespo
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.in.*;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
+import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
@@ -63,6 +64,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     ProductVariantRepoPort productVariantRepoPort;
     ProductUpdateService productUpdateService;
     Clock clock;
+    ShopInfoClientPort shopInfoClientPort;
 
     // Giữ phiên đọc cho ảnh và thuộc tính; trả cả trạng thái product để FE xử lý hiển thị.
     @Override
@@ -70,7 +72,9 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     public UserProductDetailResponse getUserProductDetail(Long productId) {
         Product product = productRepositoryPort.findById(productId)
                 .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
-        return UserProductDetailMapper.toResponse(product);
+        String shopAddress = shopInfoClientPort.findPublicShopAddress(product.getUserId()).orElse(null);
+        String location = productHelper.extractProvinceNameFromAddress(shopAddress);
+        return UserProductDetailMapper.toResponse(product, location);
     }
 
     // Lấy shop ID từ người tạo sản phẩm; sản phẩm không tồn tại trả lỗi 404.

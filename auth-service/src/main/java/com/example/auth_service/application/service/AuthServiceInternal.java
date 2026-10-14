@@ -1,6 +1,9 @@
 package com.example.auth_service.application.service;
 
 import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
+import com.example.auth_service.application.DTO.repone.PublicShopInfoResponse;
+import com.example.auth_service.application.port.in.GetPublicShopInfoUseCase;
+import org.springframework.transaction.annotation.Transactional;
 import com.example.auth_service.application.DTO.repone.UserInternaInfoRespone;
 import com.example.auth_service.application.error.AuthError;
 import com.example.auth_service.application.mapper.UserInternalInfoResponseMapper;
@@ -17,9 +20,17 @@ import java.util.Objects;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class AuthServiceInternal implements InternalGetUserInfoUseCase {
+public class AuthServiceInternal implements InternalGetUserInfoUseCase, GetPublicShopInfoUseCase {
     TokenServicePort tokenServicePort;
     UserRepositoryPort userRepositoryPort;
+
+    @Override
+    @Transactional(readOnly = true)
+    public PublicShopInfoResponse getPublicShopInfo(Long shopId) {
+        var shop = userRepositoryPort.findShopAddressById(shopId)
+                .orElseThrow(() -> new BusinessException(AuthError.SHOP_NOT_FOUND));
+        return new PublicShopInfoResponse(shop.shopId(), shop.shopName(), shop.shopAddress());
+    }
 
     @Override
     public UserInternaInfoRespone getInfoUserInternal(String authorizationHeader) {

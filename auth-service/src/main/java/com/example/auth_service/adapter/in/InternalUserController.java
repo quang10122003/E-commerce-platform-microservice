@@ -3,6 +3,10 @@ package com.example.auth_service.adapter.in;
 import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
 import com.example.auth_service.application.DTO.repone.UserInternaInfoRespone;
 import com.example.auth_service.application.port.in.InternalGetUserInfoUseCase;
+import com.example.auth_service.application.port.in.GetPublicShopInfoUseCase;
+import com.example.auth_service.application.DTO.repone.PublicShopInfoResponse;
+import jakarta.validation.constraints.Positive;
+import org.springframework.web.bind.annotation.PathVariable;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,6 +24,13 @@ import org.springframework.web.bind.annotation.RestController;
 @FieldDefaults(makeFinal = true,level = AccessLevel.PRIVATE)
 public class InternalUserController {
     private final InternalGetUserInfoUseCase internalGetUserInfoUseCase;
+    private final GetPublicShopInfoUseCase getPublicShopInfoUseCase;
+
+//    endpoint lấy thônng tin shop ko cần token
+    @GetMapping("/shops/{shopId}/info")
+    public PublicShopInfoResponse getPublicShopInfo(@PathVariable("shopId") @Positive Long shopId) {
+        return getPublicShopInfoUseCase.getPublicShopInfo(shopId);
+    }
     @GetMapping("getInfoUser")
     UserInternaInfoRespone getInfoUser(@RequestHeader("Authorization") String authorizationHeader){
         return internalGetUserInfoUseCase.getInfoUserInternal(authorizationHeader);
