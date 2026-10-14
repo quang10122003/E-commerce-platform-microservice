@@ -46,14 +46,14 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
             throw new BusinessException(ProductError.FLASH_SALE_SCHEDULE_CONFLICT);
         }
         if (offers.isEmpty()) {
-            return new VariantSaleResponse(variantId, null);
+            return new VariantSaleResponse(variantId, variant.price(), null);
         }
 
         FlashSaleOfferView offer = offers.getFirst();
         if (variant.stockQuantity() <= 0 || offer.soldQuantity() >= offer.registeredQuantity()) {
-            return new VariantSaleResponse(variantId, null);
+            return new VariantSaleResponse(variantId, variant.price(), null);
         }
-        return new VariantSaleResponse(variantId, new VariantSaleResponse.Sale(
+        return new VariantSaleResponse(variantId, variant.price(), new VariantSaleResponse.Sale(
                 offer.discountPercent(),
                 FlashSaleRules.calculateSalePrice(variant.price(), offer.discountPercent()),
                 offer.endsAt().atZone(clock.getZone()).toOffsetDateTime()
