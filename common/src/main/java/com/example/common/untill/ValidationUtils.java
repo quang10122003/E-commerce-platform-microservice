@@ -7,6 +7,13 @@ import com.example.common.exception.BusinessException;
 public final class ValidationUtils {
     private ValidationUtils() {
     }
+
+    // Kiểm tra số nguyên dương nếu có giá trị, cho phép null.
+    public static void requirePositiveIfPresent(Integer value, ErrorCode errorCode) {
+        if (value != null && value <= 0) {
+            throw new BusinessException(errorCode);
+        }
+    }
     // Chuẩn hóa chuỗi: loại khoảng trắng 2 đầu và đổi chuỗi rỗng thành null.
     public static String normalize(String value) {
         if (value == null) {

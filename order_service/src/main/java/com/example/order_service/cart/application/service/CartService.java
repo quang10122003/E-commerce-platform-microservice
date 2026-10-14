@@ -12,6 +12,7 @@ import com.example.order_service.cart.application.port.out.repo.CartRepoPort;
 import com.example.order_service.cart.domain.model.Cart;
 import com.example.order_service.cart.domain.model.CartItem;
 import com.example.common.exception.BusinessException;
+import com.example.common.untill.ValidationUtils;
 import com.example.order_service.cart.domain.error.CartDomainError;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -120,18 +121,25 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
     // thêm sản phâm vào giỏ
     @Override
     public void  addCartItem(Long productVariantId) {
+        addCartItem(productVariantId, null);
+    }
+
+    // Kiểm tra số lượng tùy chọn trước khi thêm biến thể vào giỏ.
+    @Override
+    public void addCartItem(Long productVariantId, Integer quantity) {
+        ValidationUtils.requirePositiveIfPresent(quantity, CartDomainError.QUANTITY_INVALID);
         Long userId = currentUserPort.getInfo().userId();
 
         LocalDateTime now = LocalDateTime.now(clock);
         Cart cart;
         Optional<Cart> optionalCart = cartRepoPort.findByUserId(userId);
         // k giỏ thì tạo và thêm sản phẩm
-        if (optionalCart.isEmpty()) {
-            cart = Cart.create(userId, now);
+        cart = optionalCart.orElseGet(() -> Cart.create(userId, now));
+
+        if (quantity == null) {
             cart.addItem(productVariantId, now);
         } else {
-            cart = optionalCart.get();
-            cart.addItem(productVariantId, now);
+            cart.addItem(productVariantId, quantity, now);
         }
         cartRepoPort.save(cart);
     }
