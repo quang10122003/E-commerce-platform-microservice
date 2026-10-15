@@ -37,6 +37,11 @@ public enum ProductError implements ErrorCode  {
             "product not found",
             404
     ),
+    PRODUCT_INACTIVE(
+            "PRODUCT_INACTIVE",
+            "Sản phẩm không ở trạng thái hoạt động, không thể tra cứu giá sale",
+            409
+    ),
     PRODUCT_VARIANT_NOT_FOUND(
             "PRODUCT_VARIANT_NOT_FOUND",
             "product variant not found",

@@ -14,6 +14,7 @@ import com.example.producr_service.application.service.ProductService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import com.example.producr_service.application.service.FlashSaleItemService;
+import com.example.producr_service.application.service.VariantSaleResolver;
 import com.example.producr_service.application.port.in.RegisterFlashSaleItemUseCase;
 import com.example.producr_service.application.port.in.PreviewFlashSalePriceUseCase;
 import com.example.producr_service.application.port.in.GetVariantSaleUseCase;
@@ -33,12 +34,19 @@ import java.util.List;
 @Configuration
 public class FlashSaleConfig {
 
+    // Cung cấp bộ xác định sale dùng chung cho API variant và giỏ hàng.
+    @Bean
+    VariantSaleResolver variantSaleResolver(Clock clock) {
+        return new VariantSaleResolver(clock);
+    }
+
     // Lắp ghép các port cho đăng ký variant và tính giá sale dự kiến.
     @Bean
     FlashSaleItemService flashSaleItemService(CurrentUserPort currentUser,
             FlashSaleCampaignRepositoryPort campaigns, FlashSaleItemRepositoryPort items, Clock clock,
-            ProductVariantRepoPort productVariantRepoPort) {
-        return new FlashSaleItemService(currentUser, campaigns, items, clock, productVariantRepoPort);
+            ProductVariantRepoPort productVariantRepoPort, VariantSaleResolver variantSaleResolver) {
+        return new FlashSaleItemService(currentUser, campaigns, items, clock, productVariantRepoPort,
+                variantSaleResolver);
     }
 
     // Cung cấp use case kiểm tra ưu đãi variant cho API chi tiết công khai.

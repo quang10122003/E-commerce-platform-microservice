@@ -4,6 +4,7 @@ import com.example.producr_service.domain.model.ProductStatus;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 
@@ -19,10 +20,15 @@ public record CartInfoRepone(
         List<VariantOption> variantOptions,
         BigDecimal price,
         int stockQuantity,
-        ProductStatus status
+        ProductStatus status,
+        Sale sale
 ) {
 
     // Mô tả một lựa chọn phân loại của variant.
     public record VariantOption(String name, String value) {
+    }
+
+    // Giá sale một đơn vị và thời điểm kết thúc; null khi không còn ưu đãi áp dụng.
+    public record Sale(BigDecimal salePrice, OffsetDateTime endsAt) {
     }
 }

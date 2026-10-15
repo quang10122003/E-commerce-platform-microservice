@@ -3,7 +3,6 @@ package com.example.auth_service.application.service;
 import java.time.Duration;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -25,7 +24,6 @@ import com.example.auth_service.application.port.out.*;
 import com.example.auth_service.domain.model.OutboxEvent;
 import com.example.auth_service.domain.model.Role;
 import com.example.auth_service.domain.model.User;
-import com.example.auth_service.domain.until.EventType;
 import com.example.auth_service.domain.until.RoleEnum;
 import com.example.common.exception.BusinessException;
 import com.example.common.untill.ValidationUtils;
@@ -163,11 +161,11 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
 
     private void publishUserRegisteredEvent(User user) {
         UUID eventId = UUID.randomUUID();
-        EventType eventType = EventType.USER_REGISTERED;
+//        EventType eventType = EventType.USER_REGISTERED;
         LocalDateTime now = LocalDateTime.now(clock);
         outboxEventPort.save(new OutboxEvent(
-                eventId, Constant.USER, String.valueOf(user.getId()), eventType,
-                new UserRegisteredEventDto(eventId, eventType.getValue(),
+                eventId, Constant.USER, String.valueOf(user.getId()), UserRegisteredEventDto.Event_Type,
+                new UserRegisteredEventDto(eventId, UserRegisteredEventDto.Event_Type,
                         user.getId(), user.getEmail(), user.getFullName(), now), now));
     }
 

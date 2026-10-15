@@ -20,6 +20,7 @@ spring:
       properties:
         enable.idempotence: true
         delivery.timeout.ms: 120000
+        # Chờ tối đa 5 mili giây để gom thêm message cùng partition.
         linger.ms: 5
   data:
     redis:
@@ -52,7 +53,5 @@ app:
     access-token-expiration-minutes: 15
     refresh-token-expiration-days: 7
   kafka:
-    topic:
-      auth-events: auth-service.events
     publisher:
       fixed-delay-ms: 10000

@@ -13,11 +13,13 @@ import java.util.List;
 public final class UserProductDetailMapper {
     private UserProductDetailMapper() {}
 
-    // Dựng dữ liệu tổ hợp và chọn variant giá cao nhất, không loại variant hết hàng.
+    // Dựng dữ liệu tổ hợp và chọn variant mặc định theo tồn kho và giá.
     public static UserProductDetailResponse toResponse(Product product, String location) {
+        // Ưu tiên giá cao nhất trong nhóm còn hàng; nếu tất cả hết hàng thì chọn giá cao nhất.
         Long defaultVariantId = product.getVariants().stream()
-                .sorted(Comparator.comparing((ProductVariant variant) -> variant.getPrice().getAmount())
-                        .reversed().thenComparing(ProductVariant::getId))
+                .sorted(Comparator.comparing(ProductVariant::isInStock).reversed()
+                        .thenComparing(variant -> variant.getPrice().getAmount(), Comparator.reverseOrder())
+                        .thenComparing(ProductVariant::getId))
                 .map(ProductVariant::getId)
                 .findFirst().orElse(null);
 

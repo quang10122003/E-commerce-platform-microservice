@@ -38,9 +38,6 @@ eureka:
 app:
   jwt:
     public-key: ${JWT_PUBLIC_KEY}
-  kafka:
-    topic:
-      auth-events: auth-service.events
   mail:
     welcome-sender: welcome@daoxuanquang.dev
   resend:

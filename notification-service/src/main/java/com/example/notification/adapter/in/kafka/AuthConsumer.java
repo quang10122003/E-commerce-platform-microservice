@@ -1,5 +1,6 @@
 package com.example.notification.adapter.in.kafka;
 
+import com.example.notification.application.constant.Constant;
 import com.example.notification.application.registry.AuthEventHandlerRegistry;
 import com.example.notification.application.strategy.event.AuthEventHandler;
 import lombok.AccessLevel;
@@ -16,24 +17,26 @@ import tools.jackson.databind.ObjectMapper;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthConsumer {
-
     ObjectMapper objectMapper;
     AuthEventHandlerRegistry authEventHandlerRegistry;
 
-    @KafkaListener(topics = "${app.kafka.topic.auth-events}")
+    @KafkaListener(topics = Constant.AUTH_EVENTS_TOPIC)
     public void listen(String message) {
         try {
             var eventPayload = objectMapper.readTree(message);
             String eventType = eventPayload.path("eventType").asText();
+            String eventId = eventPayload.path("eventId").asText();
 
-            log.info("Nhận event auth: event_type={}", eventType);
+            log.info("Nhận event auth: event_id={}, event_type={}", eventId, eventType);
 
             // Định tuyến event sang strategy phù hợp để không phải mở rộng consumer khi thêm event mới.
             AuthEventHandler handler = authEventHandlerRegistry.handle(eventType);
             if (handler == null) {
-                log.info("Bỏ qua event auth chưa được hỗ trợ: event_type={}", eventType);
+                log.warn("Bỏ qua event auth do không có handler: event_id={}, event_type={}",
+                        eventId, eventType);
             } else {
                 handler.handle(message);
+                log.info("Xử lý event auth thành công: event_id={}, event_type={}", eventId, eventType);
             }
         } catch (Exception exception) {
             log.error("Xử lý event auth thất bại", exception);

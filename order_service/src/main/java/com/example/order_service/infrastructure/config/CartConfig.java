@@ -2,6 +2,7 @@ package com.example.order_service.infrastructure.config;
 
 import com.example.order_service.cart.application.port.in.AddCartItemUseCase;
 import com.example.order_service.cart.application.port.in.GetCartUseCase;
+import com.example.order_service.cart.application.port.in.GetCountItemCartUseCase;
 import com.example.order_service.cart.application.port.in.RemoveCartItemUseCase;
 import com.example.order_service.cart.application.port.in.UpdateCartItemQuantityUseCase;
 import com.example.order_service.cart.application.port.out.client.CurrentUserPort;
@@ -35,6 +36,12 @@ public class CartConfig {
     // Đăng ký use case giỏ hàng thông qua input port.
     @Bean
     GetCartUseCase getCartUseCase(CartService cartService) {
+        return cartService;
+    }
+
+    // Đăng ký use case đếm item trong giỏ qua input port.
+    @Bean
+    GetCountItemCartUseCase getCountItemCartUseCase(CartService cartService) {
         return cartService;
     }
 

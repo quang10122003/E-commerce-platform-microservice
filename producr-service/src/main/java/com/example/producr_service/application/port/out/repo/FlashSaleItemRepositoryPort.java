@@ -11,6 +11,9 @@ public interface FlashSaleItemRepositoryPort {
     // Đọc ưu đãi REGISTERED trong campaign đang chạy của đúng variant, không tải toàn bộ sale.
     List<FlashSaleOfferView> findOngoingOffers(Long productId, Long variantId, LocalDateTime now);
 
+    // Đọc ưu đãi đang chạy theo danh sách variant để tránh truy vấn từng item giỏ hàng.
+    List<FlashSaleOfferView> findOngoingOffersByVariantIds(List<Long> variantIds, LocalDateTime now);
+
     // Đọc thông tin variant và thuộc tính để tạo snapshot, không khóa dữ liệu.
     Optional<FlashSaleVariantSnapshot> findVariant(Long variantId);
 

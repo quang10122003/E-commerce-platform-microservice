@@ -35,6 +35,16 @@ public class FlashSaleItemRepoAdapter implements FlashSaleItemRepositoryPort {
                 FlashSaleItemStatus.REGISTERED, FlashSaleCampaignStatus.PUBLISHED);
     }
 
+    // Đọc ưu đãi theo danh sách variant, bỏ qua truy vấn khi danh sách rỗng.
+    @Override
+    public List<FlashSaleOfferView> findOngoingOffersByVariantIds(List<Long> variantIds, LocalDateTime now) {
+        if (variantIds.isEmpty()) {
+            return List.of();
+        }
+        return flashSaleItemJpa.findOngoingOffersByVariantIds(variantIds, now, ProductStatus.ACTIVE,
+                FlashSaleItemStatus.REGISTERED, FlashSaleCampaignStatus.PUBLISHED);
+    }
+
     // Đọc sản phẩm và variant hiện có để tạo snapshot, không giữ khóa khi kiểm tra.
     @Override
     public Optional<FlashSaleVariantSnapshot> findVariant(Long variantId) {

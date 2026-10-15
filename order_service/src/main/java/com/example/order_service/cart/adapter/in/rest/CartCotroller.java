@@ -2,10 +2,7 @@ package com.example.order_service.cart.adapter.in.rest;
 
 import com.example.order_service.cart.application.dto.request.AddCartItemRequest;
 import com.example.order_service.cart.application.dto.repone.CartRepone;
-import com.example.order_service.cart.application.port.in.AddCartItemUseCase;
-import com.example.order_service.cart.application.port.in.GetCartUseCase;
-import com.example.order_service.cart.application.port.in.RemoveCartItemUseCase;
-import com.example.order_service.cart.application.port.in.UpdateCartItemQuantityUseCase;
+import com.example.order_service.cart.application.port.in.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -23,6 +20,7 @@ public class CartCotroller {
     AddCartItemUseCase addCartItemUseCase;
     UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase;
     RemoveCartItemUseCase removeCartItemUseCase;
+    GetCountItemCartUseCase getCountItemCartUseCase;
 
     @GetMapping
     public ResponseEntity<CartRepone> getCart(){
@@ -48,5 +46,9 @@ public class CartCotroller {
     public ResponseEntity<Void> removeCartItem(@RequestParam Long productVariantId) {
         removeCartItemUseCase.removeCartItem(productVariantId);
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/count")
+    public ResponseEntity<Integer> getCountItemCart(){
+        return  ResponseEntity.status(200).body(getCountItemCartUseCase.getCountItemCart());
     }
 }

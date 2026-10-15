@@ -1,5 +1,6 @@
 package com.example.auth_service.infrastructure.config;
 
+import com.example.auth_service.application.constant.Constant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,9 +45,10 @@ public class KafkaProducerConfig {
     }
     
 
+    // Tạo topic auth từ cùng constant mà publisher sử dụng.
     @Bean
-    NewTopic orderEventsTopic(@Value("${app.kafka.topic.auth-events}") String topicName) {
-        return TopicBuilder.name(topicName)
+    NewTopic orderEventsTopic() {
+        return TopicBuilder.name(Constant.AUTH_EVENTS_TOPIC)
                 .partitions(3)
                 .replicas(1)
                 .build();

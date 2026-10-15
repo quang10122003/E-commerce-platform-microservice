@@ -10,4 +10,6 @@ public record UserRegisteredEvent(UUID eventId,
                 String fullName,
                 LocalDateTime occurredAt) {
 
+    public  final static String EVENT_TYPE = "USER_REGISTERED";
+
 }

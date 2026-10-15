@@ -28,6 +28,7 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
      FlashSaleItemRepositoryPort flashSaleItemRepositoryPort;
      Clock clock;
      ProductVariantRepoPort productVariantRepoPort;
+     VariantSaleResolver variantSaleResolver;
 
     // Kiểm tra đúng product và variant trước khi xác định ưu đãi còn mua được.
     @Override
@@ -35,29 +36,15 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
     public VariantSaleResponse getVariantSale(Long productId, Long variantId) {
         VariantPriceView variant = productVariantRepoPort.findPriceView(productId, variantId)
                 .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND));
+        // Phân biệt sản phẩm không hoạt động với product hoặc variant không tồn tại.
         if (variant.productStatus() != ProductStatus.ACTIVE) {
-            throw new BusinessException(ProductError.PRODUCT_NOT_FOUND);
+            throw new BusinessException(ProductError.PRODUCT_INACTIVE);
         }
 
         LocalDateTime now = LocalDateTime.now(clock);
         List<FlashSaleOfferView> offers = flashSaleItemRepositoryPort.findOngoingOffers(productId, variantId, now);
-        // Không chọn ngẫu nhiên ưu đãi khi dữ liệu vi phạm quy tắc lịch sale không chồng nhau.
-        if (offers.size() > 1) {
-            throw new BusinessException(ProductError.FLASH_SALE_SCHEDULE_CONFLICT);
-        }
-        if (offers.isEmpty()) {
-            return new VariantSaleResponse(variantId, variant.price(), null);
-        }
-
-        FlashSaleOfferView offer = offers.getFirst();
-        if (variant.stockQuantity() <= 0 || offer.soldQuantity() >= offer.registeredQuantity()) {
-            return new VariantSaleResponse(variantId, variant.price(), null);
-        }
-        return new VariantSaleResponse(variantId, variant.price(), new VariantSaleResponse.Sale(
-                offer.discountPercent(),
-                FlashSaleRules.calculateSalePrice(variant.price(), offer.discountPercent()),
-                offer.endsAt().atZone(clock.getZone()).toOffsetDateTime()
-        ));
+        return new VariantSaleResponse(variantId, variant.price(),
+                variantSaleResolver.resolve(variant.price(), variant.stockQuantity(), offers));
     }
 
     // Khóa campaign và tải đầy đủ items trước khi domain thêm đăng ký vào aggregate.

@@ -1,8 +1,8 @@
 package com.example.auth_service.application.strategy.outbox;
 
 import com.example.auth_service.application.DTO.OutboxEventDto;
+import com.example.auth_service.application.DTO.event.UserRegisteredEventDto;
 import com.example.auth_service.application.port.out.AuthEventPublisherPort;
-import com.example.auth_service.domain.until.EventType;
 
 // Phát hành event đăng ký người dùng lên topic auth.
 public class UserRegisteredOutboxHandler implements OutboxEventHandler {
@@ -15,7 +15,7 @@ public class UserRegisteredOutboxHandler implements OutboxEventHandler {
 
     @Override
     public String eventType() {
-        return EventType.USER_REGISTERED.getValue();
+        return UserRegisteredEventDto.Event_Type;
     }
 
     @Override

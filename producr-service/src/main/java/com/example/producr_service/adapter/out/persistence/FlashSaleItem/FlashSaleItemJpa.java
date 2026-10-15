@@ -18,7 +18,7 @@ public interface FlashSaleItemJpa extends JpaRepository<FlashSaleItemEntity, Lon
     // Đọc hạn mức sale theo variant và thời gian; liên kết null tự bị loại bởi INNER JOIN.
     @Query("""
             select new com.example.producr_service.application.dto.response.FlashSaleOfferView(
-                i.discountPercent, i.registeredQuantity, i.soldQuantity, c.endsAt)
+                v.id, i.discountPercent, i.registeredQuantity, i.soldQuantity, c.endsAt)
             from FlashSaleItemEntity i
             join i.campaign c join i.variant v join v.product p
             where p.id = :productId and v.id = :variantId
@@ -28,6 +28,23 @@ public interface FlashSaleItemJpa extends JpaRepository<FlashSaleItemEntity, Lon
             """)
     List<FlashSaleOfferView> findOngoingOffers(
             @Param("productId") Long productId, @Param("variantId") Long variantId,
+            @Param("now") LocalDateTime now, @Param("productStatus") ProductStatus productStatus,
+            @Param("itemStatus") FlashSaleItemStatus itemStatus,
+            @Param("campaignStatus") FlashSaleCampaignStatus campaignStatus);
+
+    // Lấy ưu đãi cho cả giỏ với cùng điều kiện của API sale một variant.
+    @Query("""
+            select new com.example.producr_service.application.dto.response.FlashSaleOfferView(
+                v.id, i.discountPercent, i.registeredQuantity, i.soldQuantity, c.endsAt)
+            from FlashSaleItemEntity i
+            join i.campaign c join i.variant v join v.product p
+            where v.id in :variantIds
+              and p.status = :productStatus and i.status = :itemStatus
+              and c.status = :campaignStatus and c.startsAt <= :now and c.endsAt > :now
+            order by i.id asc
+            """)
+    List<FlashSaleOfferView> findOngoingOffersByVariantIds(
+            @Param("variantIds") List<Long> variantIds,
             @Param("now") LocalDateTime now, @Param("productStatus") ProductStatus productStatus,
             @Param("itemStatus") FlashSaleItemStatus itemStatus,
             @Param("campaignStatus") FlashSaleCampaignStatus campaignStatus);

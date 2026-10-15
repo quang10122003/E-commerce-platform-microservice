@@ -1,6 +1,5 @@
 package com.example.notification.application.strategy.event;
 
-import com.example.notification.application.dto.event.EventType;
 import com.example.notification.application.dto.event.UserRegisteredEvent;
 import com.example.notification.application.port.in.SendEmailUserRegisteredUseCase;
 import com.example.notification.application.port.out.objectMapper.UserRegisteredEventParserPort;
@@ -21,7 +20,7 @@ public class UserRegisteredEventHandler implements AuthEventHandler {
 
     @Override
     public String eventType() {
-        return EventType.USER_REGISTERED.getValue();
+        return UserRegisteredEvent.EVENT_TYPE;
     }
 
     @Override

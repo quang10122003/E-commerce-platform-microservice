@@ -26,6 +26,8 @@ import com.example.producr_service.application.service.ShopProductPageAssembler;
 import com.example.producr_service.application.service.ProductImageUploadService;
 import com.example.producr_service.application.service.ProductService;
 import com.example.producr_service.application.service.ProductInternalService;
+import com.example.producr_service.application.service.VariantSaleResolver;
+import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import com.example.producr_service.application.service.ProductUpdateService;
 import com.example.producr_service.application.service.ProductHelper;
 import org.springframework.context.annotation.Bean;
@@ -57,8 +59,11 @@ public class ProductConfig {
     // Cung cấp use case đọc thông tin variant cho API giỏ hàng nội bộ.
     @Bean
     GetCartInfoUseCase getCartInfoUseCase(ProductVariantRepoPort productVariantRepoPort,
-                                           ShopInfoClientPort shopInfoClientPort) {
-        return new ProductInternalService(productVariantRepoPort, shopInfoClientPort);
+                                           ShopInfoClientPort shopInfoClientPort,
+                                           FlashSaleItemRepositoryPort flashSaleItemRepositoryPort,
+                                           VariantSaleResolver variantSaleResolver, Clock clock) {
+        return new ProductInternalService(productVariantRepoPort, shopInfoClientPort,
+                flashSaleItemRepositoryPort, variantSaleResolver, clock);
     }
 
     // Đăng ký service chỉ xử lý việc dựng và lưu aggregate khi tạo product.

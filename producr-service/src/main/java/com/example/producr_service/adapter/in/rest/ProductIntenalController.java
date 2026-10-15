@@ -1,9 +1,10 @@
 package com.example.producr_service.adapter.in.rest;
 
-import com.example.producr_service.application.dto.request.CartInfoRequest;
 import com.example.producr_service.application.dto.response.CartInfoRepone;
 import com.example.producr_service.application.port.in.GetCartInfoUseCase;
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -23,7 +24,9 @@ public class ProductIntenalController {
     GetCartInfoUseCase getCartInfoUseCase;
 
     @PostMapping("cart-info")
-    public ResponseEntity<List<CartInfoRepone>> getCartInfo(@Valid @RequestBody CartInfoRequest request) {
-        return ResponseEntity.ok(getCartInfoUseCase.getCartInfo(request));
+    public ResponseEntity<List<CartInfoRepone>> getCartInfo(
+            @RequestBody @NotEmpty(message = "Danh sách variant không được để trống")
+            List<@NotNull(message = "ID variant không được để trống") Long> variantIds) {
+        return ResponseEntity.ok(getCartInfoUseCase.getCartInfo(variantIds));
     }
 }

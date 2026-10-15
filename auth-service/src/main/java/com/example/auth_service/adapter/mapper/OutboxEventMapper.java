@@ -23,7 +23,7 @@ public class OutboxEventMapper {
         entity.setEventId(event.eventId().toString());
         entity.setAggregateType(event.aggregateType());
         entity.setAggregateId(event.aggregateId());
-        entity.setEventType(event.eventType().getValue());
+        entity.setEventType(event.eventType());
         entity.setPayload(payload);
         entity.setStatus(OutboxEventEntity.Status.valueOf(event.status().name()));
         entity.setRetryCount(event.retryCount());

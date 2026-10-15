@@ -4,6 +4,7 @@ import com.example.order_service.cart.domain.model.ProductStatus;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Builder
@@ -21,7 +22,11 @@ public record CartRepone(Long CartId, int totalItems, int totalQuantity, List<Ca
                                Long shopId, String shopName, String productName,
                                String imageUrl, boolean hasOption,
                                List<VariantOptions> variantOptions, BigDecimal price, int quantity, int stockQuantity,
-                               ProductStatus status) {
+                               ProductStatus status, Sale sale) {
 
+    }
+
+    // Ưu đãi hiện áp dụng cho một đơn vị sản phẩm trong giỏ hàng.
+    public record Sale(BigDecimal salePrice, OffsetDateTime endsAt) {
     }
 }
