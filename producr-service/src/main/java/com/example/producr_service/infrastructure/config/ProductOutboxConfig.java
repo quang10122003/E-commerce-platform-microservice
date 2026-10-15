@@ -2,6 +2,7 @@ package com.example.producr_service.infrastructure.config;
 
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.port.in.ProcessProductOutboxUseCase;
+import com.example.producr_service.application.port.out.kafka.ProductEventPublisherPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
@@ -90,9 +91,10 @@ public class ProductOutboxConfig {
     @Bean
     OutboxEventHandler productDeletedOutboxHandler(
             MapJsonToObjPort mapJsonToObjPort,
-            ProductSearchIndexPort productSearchIndexPort
+            ProductSearchIndexPort productSearchIndexPort,
+            ProductEventPublisherPort productEventPublisherPort
     ) {
-        return new ProductDeletedOutboxHandler(mapJsonToObjPort, productSearchIndexPort);
+        return new ProductDeletedOutboxHandler(mapJsonToObjPort, productSearchIndexPort,productEventPublisherPort);
     }
 
     // Gom các strategy outbox để định tuyến theo eventType.

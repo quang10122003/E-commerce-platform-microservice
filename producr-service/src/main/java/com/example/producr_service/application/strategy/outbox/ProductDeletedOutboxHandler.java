@@ -4,18 +4,17 @@ import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.dto.outbox.ProductDeletedOutboxPayload;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
+import com.example.producr_service.application.port.out.kafka.ProductEventPublisherPort;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class ProductDeletedOutboxHandler implements OutboxEventHandler {
-    private final MapJsonToObjPort mapJsonToObjPort;
-    private final ProductSearchIndexPort productSearchIndexPort;
-
-    public ProductDeletedOutboxHandler(
-            MapJsonToObjPort mapJsonToObjPort,
-            ProductSearchIndexPort productSearchIndexPort
-    ) {
-        this.mapJsonToObjPort = mapJsonToObjPort;
-        this.productSearchIndexPort = productSearchIndexPort;
-    }
+    MapJsonToObjPort mapJsonToObjPort;
+    ProductSearchIndexPort productSearchIndexPort;
+    ProductEventPublisherPort productEventPublisherPort;
 
     @Override
     public String eventType() {
@@ -29,5 +28,6 @@ public class ProductDeletedOutboxHandler implements OutboxEventHandler {
                 event.payload(), ProductDeletedOutboxPayload.class
         );
         productSearchIndexPort.deleteById(payload.productId());
+        productEventPublisherPort.publish(event);
     }
 }

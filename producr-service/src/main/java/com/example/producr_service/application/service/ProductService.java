@@ -224,11 +224,11 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
             productHelper.validateProductOwnership(productId, userInternaInfoRespone.userId());
             // lấy và khóa ProductVariant thuộc product
             List<ProductVariant> variants = productVariantRepoPort.findByProductIdForUpdate(productId);
-
-
+            // Giữ ID các variant trước khi cascade xóa để đưa vào event outbox.
+            List<Long> variantIds = variants.stream().map(ProductVariant::getId).toList();
             // Giữ thông tin ảnh phân loại trước khi xóa bản ghi để dọn storage sau commit.
             List<StoredFile> variantFiles = productVariantRepoPort.findStoredFilesByVariantIds(
-                    variants.stream().map(ProductVariant::getId).toList()
+                    variantIds
             );
 
             // Giữ thông tin ảnh bìa trước khi xóa bản ghi sản phẩm.
@@ -238,7 +238,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                     productId,
                     Stream.concat(Stream.of(coverFile), variantFiles.stream()).toList()
             );
-            saveProductDeletionOutboxEvents(productId, filesToDelete);
+            saveProductDeletionOutboxEvents(productId, variantIds, filesToDelete);
 
             // Xóa aggregate và các bản ghi liên quan bằng cascade trong cùng transaction với outbox.
             productRepositoryPort.deleteById(productId);
@@ -249,8 +249,9 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
         }
     }
 
-    // Lưu công việc dọn ảnh và xóa document tìm kiếm trong cùng transaction xóa sản phẩm.
-    private void saveProductDeletionOutboxEvents(Long productId, List<StoredFile> filesToDelete) {
+    // Lưu công việc dọn ảnh và xóa document tìm kiếm, kèm ID variant trong cùng transaction xóa sản phẩm.
+    private void saveProductDeletionOutboxEvents(Long productId, List<Long> variantIds,
+                                                List<StoredFile> filesToDelete) {
         String aggregateId = String.valueOf(productId);
         ProductImagesDeleteOutboxPayload imagesPayload = new ProductImagesDeleteOutboxPayload(filesToDelete);
         outboxPort.save(new OutboxEventDto(
@@ -261,15 +262,16 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                 jsonUtils.toJson(imagesPayload),
                 LocalDateTime.now(clock)
         ));
-
-        ProductDeletedOutboxPayload deletedPayload = new ProductDeletedOutboxPayload(productId);
+        UUID deletedEventId = UUID.randomUUID();
+        LocalDateTime timeDeletedEventId =  LocalDateTime.now(clock);
+        ProductDeletedOutboxPayload deletedPayload = new ProductDeletedOutboxPayload(deletedEventId,ProductDeletedOutboxPayload.EVENT_TYPE,productId, variantIds,timeDeletedEventId);
         outboxPort.save(new OutboxEventDto(
-                UUID.randomUUID(),
+                deletedEventId,
                 Constant.PRODUCT,
                 aggregateId,
                 ProductDeletedOutboxPayload.EVENT_TYPE,
                 jsonUtils.toJson(deletedPayload),
-                LocalDateTime.now(clock)
+                timeDeletedEventId
         ));
     }
 
@@ -314,7 +316,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
         String aggregateId = String.valueOf(variantId);
         ProductvariantImagesDeleteOutboxPayload productvariantImagesDeleteOutboxPayload = new ProductvariantImagesDeleteOutboxPayload(filesToDelete);
         ProductvariantDeleteOutboxPayload productvariantDeleteOutboxPayload = new ProductvariantDeleteOutboxPayload(
-                productId, productHelper.extractProvinceNameFromAddress(shopAddress)
+                productId, variantId, productHelper.extractProvinceNameFromAddress(shopAddress)
         );
         outboxPort.save(new OutboxEventDto(
                 UUID.randomUUID(),

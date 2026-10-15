@@ -1,6 +1,17 @@
 spring:
   application:
     name: producr-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        delivery.timeout.ms: 120000
+        # Chờ tối đa 5 mili giây để gom thêm message cùng partition.
+        linger.ms: 5
   config:
     import:
       # Nạp biến môi trường từ .env ở cả root project và thư mục cha của module

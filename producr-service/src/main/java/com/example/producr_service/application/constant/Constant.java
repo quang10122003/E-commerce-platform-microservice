@@ -3,6 +3,8 @@ package com.example.producr_service.application.constant;
 public final class Constant {
     public static final String PRODUCT = "Product";
     public static final String VARIANT = "Variant";
+    // toppic của producr service
+    public static final String PRODUCT_EVENTS_TOPIC = "product-service.events";
     // Giới hạn sinh SKU theo cột lưu trữ và số lần thử tránh trùng.
     public static final int MAX_SKU_LENGTH = 50;
     public static final int MAX_SKU_RETRY = 10;
