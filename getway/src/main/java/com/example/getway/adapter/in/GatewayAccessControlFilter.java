@@ -1,7 +1,7 @@
 package com.example.getway.adapter.in;
 
 import com.example.common.security.AuthorizationUtils;
-import com.example.getway.application.service.AccessControlService;
+import com.example.getway.application.port.in.AuthorizeAccessUseCase;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import reactor.core.publisher.Mono;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class GatewayAccessControlFilter implements org.springframework.cloud.gateway.filter.GlobalFilter {
 
-    AccessControlService accessControlService;
+    AuthorizeAccessUseCase authorizeAccessUseCase;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -41,7 +41,7 @@ public class GatewayAccessControlFilter implements org.springframework.cloud.gat
 
         // Khi client gửi token, token phải hợp lệ và không bị thu hồi hoặc khóa user.
         String token = AuthorizationUtils.extractBearerToken(authorizationHeader);
-        accessControlService.authorize(token);
+        authorizeAccessUseCase.authorize(token);
         return chain.filter(exchange);
     }
 }

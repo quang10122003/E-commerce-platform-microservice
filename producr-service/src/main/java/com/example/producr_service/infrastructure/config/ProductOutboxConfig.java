@@ -75,15 +75,16 @@ public class ProductOutboxConfig {
         return new ProductvariantImagesDeleteOutboxHandler(mapJsonToObjPort, storedFileCleaner);
     }
 
-    // Đăng ký handler cập nhật chỉ mục sau khi xóa phân loại.
+    // Đăng ký handler cập nhật chỉ mục và phát event Kafka sau khi xóa phân loại.
     @Bean
     OutboxEventHandler productvariantDeleteOutboxHandler(
             MapJsonToObjPort mapJsonToObjPort,
             ProductSearchIndexPort productSearchIndexPort,
-            ProductRepositoryPort productRepositoryPort
+            ProductRepositoryPort productRepositoryPort,
+            ProductEventPublisherPort productEventPublisherPort
     ) {
         return new ProductvariantDeleteOutboxHandler(
-                mapJsonToObjPort, productSearchIndexPort, productRepositoryPort
+                mapJsonToObjPort, productSearchIndexPort, productRepositoryPort, productEventPublisherPort
         );
     }
 

@@ -11,7 +11,7 @@ public record OutboxEventDto(
         String aggregateType,
         String aggregateId,
         String eventType,
-        String payload,
+        Object payload,
         OutboxStatus status,
         int retryCount,
         int maxRetry,
@@ -27,7 +27,7 @@ public record OutboxEventDto(
             String aggregateType,
             String aggregateId,
             String eventType,
-            String payload,
+            Object payload,
             LocalDateTime now
     ) {
         this(

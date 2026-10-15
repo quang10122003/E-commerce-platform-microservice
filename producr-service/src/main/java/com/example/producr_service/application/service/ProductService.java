@@ -38,7 +38,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.experimental.FieldDefaults;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.common.untill.JsonUtils;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -58,7 +57,6 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     // Port thao tác chỉ mục và tìm kiếm product trên Elasticsearch.
     ProductSearchIndexPort productSearchIndexPort;
     ProductHelper productHelper;
-    JsonUtils jsonUtils;
     ShopProductPageAssembler sellerProductPageAssembler;
     ProductRepositoryPort productRepositoryPort;
     ProductVariantRepoPort productVariantRepoPort;
@@ -177,7 +175,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                 Constant.PRODUCT,
                 String.valueOf(product.getId()),
                 ProductCreatedOutboxPayload.EVENT_TYPE,
-                jsonUtils.toJson(payload),
+                payload,
                 LocalDateTime.now(clock)
         ));
     }
@@ -259,7 +257,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                 Constant.PRODUCT,
                 aggregateId,
                 ProductImagesDeleteOutboxPayload.EVENT_TYPE,
-                jsonUtils.toJson(imagesPayload),
+                imagesPayload,
                 LocalDateTime.now(clock)
         ));
         UUID deletedEventId = UUID.randomUUID();
@@ -270,7 +268,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                 Constant.PRODUCT,
                 aggregateId,
                 ProductDeletedOutboxPayload.EVENT_TYPE,
-                jsonUtils.toJson(deletedPayload),
+                deletedPayload,
                 timeDeletedEventId
         ));
     }
@@ -312,28 +310,32 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
         }
     }
 
-    private  void saveProductvariantDeletionOutboxEvents(Long variantId, List<StoredFile> filesToDelete,String shopAddress,Long productId){
+    // Lưu tác vụ dọn ảnh và event xóa variant với metadata khớp payload tương ứng.
+    private void saveProductvariantDeletionOutboxEvents(Long variantId, List<StoredFile> filesToDelete, String shopAddress, Long productId) {
         String aggregateId = String.valueOf(variantId);
+        UUID eventId = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.now(clock);
         ProductvariantImagesDeleteOutboxPayload productvariantImagesDeleteOutboxPayload = new ProductvariantImagesDeleteOutboxPayload(filesToDelete);
         ProductvariantDeleteOutboxPayload productvariantDeleteOutboxPayload = new ProductvariantDeleteOutboxPayload(
-                productId, variantId, productHelper.extractProvinceNameFromAddress(shopAddress)
+                eventId, ProductvariantDeleteOutboxPayload.EVENT_TYPE,
+                productId, variantId, productHelper.extractProvinceNameFromAddress(shopAddress), now
         );
         outboxPort.save(new OutboxEventDto(
                 UUID.randomUUID(),
                 Constant.VARIANT,
                 aggregateId,
                 ProductvariantImagesDeleteOutboxPayload.EVENT_TYPE,
-                jsonUtils.toJson(productvariantImagesDeleteOutboxPayload),
-                LocalDateTime.now(clock)
+                productvariantImagesDeleteOutboxPayload,
+                now
         ));
 
         outboxPort.save(new OutboxEventDto(
-                UUID.randomUUID(),
+                eventId,
                 Constant.VARIANT,
                 aggregateId,
                 ProductvariantDeleteOutboxPayload.EVENT_TYPE,
-                jsonUtils.toJson(productvariantDeleteOutboxPayload),
-                LocalDateTime.now(clock)
+                productvariantDeleteOutboxPayload,
+                now
         ));
 
     }

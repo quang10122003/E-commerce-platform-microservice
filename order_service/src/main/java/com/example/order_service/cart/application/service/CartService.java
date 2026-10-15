@@ -2,6 +2,8 @@ package com.example.order_service.cart.application.service;
 
 import com.example.order_service.cart.application.dto.repone.CartInfoRepone;
 import com.example.order_service.cart.application.dto.repone.CartRepone;
+import com.example.order_service.cart.application.dto.event.ProductDeleteEvent;
+import com.example.order_service.cart.application.dto.event.ProductvariantDeleteEvent;
 import com.example.order_service.cart.application.port.in.*;
 import com.example.order_service.cart.application.port.out.client.CurrentUserPort;
 import com.example.order_service.cart.application.port.out.client.ProductClientPort;
@@ -15,13 +17,14 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -34,8 +37,9 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
     ProductClientPort productClientPort;
     Clock clock;
 
-    // Lấy giỏ hàng và loại bỏ biến thể không còn thông tin sản phẩm.
+    // Lấy giỏ hàng và ghép thông tin sản phẩm, không thay đổi dữ liệu đã lưu.
     @Override
+    @Transactional(readOnly = true)
     public CartRepone getCart() {
         Long userId = currentUserPort.getInfo().userId();
         log.debug("Bắt đầu lấy giỏ hàng: user_id={}", userId);
@@ -67,25 +71,9 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                         productInfo -> productInfo,
                         (existing, duplicate) -> existing));
 
-        Set<Long> returnedVariantIds = productInfoByVariantId.keySet();
-
-        // Xác định biến thể không còn được product service trả về.
-        List<Long> missingVariantIds = cart.getItems().stream()
-                .map(CartItem::getProductVariantId)
-                .filter(variantId -> !returnedVariantIds.contains(variantId))
-                .toList();
-        // Xóa biến thể khỏi aggregate trước khi lưu thay đổi.
-        LocalDateTime now = LocalDateTime.now(clock);
-        missingVariantIds.forEach(variantId -> cart.removeItem(variantId, now));
-
-        // Chỉ lưu giỏ khi có biến thể bị loại bỏ.
-        if (!missingVariantIds.isEmpty()) {
-            cartRepoPort.save(cart);
-            log.info("Đã loại bỏ biến thể thiếu thông tin: user_id={}, cart_id={}, removed_items={}",
-                    userId, cart.getId(), missingVariantIds.size());
-        }
-
+        // Chỉ ghép item có thông tin sản phẩm vào response, không xóa item khỏi giỏ.
         List<CartRepone.CartItemInfo> responseItems = cart.getItems().stream()
+                .filter(cartItem -> productInfoByVariantId.containsKey(cartItem.getProductVariantId()))
                 .map(cartItem -> toCartItemInfo(
                         cartItem,
                         productInfoByVariantId.get(cartItem.getProductVariantId())))
@@ -96,7 +84,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
         return CartRepone.builder()
                 .CartId(cart.getId())
                 .totalItems(responseItems.size())
-                .totalQuantity(cart.getItems().stream().mapToInt(CartItem::getQuantity).sum())
+                .totalQuantity(responseItems.stream().mapToInt(CartRepone.CartItemInfo::quantity).sum())
                 .item(responseItems)
                 .build();
     }
@@ -127,12 +115,14 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
 
     // Thêm một sản phẩm bằng luồng thêm giỏ với số lượng mặc định.
     @Override
+    @Transactional
     public void  addCartItem(Long productVariantId) {
         addCartItem(productVariantId, null);
     }
 
     // Kiểm tra số lượng tùy chọn trước khi thêm biến thể vào giỏ.
     @Override
+    @Transactional
     public void addCartItem(Long productVariantId, Integer quantity) {
         ValidationUtils.requirePositiveIfPresent(quantity, CartDomainError.QUANTITY_INVALID);
         Long userId = currentUserPort.getInfo().userId();
@@ -158,6 +148,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
 
     // Cập nhật số lượng biến thể trong giỏ của người dùng hiện tại.
     @Override
+    @Transactional
     public void updateCartItemQuantity(Long productVariantId, int quantity) {
         Long userId = currentUserPort.getInfo().userId();
         log.debug("Bắt đầu cập nhật số lượng trong giỏ: user_id={}, product_variant_id={}, quantity={}",
@@ -172,6 +163,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
 
     // Xóa biến thể khỏi giỏ của người dùng hiện tại.
     @Override
+    @Transactional
     public void removeCartItem(Long productVariantId) {
         Long userId = currentUserPort.getInfo().userId();
         log.debug("Bắt đầu xóa sản phẩm khỏi giỏ: user_id={}, product_variant_id={}",
@@ -184,8 +176,52 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 userId, productVariantId);
     }
 
+    // Dọn biến thể đã xóa trên mọi giỏ, không phụ thuộc người đăng nhập và an toàn khi nhận lại event.
+    @Transactional
+    public void removeDeletedProductVariants(ProductDeleteEvent event) {
+
+        if (event == null || event.eventId() == null || event.productId() == null || event.productId() <= 0
+                || !ProductDeleteEvent.EVENT_TYPE.equals(event.eventType()) || event.variantIds() == null
+                || event.variantIds().stream().anyMatch(id -> id == null || id <= 0)) {
+            throw new IllegalArgumentException("Event xóa sản phẩm không hợp lệ");
+        }
+
+        removeDeletedVariants(event.eventId(), event.eventType(), event.productId(), event.variantIds());
+    }
+
+    // Dọn một biến thể đã xóa trên mọi giỏ trong cùng transaction.
+    @Transactional
+    public void removeDeletedProductVariant(ProductvariantDeleteEvent event) {
+        if (event == null || event.eventId() == null || event.productId() == null ||
+                !ProductvariantDeleteEvent.EVENT_TYPE.equals(event.eventType())
+                || event.variantId() == null ) {
+            throw new IllegalArgumentException("Event xóa biến thể sản phẩm không hợp lệ");
+        }
+        removeDeletedVariants(event.eventId(), event.eventType(), event.productId(), List.of(event.variantId()));
+    }
+
+    // Dùng chung thao tác dọn giỏ cho event xóa sản phẩm và xóa một biến thể.
+    private void removeDeletedVariants(UUID eventId, String eventType, Long productId, List<Long> deletedVariantIds) {
+        List<Long> variantIds = deletedVariantIds.stream().distinct().toList();
+
+        if (variantIds.isEmpty()) {
+            log.info("Không có biến thể cần dọn giỏ: event_id={}, event_type={}, product_id={}",
+                    eventId, eventType, productId);
+            return;
+        }
+
+        log.debug("Bắt đầu dọn giỏ theo event: event_id={}, event_type={}, product_id={}, variant_count={}",
+                eventId, eventType, productId, variantIds.size());
+
+        int removedItems = cartRepoPort.removeItemsByVariantIds(variantIds, LocalDateTime.now(clock));
+
+        log.info("Dọn giỏ theo event thành công: event_id={}, event_type={}, product_id={}, variant_count={}, removed_items={}",
+                eventId, eventType, productId, variantIds.size(), removedItems);
+    }
+
     // Đếm số dòng biến thể trong giỏ, trả 0 khi chưa có giỏ hàng.
     @Override
+    @Transactional(readOnly = true)
     public int getCountItemCart() {
         Long userId = currentUserPort.getInfo().userId();
         int count = cartRepoPort.findByUserId(userId).map((cart) -> cart.getItems().size())

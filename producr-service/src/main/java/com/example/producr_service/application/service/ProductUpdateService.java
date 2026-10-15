@@ -2,7 +2,6 @@ package com.example.producr_service.application.service;
 
 import com.example.common.error.AuthorizationError;
 import com.example.common.exception.BusinessException;
-import com.example.common.untill.JsonUtils;
 import com.example.common.untill.ValidationUtils;
 import com.example.producr_service.application.constant.Constant;
 import com.example.producr_service.application.dto.command.UpdateProductCommand;
@@ -47,7 +46,6 @@ public class ProductUpdateService {
     FileUploader fileUploader;
     ProductImageRollbackPort productImageRollbackPort;
     OutboxPort outboxPort;
-    JsonUtils jsonUtils;
     Clock clock;
     ShopProductDetailMapper shopProductDetailMapper = new ShopProductDetailMapper();
 
@@ -110,12 +108,12 @@ public class ProductUpdateService {
         if (!filesToDelete.isEmpty()) {
             outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
                     String.valueOf(productId), ProductImagesDeleteOutboxPayload.EVENT_TYPE,
-                    jsonUtils.toJson(new ProductImagesDeleteOutboxPayload(filesToDelete)), LocalDateTime.now(clock)));
+                    new ProductImagesDeleteOutboxPayload(filesToDelete), LocalDateTime.now(clock)));
         }
         outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
                 String.valueOf(productId), ProductUpdatedOutboxPayload.EVENT_TYPE,
-                jsonUtils.toJson(new ProductUpdatedOutboxPayload(productId,
-                        productHelper.extractProvinceNameFromAddress(user.shopAddress()))), LocalDateTime.now(clock)));
+                new ProductUpdatedOutboxPayload(productId,
+                        productHelper.extractProvinceNameFromAddress(user.shopAddress())), LocalDateTime.now(clock)));
         return shopProductDetailMapper.toShopProductDetailResponse(saved);
     }
 

@@ -4,6 +4,7 @@ import com.example.producr_service.adapter.entity.OutboxEventEntity;
 import com.example.producr_service.adapter.mapper.OutboxEventMapper;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
+import com.example.common.untill.JsonUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -20,11 +21,13 @@ public class OutboxEventRepoAdapter implements OutboxPort {
 
     private final OutboxEventJpa outboxEventJpa;
     private final OutboxEventMapper outboxEventMapper;
+    private final JsonUtils jsonUtils;
     private final Clock clock;
 
     @Override
     public void save(OutboxEventDto event) {
-        outboxEventJpa.save(outboxEventMapper.toEntity(event));
+        // Chỉ serialize payload tại adapter trước khi lưu cột JSON.
+        outboxEventJpa.save(outboxEventMapper.toEntity(event, jsonUtils.toJson(event.payload())));
     }
 
     @Override

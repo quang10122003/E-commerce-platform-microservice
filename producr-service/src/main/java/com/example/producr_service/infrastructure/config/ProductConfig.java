@@ -32,7 +32,6 @@ import com.example.producr_service.application.service.ProductUpdateService;
 import com.example.producr_service.application.service.ProductHelper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.example.common.untill.JsonUtils;
 import java.time.Clock;
 
 @Configuration
@@ -113,12 +112,11 @@ public class ProductConfig {
             FileUploader fileUploader,
             ProductImageRollbackPort productImageRollbackPort,
             OutboxPort outboxPort,
-            JsonUtils jsonUtils,
             Clock clock
     ) {
         return new ProductUpdateService(productRepositoryPort, productVariantRepoPort,
                 categoryRepoPort, brandRepositoryPort, currentUserPort, productHelper,
-                fileUploader, productImageRollbackPort, outboxPort, jsonUtils, clock);
+                fileUploader, productImageRollbackPort, outboxPort, clock);
     }
 
     // Đăng ký application service triển khai các use case thuộc phạm vi product.
@@ -131,7 +129,6 @@ public class ProductConfig {
         ProductSearchIndexPort productSearchIndexPort,
         ProductHelper productHelper,
         OutboxPort outboxPort,
-        JsonUtils jsonUtils,
         ShopProductPageAssembler sellerProductPageAssembler,
         ProductRepositoryPort productRepositoryPort,
         ProductVariantRepoPort productVariantRepoPort,
@@ -147,7 +144,6 @@ public class ProductConfig {
                 outboxPort,
                 productSearchIndexPort,
                 productHelper,
-                jsonUtils,
                 sellerProductPageAssembler,
                 productRepositoryPort,
                 productVariantRepoPort,

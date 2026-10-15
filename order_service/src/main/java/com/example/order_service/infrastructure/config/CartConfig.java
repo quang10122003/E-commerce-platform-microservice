@@ -9,11 +9,19 @@ import com.example.order_service.cart.application.port.out.client.CurrentUserPor
 import com.example.order_service.cart.application.port.out.client.ProductClientPort;
 import com.example.order_service.cart.application.port.out.repo.CartRepoPort;
 import com.example.order_service.cart.application.service.CartService;
+import com.example.order_service.cart.application.port.in.ProcessProductEventUseCase;
+import com.example.order_service.cart.application.port.out.objettMapper.ObjectMapperPort;
+import com.example.order_service.cart.application.registry.KafkaEventHandlerRegistry;
+import com.example.order_service.cart.application.service.ProductEventApplicationService;
+import com.example.order_service.cart.application.strategy.eventKafka.EventHandler;
+import com.example.order_service.cart.application.strategy.eventKafka.ProductDeleteEventHandler;
+import com.example.order_service.cart.application.strategy.eventKafka.ProductvariantDeleteEventHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Clock;
 import java.time.ZoneId;
+import java.util.List;
 
 @Configuration
 public class CartConfig {
@@ -31,6 +39,30 @@ public class CartConfig {
             ProductClientPort productClientPort,
             Clock clock) {
         return new CartService(currentUserPort, cartRepoPort, productClientPort, clock);
+    }
+
+    // Lắp ghép handler nội bộ với service giỏ hàng, không thêm vòng gọi qua input port.
+    @Bean
+    ProductDeleteEventHandler productDeleteEventHandler(ObjectMapperPort objectMapperPort, CartService cartService) {
+        return new ProductDeleteEventHandler(objectMapperPort, cartService);
+    }
+
+    // Đăng ký strategy xóa một biến thể vào flow event product hiện có.
+    @Bean
+    ProductvariantDeleteEventHandler productvariantDeleteEventHandler(ObjectMapperPort objectMapperPort, CartService cartService) {
+        return new ProductvariantDeleteEventHandler(objectMapperPort, cartService);
+    }
+
+    // Gom strategy theo eventType; registry kiểm tra key trùng khi khởi tạo.
+    @Bean
+    KafkaEventHandlerRegistry productEventHandlerRegistry(List<EventHandler> eventHandlers) {
+        return new KafkaEventHandlerRegistry(eventHandlers);
+    }
+
+    // Chỉ công khai input port điều phối event cho consumer.
+    @Bean
+    ProcessProductEventUseCase processProductEventUseCase(KafkaEventHandlerRegistry eventHandlerRegistry) {
+        return new ProductEventApplicationService(eventHandlerRegistry);
     }
 
     // Đăng ký use case giỏ hàng thông qua input port.

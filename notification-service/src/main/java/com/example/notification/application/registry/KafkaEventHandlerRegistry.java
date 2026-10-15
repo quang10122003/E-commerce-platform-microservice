@@ -1,22 +1,21 @@
 package com.example.notification.application.registry;
 
-import com.example.notification.application.strategy.event.AuthEventHandler;
+import com.example.notification.application.strategy.event.EventHandler;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 // Định tuyến event auth đến đúng strategy theo eventType.
-public class AuthEventHandlerRegistry {
+public class KafkaEventHandlerRegistry {
 
-    private final Map<String, AuthEventHandler> handlers;
+    private final Map<String, EventHandler> handlers;
 
-    public AuthEventHandlerRegistry(List<AuthEventHandler> eventHandlers) {
+    public KafkaEventHandlerRegistry(List<EventHandler> eventHandlers) {
         this.handlers = eventHandlers.stream()
                 .collect(Collectors.toUnmodifiableMap(
-                        AuthEventHandler::eventType,
+                        EventHandler::eventType,
                         Function.identity(),
                         (first, second) -> {
                             throw new IllegalStateException(
@@ -26,7 +25,7 @@ public class AuthEventHandlerRegistry {
     }
 
     // Tìm và trả về strategy phụ trách event type.
-    public AuthEventHandler handle(String eventType) {
+    public EventHandler handle(String eventType) {
         return handlers.get(eventType);
     }
 }

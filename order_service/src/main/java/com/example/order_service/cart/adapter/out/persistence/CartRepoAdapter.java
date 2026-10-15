@@ -9,6 +9,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.List;
+import java.time.LocalDateTime;
 
 @Component
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
@@ -25,5 +27,15 @@ public class CartRepoAdapter implements CartRepoPort {
     @Override
     public Cart save(Cart cart) {
         return cartMapper.toDomain(cartJpaRepo.save(cartMapper.toEntity(cart)));
+    }
+
+    // Thực hiện cập nhật timestamp và xóa item bằng transaction do application quản lý.
+    @Override
+    public int removeItemsByVariantIds(List<Long> variantIds, LocalDateTime now) {
+        if (variantIds.isEmpty()) {
+            return 0;
+        }
+        cartJpaRepo.updateCartsContainingVariants(variantIds, now);
+        return cartJpaRepo.deleteItemsByVariantIds(variantIds);
     }
 }

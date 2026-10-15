@@ -3,6 +3,7 @@ package com.example.getway.application.service;
 import com.example.common.error.AuthorizationError;
 import com.example.common.exception.BusinessException;
 import com.example.getway.application.model.TokenIdentity;
+import com.example.getway.application.port.in.AuthorizeAccessUseCase;
 import com.example.getway.application.port.out.AccessControlCachePort;
 import com.example.getway.application.port.out.TokenVerificationPort;
 
@@ -13,12 +14,13 @@ import lombok.experimental.FieldDefaults;
 // Điều phối xác thực token và kiểm tra trạng thái truy cập tại Gateway.
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class AccessControlService {
+public class AccessControlService implements AuthorizeAccessUseCase {
 
     TokenVerificationPort tokenVerificationPort;
     AccessControlCachePort accessControlCachePort;
 
     // Xác thực token, kiểm tra user bị khóa và kiểm tra token bị thu hồi.
+    @Override
     public void authorize(String token) {
         TokenIdentity identity = tokenVerificationPort.verify(token);
 

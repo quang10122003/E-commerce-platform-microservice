@@ -4,6 +4,7 @@ import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.dto.outbox.ProductvariantDeleteOutboxPayload;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
+import com.example.producr_service.application.port.out.kafka.ProductEventPublisherPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ public class ProductvariantDeleteOutboxHandler implements OutboxEventHandler{
     MapJsonToObjPort mapJsonToObjPort;
     ProductSearchIndexPort productSearchIndexPort;
     ProductRepositoryPort productRepositoryPort;
+    ProductEventPublisherPort productEventPublisherPort;
     @Override
     public String eventType() {
         return ProductvariantDeleteOutboxPayload.EVENT_TYPE;
@@ -27,5 +29,7 @@ public class ProductvariantDeleteOutboxHandler implements OutboxEventHandler{
         // Bỏ qua event cũ nếu sản phẩm đã bị xóa trước khi worker xử lý.
         productRepositoryPort.findById(payload.productId())
                 .ifPresent(product -> productSearchIndexPort.index(product, payload.location()));
+
+        productEventPublisherPort.publish(event);
     }
 }
