@@ -1,5 +1,14 @@
 package com.example.producr_service.application.service;
 
+import com.example.common.exception.BusinessException;
+import com.example.producr_service.application.dto.response.ProductExistsResponse;
+import com.example.producr_service.application.dto.response.ProductShopIdResponse;
+import com.example.producr_service.application.dto.response.ProductSummaryResponse;
+import com.example.producr_service.application.error.ProductError;
+import com.example.producr_service.application.port.in.CheckProductExistsUseCase;
+import com.example.producr_service.application.port.in.GetProductShopIdUseCase;
+import com.example.producr_service.application.port.in.GetProductSummariesUseCase;
+import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.dto.response.CartInfoRepone;
 import com.example.producr_service.application.dto.response.ShopInfoResponse;
 import com.example.producr_service.application.dto.response.VariantCartView;
@@ -21,19 +30,47 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class ProductInternalService implements GetCartInfoUseCase {
+public class ProductInternalService implements GetCartInfoUseCase, CheckProductExistsUseCase,
+        GetProductShopIdUseCase, GetProductSummariesUseCase {
     ProductVariantRepoPort productVariantRepoPort;
+    ProductRepositoryPort productRepositoryPort;
     ShopInfoClientPort shopInfoClientPort;
     FlashSaleItemRepositoryPort flashSaleItemRepositoryPort;
     VariantSaleResolver variantSaleResolver;
     Clock clock;
 
+    // Tra cứu tên và ảnh sản phẩm cho các room trong trang, không loại sản phẩm ngừng bán.
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductSummaryResponse> getProductSummariesByIds(List<Long> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return List.of();
+        }
+        return productRepositoryPort.findProductSummariesByIds(productIds.stream()
+                .filter(Objects::nonNull).distinct().toList());
+    }
 
+    // Lấy shop ID từ người tạo sản phẩm; sản phẩm không tồn tại trả lỗi 404.
+    @Override
+    @Transactional(readOnly = true)
+    public ProductShopIdResponse getShopId(Long productId) {
+        Long shopId = productRepositoryPort.findOwnerIdById(productId)
+                .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
+        return new ProductShopIdResponse(shopId);
+    }
+
+    // Kiểm tra sản phẩm còn trong DB, kể cả khi không còn ACTIVE.
+    @Override
+    @Transactional(readOnly = true)
+    public ProductExistsResponse checkExists(Long productId) {
+        return new ProductExistsResponse(productRepositoryPort.existsById(productId));
+    }
 
     // Lấy thông tin sản phẩm theo danh sách variant để phục vụ hiển thị giỏ hàng.
     @Override

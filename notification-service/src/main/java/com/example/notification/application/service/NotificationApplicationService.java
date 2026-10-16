@@ -1,5 +1,6 @@
 package com.example.notification.application.service;
 
+import com.example.notification.application.dto.request.EmailMessage;
 import com.example.notification.application.dto.event.UserRegisteredEvent;
 import com.example.notification.application.dto.template.UserRegisteredEmailTemplate;
 import com.example.notification.application.port.in.SendEmailUserRegisteredUseCase;
@@ -24,7 +25,7 @@ public class NotificationApplicationService
                 event.userId()
         );
 
-        var message = userRegisteredEmailTemplate.build(event);
+        EmailMessage message = userRegisteredEmailTemplate.build(event);
 
         emailSenderPort.send(message);
 

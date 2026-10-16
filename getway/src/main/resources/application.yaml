@@ -15,6 +15,20 @@ spring:
       server:
         webflux:
           routes:
+            # WebSocket upgrade đi riêng, không bọc response hoặc xử lý frame như HTTP JSON.
+            - id: notification-websocket
+              uri: lb:ws://notification-service
+              predicates:
+                - Path=/ws-notifications,/ws-notifications/**
+
+            # Các API chat, bao gồm cấp vé, giữ kiểm soát JWT qua luồng HTTP hiện có.
+            - id: notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/chat/**
+              filters:
+                - name: ApiResponse
+
             # Auth Service
             - id: auth-service
               uri: lb://auth-service

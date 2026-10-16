@@ -47,7 +47,7 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
         if (campaignId == null || campaignId <= 0) {
             throw new BusinessException(ProductError.INVALID_FLASH_SALE_CAMPAIGN_ID);
         }
-        var campaign = flashSaleCampaignRepositoryPort.findViewById(campaignId)
+        FlashSaleCampaignView campaign = flashSaleCampaignRepositoryPort.findViewById(campaignId)
                 .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
         if (campaign.status() != FlashSaleCampaignStatus.DRAFT) {
             throw new BusinessException(DomainProductError.FLASH_SALE_REGISTRATION_CLOSED);

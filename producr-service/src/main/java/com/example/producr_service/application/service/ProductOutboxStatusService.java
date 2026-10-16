@@ -1,5 +1,6 @@
 package com.example.producr_service.application.service;
 
+import java.util.Optional;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.port.in.ProcessProductOutboxUseCase;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
@@ -39,7 +40,7 @@ public class ProductOutboxStatusService implements ProcessProductOutboxUseCase {
     @Transactional
     public boolean processEvent(OutboxEventDto candidate) {
         // Danh sách đã đọc có thể cũ; chỉ instance giữ khóa mới được chạy handler.
-        var lockedEvent = outboxPort.lockPendingEvent(candidate.eventId());
+        Optional<OutboxEventDto> lockedEvent = outboxPort.lockPendingEvent(candidate.eventId());
         if (lockedEvent.isEmpty()) {
             return false;
         }

@@ -23,9 +23,6 @@ public class ChatConversationMapper {
         return new ChatConversationsEntity(
                 domain.getCustomerId(),
                 domain.getShopId(),
-                domain.getProductId(),
-                domain.getLastMessageAt(),
-                domain.getCreatedAt(),
-                domain.getUpdatedAt());
+                domain.getProductId());
     }
 }

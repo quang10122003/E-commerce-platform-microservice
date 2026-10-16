@@ -24,8 +24,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/info").permitAll()
-                        // Handshake chưa mang STOMP header; JWT bắt buộc tại frame CONNECT.
+                        // Handshake chưa mang STOMP header; vé bắt buộc tại CONNECT, API cấp vé vẫn dùng JWT.
                         .requestMatchers("/ws-notifications", "/ws-notifications/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/chat/chat_conversations/shop").hasRole("SHOP")
                         .anyRequest().authenticated())
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint(authenticationEntryPoint)

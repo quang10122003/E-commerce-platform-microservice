@@ -54,9 +54,6 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 
     PRIMARY KEY (id),
 
-    KEY idx_chat_message_conversation_created
-(conversation_id, created_at, id),
-
     CONSTRAINT fk_chat_message_conversation
     FOREIGN KEY (conversation_id)
     REFERENCES chat_conversations(id)

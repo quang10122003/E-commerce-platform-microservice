@@ -11,8 +11,17 @@ spring:
     username: ${USERNAME_DATABASE}
     password: ${PASSWORD_DATABASE}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+07:00'"
   application:
     name: notification-service
+  # Dùng cùng cấu hình Redis và StringRedisTemplate như gateway.
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2s
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
@@ -36,6 +45,9 @@ eureka:
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
 app:
+  websocket:
+    ticket-ttl-seconds: 30
+    allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS:http://localhost:3000}
   jwt:
     public-key: ${JWT_PUBLIC_KEY}
   mail:

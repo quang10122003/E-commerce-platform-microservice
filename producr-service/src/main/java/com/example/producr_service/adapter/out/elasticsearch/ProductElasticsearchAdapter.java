@@ -1,5 +1,7 @@
 package com.example.producr_service.adapter.out.elasticsearch;
 
+import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregation;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
@@ -79,7 +81,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                 filter.size() + 1
         );
 
-        var queryBuilder = NativeQuery.builder()
+        NativeQueryBuilder queryBuilder = NativeQuery.builder()
                 .withQuery(boolQueryBuilder -> boolQueryBuilder.bool(bool -> {
                     // Tìm theo tên product khi client truyền keyword.
                     if (hasText(filter.keyword())) {
@@ -241,7 +243,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
 
         ElasticsearchAggregations aggregations =
                 (ElasticsearchAggregations) searchHits.getAggregations();
-        var aggregation = aggregations.get(BRANDS_AGGREGATION);
+        ElasticsearchAggregation aggregation = aggregations.get(BRANDS_AGGREGATION);
         if (aggregation == null || !aggregation.aggregation().getAggregate().isLterms()) {
             return List.of();
         }

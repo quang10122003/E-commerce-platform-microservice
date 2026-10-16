@@ -1,5 +1,6 @@
 package com.example.producr_service.application.service;
 
+import com.example.producr_service.domain.model.FlashSaleCampaign;
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.application.dto.request.*;
 import com.example.producr_service.application.dto.response.*;
@@ -53,10 +54,10 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
     public void register(Long campaignId, RegisterFlashSaleItemRequest request) {
         Long shopId = currentUser.getUserInfo().userId();
         // lấy chương trình sale
-        var campaign = flashSaleCampaignRepositoryPort.findByIdForUpdate(campaignId)
+        FlashSaleCampaign campaign = flashSaleCampaignRepositoryPort.findByIdForUpdate(campaignId)
                 .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
 
-        var variant = ownedVariant(request.variantId(), shopId);
+        FlashSaleVariantSnapshot variant = ownedVariant(request.variantId(), shopId);
         LocalDateTime now = LocalDateTime.now(clock);
         campaign.addItem(variant.toRegistrationVariant(),
                 request.discountPercent(), request.registeredQuantity(), now);
@@ -67,14 +68,14 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
     @Override
     @Transactional(readOnly = true)
     public FlashSalePriceResponse previewPrice(Long variantId, PreviewFlashSalePriceRequest request) {
-        var variant = ownedVariant(variantId, currentUser.getUserInfo().userId());
+        FlashSaleVariantSnapshot variant = ownedVariant(variantId, currentUser.getUserInfo().userId());
         return new FlashSalePriceResponse(
                 FlashSaleRules.calculateSalePrice(variant.price(), request.discountPercent()));
     }
 
     // check quyền sở hữu variant và sản phầm phải active
     private FlashSaleVariantSnapshot ownedVariant(Long variantId, Long shopId) {
-        var variant = flashSaleItemRepositoryPort.findVariant(variantId)
+        FlashSaleVariantSnapshot variant = flashSaleItemRepositoryPort.findVariant(variantId)
                 .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND));
         if (!variant.shopId().equals(shopId)) {
             throw new BusinessException(ProductError.PRODUCT_ACCESS_DENIED);

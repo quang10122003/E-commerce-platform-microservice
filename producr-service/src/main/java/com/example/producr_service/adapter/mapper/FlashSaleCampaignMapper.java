@@ -1,5 +1,8 @@
 package com.example.producr_service.adapter.mapper;
 
+import com.example.producr_service.domain.model.FlashSaleItem;
+import java.util.Map;
+import java.util.Set;
 import com.example.producr_service.adapter.entity.FlashSaleCampaignEntity;
 import com.example.producr_service.application.dto.response.FlashSaleCampaignView;
 import com.example.producr_service.domain.model.FlashSaleCampaign;
@@ -73,15 +76,15 @@ public class FlashSaleCampaignMapper {
     public void updateEntity(FlashSaleCampaign campaign, FlashSaleCampaignEntity entity,
             Function<Long, ProductVariantEntity> variantReference) {
         updateHeader(campaign, entity);
-        var existing = entity.getItems().stream()
+        Map<Long, FlashSaleItemEntity> existing = entity.getItems().stream()
                 .collect(Collectors.toMap(FlashSaleItemEntity::getId, Function.identity()));
-        var retainedIds = campaign.getItems().stream().map(item -> item.id())
+        Set<Long> retainedIds = campaign.getItems().stream().map(item -> item.id())
                 .filter(java.util.Objects::nonNull).collect(Collectors.toSet());
         if (!existing.keySet().containsAll(retainedIds)) {
             throw new IllegalStateException("Item cần cập nhật không thuộc collection hiện tại");
         }
         entity.getItems().removeIf(item -> !retainedIds.contains(item.getId()));
-        for (var item : campaign.getItems()) {
+        for (FlashSaleItem item : campaign.getItems()) {
             ProductVariantEntity variant = item.variantId() == null ? null : variantReference.apply(item.variantId());
             if (item.id() == null) {
                 entity.getItems().add(itemMapper.toEntity(item, entity, variant));

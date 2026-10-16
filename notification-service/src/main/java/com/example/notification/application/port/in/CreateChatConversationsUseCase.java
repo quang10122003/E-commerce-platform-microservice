@@ -1,5 +1,8 @@
 package com.example.notification.application.port.in;
 
+import com.example.notification.application.dto.response.ChatConversationResponse;
+
 public interface CreateChatConversationsUseCase {
-    void createRoomChatConversations(Long productID);
+
+    ChatConversationResponse getOrCreateConversationByProductId(Long productId);
 }

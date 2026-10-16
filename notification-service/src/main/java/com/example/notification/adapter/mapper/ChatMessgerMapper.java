@@ -29,9 +29,7 @@ public class ChatMessgerMapper {
                 conversation,
                 message.senderId(),
                 message.content(),
-                message.read(),
-                message.createdAt(),
-                message.updatedAt());
+                message.read());
     }
 
     public List<ChatMessageEntity> toEntities(List<ChatMessage> messages, ChatConversationsEntity conversation) {

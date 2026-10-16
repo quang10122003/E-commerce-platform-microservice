@@ -22,11 +22,11 @@ public final class ChatConversation {
     private final Long productId;
     @Getter
     private final LocalDateTime createdAt;
-    // Lưu thời điểm tin mới nhất và cập nhật aggregate.
+    // Lưu thời điểm tin mới nhất và timestamp do database cung cấp.
     @Getter
     private LocalDateTime lastMessageAt;
     @Getter
-    private LocalDateTime updatedAt;
+    private final LocalDateTime updatedAt;
     // Chỉ giữ các tin mới của thao tác hiện tại, không tải toàn bộ lịch sử.
     private final List<ChatMessage> newMessages = new ArrayList<>();
 
@@ -41,20 +41,20 @@ public final class ChatConversation {
         this.shopId = shopId;
         this.productId = productId;
         this.lastMessageAt = lastMessageAt;
-        this.createdAt = Objects.requireNonNull(createdAt);
-        this.updatedAt = Objects.requireNonNull(updatedAt);
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     // Tạo room mới từ bộ khóa nghiệp vụ, chưa có tin nhắn hoặc ID persistence.
-    public static ChatConversation create(Long customerId, Long shopId, Long productId, LocalDateTime now) {
-        return new ChatConversation(null, customerId, shopId, productId, null, now, now);
+    public static ChatConversation create(Long customerId, Long shopId, Long productId) {
+        return new ChatConversation(null, customerId, shopId, productId, null, null, null);
     }
 
     // Khôi phục metadata của room từ persistence mà không thay đổi nghiệp vụ.
     public static ChatConversation restore(Long id, Long customerId, Long shopId, Long productId, LocalDateTime lastMessageAt,
                                            LocalDateTime createdAt, LocalDateTime updatedAt) {
         return new ChatConversation(Objects.requireNonNull(id), customerId, shopId, productId,
-                lastMessageAt, createdAt, updatedAt);
+                lastMessageAt, Objects.requireNonNull(createdAt), Objects.requireNonNull(updatedAt));
     }
 
     // Chỉ khách hàng và tài khoản người bán của room được gửi tin.
@@ -64,18 +64,20 @@ public final class ChatConversation {
         }
     }
 
-    public ChatMessage addMessage(Long senderId, String content, LocalDateTime now) {
-        Objects.requireNonNull(now, "Thời điểm gửi tin là bắt buộc");
+    // Kiểm tra người gửi và tạo tin mới, không tự sinh timestamp persistence.
+    public ChatMessage addMessage(Long senderId, String content) {
         requireParticipant(senderId);
-        ChatMessage message = ChatMessage.create(senderId, content, now);
+        ChatMessage message = ChatMessage.create(senderId, content);
         newMessages.add(message);
-        if (lastMessageAt == null || now.isAfter(lastMessageAt)) {
-            lastMessageAt = now;
-        }
-        if (now.isAfter(updatedAt)) {
-            updatedAt = now;
-        }
         return message;
+    }
+
+    // Cập nhật hoạt động room bằng thời điểm DB đã ghi nhận cho tin vừa lưu.
+    public void recordLastMessageAt(LocalDateTime messageCreatedAt) {
+        Objects.requireNonNull(messageCreatedAt, "Thời điểm tin đã lưu là bắt buộc");
+        if (lastMessageAt == null || messageCreatedAt.isAfter(lastMessageAt)) {
+            lastMessageAt = messageCreatedAt;
+        }
     }
 
     // Adapter gọi sau khi lưu xong để không insert lặp nếu aggregate bị save lần nữa.

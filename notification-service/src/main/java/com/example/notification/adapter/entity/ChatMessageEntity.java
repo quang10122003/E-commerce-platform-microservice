@@ -3,6 +3,8 @@ package com.example.notification.adapter.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import java.time.LocalDateTime;
 
@@ -29,38 +31,27 @@ public class ChatMessageEntity {
     @Column(name = "is_read", nullable = false)
     private boolean read = false;
 
-    @Column(name = "created_at", nullable = false)
+    @Generated(event = EventType.INSERT)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false,
+            columnDefinition = "DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6)")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false,
+            columnDefinition = "DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)")
     private LocalDateTime updatedAt;
 
     // Nhận dữ liệu tin nhắn đã được tạo và kiểm tra tại domain.
     public ChatMessageEntity(ChatConversationsEntity conversation, Long senderId, String content,
-                             boolean read, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                             boolean read) {
         this.chatConversationsEntity = conversation;
         this.senderId = senderId;
         this.content = content;
         this.read = read;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 
-
-    @PrePersist
-    protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        if (createdAt == null) {
-            createdAt = now;
-        }
-        if (updatedAt == null) {
-            updatedAt = now;
-        }
+    // Chỉ thay đổi trạng thái đọc; database tự cập nhật thời điểm sửa.
+    public void markRead() {
+        this.read = true;
     }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
 }

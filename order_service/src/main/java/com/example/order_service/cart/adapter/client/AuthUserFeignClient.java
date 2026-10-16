@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @FeignClient(name = "auth-service")
 public interface AuthUserFeignClient {
+    // Lấy thông tin tài khoản bằng phiên đăng nhập để xác định giỏ hàng.
     @GetMapping("/api/internal/getInfoUser")
     UserInternaInfoRespone getInFo();
 }

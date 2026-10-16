@@ -2,14 +2,12 @@ package com.example.notification.adapter.entity;
 
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "chat_conversations", uniqueConstraints = @UniqueConstraint(
@@ -17,7 +15,6 @@ import java.util.List;
         columnNames = {"customer_id", "shop_id", "product_id"}))
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
 public class ChatConversationsEntity {
 
     @Id
@@ -36,44 +33,25 @@ public class ChatConversationsEntity {
     @Column(name = "last_message_at")
     private LocalDateTime lastMessageAt;
 
-    @Column(name = "created_at", nullable = false)
+    @Generated(event = EventType.INSERT)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false,
+            columnDefinition = "DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6)")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false,
+            columnDefinition = "DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)")
     private LocalDateTime updatedAt;
     
-    public ChatConversationsEntity(Long customerId, Long shopId, Long productId,
-                                   LocalDateTime lastMessageAt, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public ChatConversationsEntity(Long customerId, Long shopId, Long productId) {
         this.customerId = customerId;
         this.shopId = shopId;
         this.productId = productId;
-        this.lastMessageAt = lastMessageAt;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 
     // Ánh xạ metadata đã được domain xử lý vào entity đang được quản lý.
-    public void updateTimestamps(LocalDateTime lastMessageAt, LocalDateTime updatedAt) {
+    public void updateLastMessageAt(LocalDateTime lastMessageAt) {
         this.lastMessageAt = lastMessageAt;
-        this.updatedAt = updatedAt;
-    }
-
-    @PrePersist
-    protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        if (createdAt == null) {
-            createdAt = now;
-        }
-        if (updatedAt == null) {
-            updatedAt = now;
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        if (updatedAt == null) {
-            updatedAt = LocalDateTime.now();
-        }
     }
 
 }

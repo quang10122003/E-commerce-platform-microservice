@@ -5,38 +5,36 @@ import com.example.common.response.PageResponse;
 import com.example.producr_service.application.constant.Constant;
 import com.example.producr_service.application.dto.command.CreateProductCommand;
 import com.example.producr_service.application.dto.command.UpdateProductCommand;
+import com.example.producr_service.application.dto.command.VariantImageUploadCommand;
 import com.example.producr_service.application.dto.outbox.*;
 import com.example.producr_service.application.dto.request.CreateProductData;
-import com.example.producr_service.application.dto.command.VariantImageUploadCommand;
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
 import com.example.producr_service.application.dto.request.SellerProductFilter;
-import com.example.producr_service.application.dto.response.ProductResponse;
-import com.example.producr_service.application.dto.response.ProductExistsResponse;
-import com.example.producr_service.application.dto.response.ProductShopIdResponse;
-import com.example.producr_service.application.dto.response.UserProductDetailResponse;
-import com.example.producr_service.application.mapper.UserProductDetailMapper;
-import com.example.producr_service.application.dto.response.ShopFlashSaleProductResponse;
-import com.example.producr_service.application.port.in.GetShopFlashSaleProductsUseCase;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
+import com.example.producr_service.application.dto.response.ProductResponse;
 import com.example.producr_service.application.dto.response.SellerProductItemResponse;
+import com.example.producr_service.application.dto.response.ShopFlashSaleProductResponse;
 import com.example.producr_service.application.dto.response.ShopProductDetailResponse;
 import com.example.producr_service.application.dto.response.UserInternaInfoRespone;
+import com.example.producr_service.application.dto.response.UserProductDetailResponse;
 import com.example.producr_service.application.error.ProductError;
+import com.example.producr_service.application.mapper.UserProductDetailMapper;
 import com.example.producr_service.application.port.in.*;
+import com.example.producr_service.application.port.in.GetShopFlashSaleProductsUseCase;
+import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
-import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
-import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.application.port.out.storage.ProductImageRollbackPort;
+import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.domain.model.Product;
 import com.example.producr_service.domain.model.ProductVariant;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
@@ -48,7 +46,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase, GetShopFlashSaleProductsUseCase, CheckProductExistsUseCase, GetProductShopIdUseCase, GetUserProductDetailUseCase {
+public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase, GetShopFlashSaleProductsUseCase, GetUserProductDetailUseCase {
     ProductImageRollbackPort productImageRollbackPort;
     ProductImageUploadService productImageUploadService;
     ProductCreationService productCreationService;
@@ -73,22 +71,6 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
         String shopAddress = shopInfoClientPort.findPublicShopAddress(product.getUserId()).orElse(null);
         String location = productHelper.extractProvinceNameFromAddress(shopAddress);
         return UserProductDetailMapper.toResponse(product, location);
-    }
-
-    // Lấy shop ID từ người tạo sản phẩm; sản phẩm không tồn tại trả lỗi 404.
-    @Override
-    @Transactional(readOnly = true)
-    public ProductShopIdResponse getShopId(Long productId) {
-        Long shopId = productRepositoryPort.findOwnerIdById(productId)
-                .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
-        return new ProductShopIdResponse(shopId);
-    }
-
-    // Kiểm tra sản phẩm còn trong DB, kể cả khi không còn ACTIVE.
-    @Override
-    @Transactional(readOnly = true)
-    public ProductExistsResponse checkExists(Long productId) {
-        return new ProductExistsResponse(productRepositoryPort.existsById(productId));
     }
 
     // Chỉ đọc sản phẩm của Shop đang đăng nhập, không nhận shopId từ client.

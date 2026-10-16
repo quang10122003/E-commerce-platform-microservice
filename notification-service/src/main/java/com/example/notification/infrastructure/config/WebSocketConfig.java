@@ -1,7 +1,8 @@
 package com.example.notification.infrastructure.config;
 import com.example.notification.adapter.in.websocket.WebSocketJwtInterceptor;
-import org.springframework.messaging.simp.config.ChannelRegistration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -11,14 +12,16 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 public class WebSocketConfig
         implements WebSocketMessageBrokerConfigurer {
-    private final String[] ALLOWED_ORIGIN = {"http://localhost:3000"};
+    private final String[] allowedOrigins;
     private final WebSocketJwtInterceptor webSocketJwtInterceptor;
 
-    public WebSocketConfig(WebSocketJwtInterceptor webSocketJwtInterceptor) {
+    public WebSocketConfig(WebSocketJwtInterceptor webSocketJwtInterceptor,
+                           @Value("${app.websocket.allowed-origins:http://localhost:3000}") String[] allowedOrigins) {
         this.webSocketJwtInterceptor = webSocketJwtInterceptor;
+        this.allowedOrigins = allowedOrigins;
     }
 
-    // Xác thực JWT trên CONNECT và bảo vệ các frame STOMP inbound.
+    // Xác thực vé trên CONNECT và giữ bảo vệ các frame STOMP inbound.
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(webSocketJwtInterceptor);
@@ -27,7 +30,7 @@ public class WebSocketConfig
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-notifications")
-                .setAllowedOriginPatterns(ALLOWED_ORIGIN);
+                .setAllowedOriginPatterns(allowedOrigins);
     }
 
     @Override

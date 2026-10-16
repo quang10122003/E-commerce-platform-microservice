@@ -11,6 +11,8 @@ spring:
     username: ${USERNAME_DATABASE}
     password: ${PASSWORD_DATABASE}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+07:00'"
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:

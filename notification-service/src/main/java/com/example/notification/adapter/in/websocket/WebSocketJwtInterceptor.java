@@ -1,10 +1,13 @@
 package com.example.notification.adapter.in.websocket;
 
+import com.example.notification.application.dto.WsTicketIdentity;
+import java.util.List;
+import java.util.regex.Matcher;
 import com.example.common.error.AuthorizationError;
 import com.example.common.exception.BusinessException;
 import com.example.common.security.AuthorizationUtils;
-import com.example.common.security.JwtVerifier;
-import io.jsonwebtoken.JwtException;
+import com.example.notification.application.port.in.CheckChatConversationAccessUseCase;
+import com.example.notification.application.port.in.ConsumeWsTicketUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -17,18 +20,19 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.Instant;
-import java.util.List;
-import java.util.Set;
+import java.util.regex.Pattern;
 
 @Component
 @RequiredArgsConstructor
 public class WebSocketJwtInterceptor implements ChannelInterceptor {
 
-    private static final String TOKEN_EXPIRES_AT = "chatTokenExpiresAt";
-    private static final Set<String> CHAT_SUBSCRIPTIONS = Set.of(
-            "/user/queue/chat/messages", "/user/queue/chat/errors");
-    private final JwtVerifier jwtVerifier;
+    private static final String SESSION_EXPIRES_AT = "chatSessionExpiresAt";
+    private static final Pattern CHAT_TOPIC = Pattern.compile("/topic/chat/conversations/([1-9][0-9]*)(?:/read)?");
+    private final ConsumeWsTicketUseCase consumeWsTicketUseCase;
+    private final CheckChatConversationAccessUseCase checkChatConversationAccessUseCase;
+    private final Clock clock;
 
     // Xác thực CONNECT và bảo vệ các frame đọc/ghi dữ liệu sau khi kết nối.
     @Override
@@ -38,52 +42,68 @@ public class WebSocketJwtInterceptor implements ChannelInterceptor {
             return message;
         }
         if (StompCommand.CONNECT.equals(accessor.getCommand()) || StompCommand.STOMP.equals(accessor.getCommand())) {
-            authenticate(accessor);
+            authenticateWithWsTicket(accessor);
         } else if (StompCommand.SEND.equals(accessor.getCommand())
                 || StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
-            requireAuthenticated(accessor);
+            requireValidSocketSession(accessor);
             String destination = accessor.getDestination();
             // Client chỉ gửi qua application, không được tự phát tin vào broker của người khác.
             if (StompCommand.SEND.equals(accessor.getCommand())
                     && (destination == null || !destination.startsWith("/app/"))) {
                 throw new BusinessException(AuthorizationError.ACCESS_DENIED);
             }
-            // Chỉ mở queue chat của chính session; giữ các topic thông báo hiện có.
-            if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())
-                    && (destination == null || (!CHAT_SUBSCRIPTIONS.contains(destination)
-                    && (!destination.startsWith("/topic/") || destination.contains("/chat/"))))) {
-                throw new BusinessException(AuthorizationError.ACCESS_DENIED);
+            // Queue chỉ nhận lỗi; topic chat được kiểm tra thành viên trước khi subscribe.
+            if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+                requireSubscriptionAllowed(accessor, destination);
             }
         }
         return message;
     }
 
-    // Dùng bộ xác minh JWT , chỉ lưu hạn token và userId trong session.
-    private void authenticate(StompHeaderAccessor accessor) {
-        String token = AuthorizationUtils.extractBearerToken(accessor.getFirstNativeHeader("Authorization"));
-        try {
-            var claims = jwtVerifier.extractAllClaims(token);
-            Long userId = claims.get("userId", Long.class);
-            if (!"access".equals(claims.get("tokenType", String.class)) || userId == null || userId <= 0
-                    || claims.getExpiration() == null || accessor.getSessionAttributes() == null) {
-                throw new BusinessException(AuthorizationError.UNAUTHENTICATED);
+    // Chặn wildcard để không thể subscribe bao trùm topic của room không có quyền.
+    private void requireSubscriptionAllowed(StompHeaderAccessor accessor, String destination) {
+        if (destination == null || destination.contains("*") || destination.contains("?")
+                || destination.contains("{") || destination.contains("}")) {
+            throw new BusinessException(AuthorizationError.ACCESS_DENIED);
+        }
+        Matcher matcher = CHAT_TOPIC.matcher(destination);
+        if (matcher.matches()) {
+            try {
+                checkChatConversationAccessUseCase.requireConversationParticipant(Long.parseLong(matcher.group(1)),
+                        Long.parseLong(accessor.getUser().getName()));
+            } catch (NumberFormatException exception) {
+                throw new BusinessException(AuthorizationError.ACCESS_DENIED);
             }
-            List<?> roles = claims.get("roles", List.class);
-            var authorities = roles == null ? List.<SimpleGrantedAuthority>of()
-                    : roles.stream().map(role -> new SimpleGrantedAuthority((String) role)).toList();
-            accessor.setUser(UsernamePasswordAuthenticationToken.authenticated(userId.toString(), null, authorities));
-            accessor.getSessionAttributes().put(TOKEN_EXPIRES_AT, claims.getExpiration().toInstant());
-        } catch (JwtException | IllegalArgumentException | ClassCastException exception) {
-            throw new BusinessException(AuthorizationError.UNAUTHENTICATED);
+            return;
+        }
+        if (!"/user/queue/chat/errors".equals(destination)
+                && (!destination.startsWith("/topic/") || destination.contains("/chat/"))) {
+            throw new BusinessException(AuthorizationError.ACCESS_DENIED);
         }
     }
 
-    // Frame SEND/SUBSCRIBE chỉ dùng danh tính của CONNECT và token còn hạn.
-    private void requireAuthenticated(StompHeaderAccessor accessor) {
+    // Tiêu thụ vé một lần; giữ hạn phiên từ JWT gốc thay vì hạn 30 giây của vé.
+    private void authenticateWithWsTicket(StompHeaderAccessor accessor) {
+        String authorization = accessor.getFirstNativeHeader("Authorization");
+        // Không giữ credential trong message để tránh lộ qua log lỗi của framework.
+        accessor.removeNativeHeader("Authorization");
+        if (accessor.getSessionAttributes() == null
+                || accessor.getSessionAttributes().containsKey(SESSION_EXPIRES_AT)) {
+            throw new BusinessException(AuthorizationError.UNAUTHENTICATED);
+        }
+        String ticket = AuthorizationUtils.extractBearerToken(authorization);
+        WsTicketIdentity identity = consumeWsTicketUseCase.consumeWebSocketTicketAndGetIdentity(ticket);
+        List<SimpleGrantedAuthority> authorities = identity.roles().stream().map(SimpleGrantedAuthority::new).toList();
+        accessor.setUser(UsernamePasswordAuthenticationToken.authenticated(identity.userId().toString(), null, authorities));
+        accessor.getSessionAttributes().put(SESSION_EXPIRES_AT, identity.sessionExpiresAt());
+    }
+
+    // Frame SEND/SUBSCRIBE dùng danh tính CONNECT và hạn phiên độc lập với TTL của vé.
+    private void requireValidSocketSession(StompHeaderAccessor accessor) {
         if (!(accessor.getUser() instanceof Authentication authentication) || !authentication.isAuthenticated()
                 || accessor.getSessionAttributes() == null
-                || !(accessor.getSessionAttributes().get(TOKEN_EXPIRES_AT) instanceof Instant expiresAt)
-                || !expiresAt.isAfter(Instant.now())) {
+                || !(accessor.getSessionAttributes().get(SESSION_EXPIRES_AT) instanceof Instant expiresAt)
+                || !expiresAt.isAfter(clock.instant())) {
             throw new BusinessException(AuthorizationError.UNAUTHENTICATED);
         }
     }

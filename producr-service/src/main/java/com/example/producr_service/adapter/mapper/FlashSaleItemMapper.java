@@ -1,5 +1,6 @@
 package com.example.producr_service.adapter.mapper;
 
+import java.util.List;
 import com.example.common.untill.JsonUtils;
 import com.example.producr_service.adapter.entity.*;
 import com.example.producr_service.application.dto.response.FlashSaleVariantSnapshot;
@@ -21,8 +22,8 @@ public class FlashSaleItemMapper {
 
     // Chuyển dữ liệu JPA thành snapshot phục vụ kiểm tra và lưu đăng ký.
     public FlashSaleVariantSnapshot toSnapshot(ProductVariantEntity variant) {
-        var product = variant.getProduct();
-        var attributes = variant.getAttributeValues().stream()
+        ProductEntity product = variant.getProduct();
+        List<FlashSaleVariantSnapshot.Attribute> attributes = variant.getAttributeValues().stream()
                 .sorted(Comparator.comparing((AttributeValueEntity value) -> value.getAttribute().getId())
                         .thenComparing(AttributeValueEntity::getId))
                 .map(value -> new FlashSaleVariantSnapshot.Attribute(
@@ -35,7 +36,7 @@ public class FlashSaleItemMapper {
     // Chuyển đăng ký domain thành entity; JSON chỉ được xử lý ở adapter.
     public FlashSaleItemEntity toEntity(FlashSaleItem item,
             FlashSaleCampaignEntity campaign, ProductVariantEntity variantEntity) {
-        var entity = new FlashSaleItemEntity();
+        FlashSaleItemEntity entity = new FlashSaleItemEntity();
         updateEntity(item, entity, campaign, variantEntity);
         return entity;
     }
@@ -62,7 +63,7 @@ public class FlashSaleItemMapper {
         if (!(decoded instanceof java.util.List<?> values)) {
             throw new IllegalStateException("Snapshot thuộc tính không phải danh sách");
         }
-        var attributes = values.stream().map(value -> {
+        List<FlashSaleItem.Attribute> attributes = values.stream().map(value -> {
             if (!(value instanceof java.util.Map<?, ?> attribute)
                     || !(attribute.get("name") instanceof String name)
                     || !(attribute.get("value") instanceof String text)) {

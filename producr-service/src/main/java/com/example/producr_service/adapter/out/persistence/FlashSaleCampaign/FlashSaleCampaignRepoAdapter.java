@@ -1,5 +1,7 @@
 package com.example.producr_service.adapter.out.persistence.FlashSaleCampaign;
 
+import com.example.producr_service.adapter.entity.FlashSaleCampaignEntity;
+import org.springframework.data.domain.Page;
 import com.example.producr_service.adapter.mapper.FlashSaleCampaignMapper;
 import com.example.producr_service.adapter.out.persistence.ProductVariant.ProductVariantJpa;
 import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRepositoryPort;
@@ -45,7 +47,7 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
     public PageResponse<FlashSaleCampaignView> findAll(PageQuery pageQuery, LocalDateTime from,
                                                  LocalDateTime to, FlashSaleCampaignStatus status,
                                                  LocalDateTime now, Boolean registrationOpen) {
-        var entityPage = flashSaleCampaignJpa.findCampaigns(
+        Page<FlashSaleCampaignEntity> entityPage = flashSaleCampaignJpa.findCampaigns(
                 from, to, status == null ? null : status.name(), now, registrationOpen,
                 PageRequest.of(pageQuery.pageIndex(), pageQuery.size())
         );
@@ -77,7 +79,7 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
             flashSaleCampaignJpa.save(flashSaleCampaignMapper.toEntity(campaign, productVariantJpa::getReferenceById));
             return;
         }
-        var entity = flashSaleCampaignJpa.findById(campaign.getId())
+        FlashSaleCampaignEntity entity = flashSaleCampaignJpa.findById(campaign.getId())
                 .orElseThrow(() -> new IllegalStateException("Chương trình đã tải không còn tồn tại"));
         flashSaleCampaignMapper.updateEntity(campaign, entity, productVariantJpa::getReferenceById);
         flashSaleCampaignJpa.save(entity);
@@ -98,7 +100,7 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
 
     @Override
     public void saveStatus(Long id, FlashSaleCampaignStatus status) {
-        var entity = flashSaleCampaignJpa.findById(id)
+        FlashSaleCampaignEntity entity = flashSaleCampaignJpa.findById(id)
                 .orElseThrow(() -> new IllegalStateException("Chương trình đã khóa không còn tồn tại"));
         entity.setStatus(status);
     }

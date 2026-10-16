@@ -1,22 +1,21 @@
 package com.example.auth_service.adapter.out.persistence.user;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
-
 import com.example.auth_service.adapter.mapper.UserMapper;
-import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
 import com.example.auth_service.application.DTO.repone.ShopAddressView;
-import com.example.auth_service.domain.until.RoleEnum;
+import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
+import com.example.auth_service.application.DTO.repone.UserDisplayInfoResponse;
 import com.example.auth_service.application.port.out.UserRepositoryPort;
 import com.example.auth_service.domain.model.User;
-
+import com.example.auth_service.domain.until.RoleEnum;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Adapter chuyển đổi giữa domain và persistence cho User.
@@ -28,6 +27,12 @@ import lombok.experimental.FieldDefaults;
 public class UserRepositoryAdapter implements UserRepositoryPort {
     UserRepoJpa userRepoJpa;
     UserMapper userMapper;
+
+    // Đọc projection tên khách theo lô, không tải entity và roles.
+    @Override
+    public List<UserDisplayInfoResponse> findUserDisplayInfosByIds(Collection<Long> userIds) {
+        return userIds.isEmpty() ? List.of() : userRepoJpa.findUserDisplayInfosByIds(userIds);
+    }
 
     // Dùng vai trò shop hiện có để tránh công khai thông tin tài khoản thường.
     @Override

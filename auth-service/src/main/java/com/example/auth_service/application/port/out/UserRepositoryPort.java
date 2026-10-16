@@ -1,15 +1,16 @@
 package com.example.auth_service.application.port.out;
 
+import com.example.auth_service.application.DTO.repone.ShopAddressView;
+import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
+import com.example.auth_service.application.DTO.repone.UserDisplayInfoResponse;
+import com.example.auth_service.domain.model.User;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
-import com.example.auth_service.application.DTO.repone.ShopAddressView;
-import com.example.auth_service.domain.model.User;
-
 public interface UserRepositoryPort {
+    List<UserDisplayInfoResponse> findUserDisplayInfosByIds(Collection<Long> userIds);
 //    lấy thông tin của shop
     Optional<ShopAddressView> findShopAddressById(Long shopId);
 

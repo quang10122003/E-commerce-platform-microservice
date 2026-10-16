@@ -1,7 +1,7 @@
 package com.example.producr_service.adapter.out.persistence.Product;
 
-import com.example.common.response.PageResponse;
 import com.example.common.exception.BusinessException;
+import com.example.common.response.PageResponse;
 import com.example.producr_service.adapter.entity.BrandEntity;
 import com.example.producr_service.adapter.entity.CategoryEntity;
 import com.example.producr_service.adapter.entity.ProductEntity;
@@ -9,22 +9,21 @@ import com.example.producr_service.adapter.mapper.ProductMapper;
 import com.example.producr_service.adapter.out.persistence.Brand.BrandJpa;
 import com.example.producr_service.adapter.out.persistence.Category.CategoryJpa;
 import com.example.producr_service.application.dto.request.SellerProductFilter;
+import com.example.producr_service.application.dto.response.ProductSummaryResponse;
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.domain.model.Product;
-
 import com.example.producr_service.domain.model.ProductStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-
-import java.util.Optional;
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -35,6 +34,12 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     CategoryJpa categoryJpa;
     BrandJpa brandJpa;
     ProductMapper productMapper;
+
+    // Lấy metadata theo lô cho cả sản phẩm đang bán và đã ngừng bán.
+    @Override
+    public List<ProductSummaryResponse> findProductSummariesByIds(List<Long> productIds) {
+        return productIds.isEmpty() ? List.of() : productJpa.findProductSummariesByIds(productIds);
+    }
 
     // Đọc ID chủ sản phẩm bằng projection, không tải dữ liệu liên quan.
     @Override

@@ -1,5 +1,6 @@
 package com.example.producr_service.adapter.out.openFeign;
 
+import com.example.producr_service.adapter.client.dto.PublicShopInfoResponse;
 import com.example.producr_service.adapter.client.AuthUserFeignClient;
 import com.example.producr_service.application.dto.response.ShopInfoResponse;
 import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
@@ -20,7 +21,7 @@ public class ShopInfoClientAdapter implements ShopInfoClientPort {
     @Override
     public Optional<String> findPublicShopAddress(Long shopId) {
         try {
-            var shop = authUserFeignClient.getPublicShopInfo(shopId);
+            PublicShopInfoResponse shop = authUserFeignClient.getPublicShopInfo(shopId);
             return shop == null ? Optional.empty()
                     : Optional.ofNullable(shop.location());
         } catch (FeignException exception) {

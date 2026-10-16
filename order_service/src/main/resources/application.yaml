@@ -18,6 +18,8 @@
     username: ${USERNAME_DATABASE}
     password: ${PASSWORD_DATABASE}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+07:00'"
 
 server:
   port: 8084

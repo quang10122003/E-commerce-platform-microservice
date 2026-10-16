@@ -1,5 +1,7 @@
 package com.example.getway.adapter.in;
 
+import com.example.common.error.ErrorCode;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import com.example.common.error.ApiErrorDto;
 import com.example.common.exception.BusinessException;
 import com.example.common.response.ApiResponse;
@@ -39,8 +41,8 @@ public class GatewayExceptionHandler implements WebExceptionHandler {
             return Mono.error(throwable);
         }
 
-        var errorCode = businessException.getErrorCode();
-        var response = exchange.getResponse();
+        ErrorCode errorCode = businessException.getErrorCode();
+        ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(HttpStatusCode.valueOf(errorCode.getHttpStatusCode()));
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 

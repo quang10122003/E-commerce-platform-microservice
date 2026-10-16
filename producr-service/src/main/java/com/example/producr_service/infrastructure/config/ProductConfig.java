@@ -1,67 +1,52 @@
 package com.example.producr_service.infrastructure.config;
 
 import com.example.producr_service.application.port.in.CreateProductUseCase;
-import com.example.producr_service.application.port.in.CheckProductExistsUseCase;
-import com.example.producr_service.application.port.in.GetProductShopIdUseCase;
-import com.example.producr_service.application.port.in.GetUserProductDetailUseCase;
-import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
-import com.example.producr_service.application.port.in.GetCartInfoUseCase;
-import com.example.producr_service.application.port.in.UpdateProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductvariantUseCase;
 import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
 import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
+import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
+import com.example.producr_service.application.port.in.GetUserProductDetailUseCase;
+import com.example.producr_service.application.port.in.UpdateProductUseCase;
+import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
+import com.example.producr_service.application.port.out.client.CurrentUserPort;
+import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
+import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
-import com.example.producr_service.application.port.out.client.CurrentUserPort;
+import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
-import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
-import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.storage.ProductImageRollbackPort;
-import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
 import com.example.producr_service.application.service.FileUploader;
 import com.example.producr_service.application.service.ProductCreationService;
-import com.example.producr_service.application.service.ShopProductPageAssembler;
-import com.example.producr_service.application.service.ProductImageUploadService;
-import com.example.producr_service.application.service.ProductService;
-import com.example.producr_service.application.service.ProductInternalService;
-import com.example.producr_service.application.service.VariantSaleResolver;
-import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
-import com.example.producr_service.application.service.ProductUpdateService;
 import com.example.producr_service.application.service.ProductHelper;
+import com.example.producr_service.application.service.ProductImageUploadService;
+import com.example.producr_service.application.service.ProductInternalService;
+import com.example.producr_service.application.service.ProductService;
+import com.example.producr_service.application.service.ProductUpdateService;
+import com.example.producr_service.application.service.ShopProductPageAssembler;
+import com.example.producr_service.application.service.VariantSaleResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import java.time.Clock;
 
 @Configuration
 public class ProductConfig {
-
     // Cung cấp use case đọc product công khai qua input port.
     @Bean
     GetUserProductDetailUseCase getUserProductDetailUseCase(ProductService productService) {
         return productService;
     }
 
-    // Cung cấp use case lấy shop ID cho controller internal.
+    // Dùng chung một internal service triển khai các input port dành cho service khác.
     @Bean
-    GetProductShopIdUseCase getProductShopIdUseCase(ProductService productService) {
-        return productService;
-    }
-
-    // Cung cấp input port kiểm tra tồn tại sản phẩm cho controller internal riêng.
-    @Bean
-    CheckProductExistsUseCase checkProductExistsUseCase(ProductService productService) {
-        return productService;
-    }
-
-    // Cung cấp use case đọc thông tin variant cho API giỏ hàng nội bộ.
-    @Bean
-    GetCartInfoUseCase getCartInfoUseCase(ProductVariantRepoPort productVariantRepoPort,
-                                           ShopInfoClientPort shopInfoClientPort,
-                                           FlashSaleItemRepositoryPort flashSaleItemRepositoryPort,
-                                           VariantSaleResolver variantSaleResolver, Clock clock) {
-        return new ProductInternalService(productVariantRepoPort, shopInfoClientPort,
+    ProductInternalService productInternalService(
+            ProductVariantRepoPort productVariantRepoPort, ProductRepositoryPort productRepositoryPort,
+            ShopInfoClientPort shopInfoClientPort, FlashSaleItemRepositoryPort flashSaleItemRepositoryPort,
+            VariantSaleResolver variantSaleResolver, Clock clock) {
+        return new ProductInternalService(productVariantRepoPort, productRepositoryPort, shopInfoClientPort,
                 flashSaleItemRepositoryPort, variantSaleResolver, clock);
     }
 

@@ -1,5 +1,6 @@
 package com.example.auth_service.application.service;
 
+import java.util.Optional;
 import com.example.auth_service.application.DTO.OutboxEventDto;
 import com.example.auth_service.application.port.in.ProcessAuthOutboxUseCase;
 import com.example.auth_service.application.port.out.OutboxEventPort;
@@ -30,7 +31,7 @@ public class AuthOutboxStatusService implements ProcessAuthOutboxUseCase {
     @Override
     @Transactional
     public boolean processEvent(OutboxEventDto candidate) {
-        var lockedEvent = outboxEventPort.lockPendingEvent(candidate.eventId());
+        Optional<OutboxEventDto> lockedEvent = outboxEventPort.lockPendingEvent(candidate.eventId());
         if (lockedEvent.isEmpty()) {
             return false;
         }
