@@ -19,14 +19,12 @@ public class KafkaConsumerConfig {
     private final String bootstrapServers;
     private final String groupId;
 
-    // Nhận địa chỉ broker và group riêng của Order Service qua constructor.
     public KafkaConsumerConfig(@Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
                                @Value("${spring.kafka.consumer.group-id}") String groupId) {
         this.bootstrapServers = bootstrapServers;
         this.groupId = groupId;
     }
 
-    // Tạo consumer đọc key và payload dạng String giống Notification Service.
     @Bean
     ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> properties = new HashMap<>();
@@ -38,7 +36,6 @@ public class KafkaConsumerConfig {
         return new DefaultKafkaConsumerFactory<>(properties);
     }
 
-    // Cung cấp container factory mặc định cho các Kafka listener được bổ sung sau.
     @Bean
     ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory(
             ConsumerFactory<String, String> consumerFactory) {

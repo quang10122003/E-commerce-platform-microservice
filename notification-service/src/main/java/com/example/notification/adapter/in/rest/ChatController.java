@@ -33,14 +33,12 @@ public class ChatController {
     GetChatConversationMessagesUseCase getChatConversationMessagesUseCase;
     ReadChatConversationUseCase readChatConversationUseCase;
 
-    // Chỉ nhận ID room; danh tính và quyền đọc được kiểm tra trong use case.
     @GetMapping("chat_conversations/{conversationId}/messages")
     public ResponseEntity<List<ChatMessageResponse>> getConversationMessagesNewestFirst(
             @PathVariable("conversationId") @Positive Long conversationId) {
         return ResponseEntity.ok(getChatConversationMessagesUseCase.getConversationMessagesNewestFirst(conversationId));
     }
 
-    // Trả room bên mua và chỉ ghép thông tin shop đối thoại.
     @GetMapping("chat_conversations/user")
     public ResponseEntity<PageResponse<ChatConversationSummaryResponse<ShopInfo>>> listCurrentCustomerConversations(
             @RequestParam(defaultValue = "1") @Min(1) int page,
@@ -48,7 +46,6 @@ public class ChatController {
         return ResponseEntity.ok(listChatConversationsUseCase.listCurrentCustomerConversations(new PageQuery(page, size)));
     }
 
-    // Trả room bên bán và chỉ ghép thông tin khách đối thoại.
     @GetMapping("chat_conversations/shop")
     public ResponseEntity<PageResponse<ChatConversationSummaryResponse<CustomerInfo>>> listCurrentShopConversations(
             @RequestParam(defaultValue = "1") @Min(1) int page,
@@ -56,13 +53,11 @@ public class ChatController {
         return ResponseEntity.ok(listChatConversationsUseCase.listCurrentShopConversations(new PageQuery(page, size)));
     }
 
-    // Lấy ID room hiện có hoặc tạo mới theo sản phẩm và người đang đăng nhập.
     @PostMapping("chat_conversations/{productId}")
     public ResponseEntity<ChatConversationResponse> getOrCreateConversationByProductId(
             @PathVariable("productId") Long productId) {
         return ResponseEntity.ok(createChatConversationsUseCase.getOrCreateConversationByProductId(productId));
     }
-    // Đánh dấu tin đã đọc; không nhận danh tính người đọc từ client.
     @PutMapping("conversations/{conversationId}/read")
     public ResponseEntity<ReadMessgerRepone> readConversationMessages(
             @PathVariable("conversationId") @Positive Long conversationId) {

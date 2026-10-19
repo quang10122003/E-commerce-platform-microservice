@@ -25,13 +25,11 @@ import java.util.List;
 
 @Configuration
 public class CartConfig {
-    // Cung cấp nguồn thời gian theo múi giờ Việt Nam.
     @Bean
     Clock clock() {
         return Clock.system(ZoneId.of("Asia/Ho_Chi_Minh"));
     }
 
-    // Khởi tạo application service từ các output port của luồng giỏ hàng.
     @Bean
     CartService cartService(
             CurrentUserPort currentUserPort,
@@ -41,55 +39,46 @@ public class CartConfig {
         return new CartService(currentUserPort, cartRepoPort, productClientPort, clock);
     }
 
-    // Lắp ghép handler nội bộ với service giỏ hàng, không thêm vòng gọi qua input port.
     @Bean
     ProductDeleteEventHandler productDeleteEventHandler(ObjectMapperPort objectMapperPort, CartService cartService) {
         return new ProductDeleteEventHandler(objectMapperPort, cartService);
     }
 
-    // Đăng ký strategy xóa một biến thể vào flow event product hiện có.
     @Bean
     ProductvariantDeleteEventHandler productvariantDeleteEventHandler(ObjectMapperPort objectMapperPort, CartService cartService) {
         return new ProductvariantDeleteEventHandler(objectMapperPort, cartService);
     }
 
-    // Gom strategy theo eventType; registry kiểm tra key trùng khi khởi tạo.
     @Bean
     KafkaEventHandlerRegistry productEventHandlerRegistry(List<EventHandler> eventHandlers) {
         return new KafkaEventHandlerRegistry(eventHandlers);
     }
 
-    // Chỉ công khai input port điều phối event cho consumer.
     @Bean
     ProcessProductEventUseCase processProductEventUseCase(KafkaEventHandlerRegistry eventHandlerRegistry) {
         return new ProductEventApplicationService(eventHandlerRegistry);
     }
 
-    // Đăng ký use case giỏ hàng thông qua input port.
     @Bean
     GetCartUseCase getCartUseCase(CartService cartService) {
         return cartService;
     }
 
-    // Đăng ký use case đếm item trong giỏ qua input port.
     @Bean
     GetCountItemCartUseCase getCountItemCartUseCase(CartService cartService) {
         return cartService;
     }
 
-    // Đăng ký use case thêm sản phẩm qua input port.
     @Bean
     AddCartItemUseCase addCartItemUseCase(CartService cartService) {
         return cartService;
     }
 
-    // Đăng ký use case cập nhật số lượng item qua input port.
     @Bean
     UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase(CartService cartService) {
         return cartService;
     }
 
-    // Đăng ký use case xóa sản phẩm khỏi giỏ qua input port.
     @Bean
     RemoveCartItemUseCase removeCartItemUseCase(CartService cartService) {
         return cartService;

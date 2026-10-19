@@ -10,7 +10,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-// Chuyển tiếp header Authorization và X-Request-Id sang request Feign.
 @Configuration
 public class FeignGlobalConfig {
 

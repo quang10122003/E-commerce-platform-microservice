@@ -25,19 +25,16 @@ import java.time.ZoneId;
 
 @Configuration
 public class AuthConfig {
-    // Lắp ghép use case thông tin shop công khai, không thay flow internal hiện có.
     @Bean
     GetPublicShopInfoUseCase getPublicShopInfoUseCase(AuthServiceInternal authServiceInternal) {
         return authServiceInternal;
     }
 
-    // Cung cấp nguồn thời gian theo múi giờ Việt Nam.
     @Bean
     Clock clock() {
         return Clock.system(ZoneId.of("Asia/Ho_Chi_Minh"));
     }
 
-    // Đăng ký strategy xử lý event UserRegistered qua port phát hành message.
     @Bean
     OutboxEventHandler userRegisteredOutboxHandler(
             AuthEventPublisherPort authEventPublisherPort
@@ -45,7 +42,6 @@ public class AuthConfig {
         return new UserRegisteredOutboxHandler(authEventPublisherPort);
     }
 
-    // Gom các strategy outbox để định tuyến theo eventType.
     @Bean
     OutboxEventHandlerRegistry outboxEventHandlerRegistry(
             List<OutboxEventHandler> eventHandlers
@@ -74,7 +70,6 @@ public class AuthConfig {
         return new AuthServiceInternal(tokenServicePort, userRepositoryPort);
     }
 
-    // Cung cấp use case internal từ cùng instance phục vụ thông tin shop public.
     @Bean
     InternalGetUserInfoUseCase internalGetUserInfoUseCase(AuthServiceInternal authServiceInternal) {
         return authServiceInternal;

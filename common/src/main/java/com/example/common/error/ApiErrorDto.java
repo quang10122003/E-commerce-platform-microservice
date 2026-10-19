@@ -1,4 +1,3 @@
-// DTO trả lỗi trong repone 
 package com.example.common.error;
 
 import lombok.AllArgsConstructor;

@@ -14,7 +14,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfig {
 
-    // Dùng lại filter JWT và response lỗi bảo mật của các service hiện có.
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter,
                                           ApiAuthenticationEntryPoint authenticationEntryPoint,

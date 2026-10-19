@@ -13,17 +13,14 @@ import java.util.List;
 // Dùng Authorization được FeignGlobalConfig chuyển tiếp từ request hiện tại.
 @FeignClient(name = "auth-service")
 public interface AuthUserFeignClient {
-    // Lấy thông tin các shop theo danh sách ID.
     @PostMapping("/api/internal/shop-info")
     List<ShopDisplayInfoResponse> getShopInfos(
             @RequestBody List<Long> shopIds);
 
-    // Lấy thông tin khách hàng theo danh sách ID để hiển thị trong chat.
     @PostMapping("/api/internal/user-info")
     List<UserDisplayInfoResponse> getUserDisplayInfosByIds(
             @RequestBody List<Long> userIds);
 
-    // Lấy thông tin người dùng bằng phiên đăng nhập hiện tại.
     @GetMapping("/api/internal/getInfoUser")
     CurrentUserInfoResponse getInfoUser();
 }

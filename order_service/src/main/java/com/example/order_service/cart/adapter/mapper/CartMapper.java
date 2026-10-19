@@ -13,7 +13,6 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface CartMapper {
 
-    // Dựng aggregate Cart từ entity, bao gồm toàn bộ item đã lưu.
     default Cart toDomain(CartEntity entity) {
         if (entity == null) {
             return null;
@@ -34,7 +33,6 @@ public interface CartMapper {
         );
     }
 
-    // Dựng CartItem domain từ entity item đã lưu.
     default CartItem toDomain(CartItemEntity entity) {
         if (entity == null) {
             return null;
@@ -49,7 +47,6 @@ public interface CartMapper {
         );
     }
 
-    // Map Cart sang entity và thiết lập quan hệ hai chiều với các item.
     default CartEntity toEntity(Cart cart) {
         if (cart == null) {
             return null;
@@ -64,11 +61,11 @@ public interface CartMapper {
         return entity;
     }
 
-    // Để MapStruct map các trường Cart, bỏ qua danh sách item cần gắn quan hệ riêng.
+    // Danh sách item cần gắn quan hệ hai chiều nên không để MapStruct tự ánh xạ collection.
     @Mapping(target = "items", ignore = true)
     CartEntity toEntityWithoutItems(Cart cart);
 
-    // Để MapStruct map CartItem; quan hệ cart được gắn sau khi map.
+    // Quan hệ cart được gắn sau để các item cùng tham chiếu entity cha đang lưu.
     @Mapping(target = "cart", ignore = true)
     CartItemEntity toEntity(CartItem item);
 }

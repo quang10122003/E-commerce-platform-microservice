@@ -15,7 +15,6 @@ import java.util.Map;
 public class ChatParticipantClientAdapter implements ChatParticipantClientPort {
     private final AuthUserFeignClient authUserFeignClient;
 
-    // Ánh xạ tên và URL logo từ Auth Service; chấp nhận trường logo chưa có dữ liệu.
     @Override
     public Map<Long, ShopInfo> findShopInfosByIds(List<Long> shopIds) {
         Map<Long, ShopInfo> shops = new HashMap<>();
@@ -26,7 +25,6 @@ public class ChatParticipantClientAdapter implements ChatParticipantClientPort {
         return shops;
     }
 
-    // Chỉ đọc tên khách, không lấy email, số điện thoại hoặc địa chỉ.
     @Override
     public Map<Long, String> findCustomerNamesByIds(List<Long> customerIds) {
         Map<Long, String> names = new HashMap<>();

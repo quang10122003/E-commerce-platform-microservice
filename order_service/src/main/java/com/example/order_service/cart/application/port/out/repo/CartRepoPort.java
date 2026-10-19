@@ -11,6 +11,5 @@ public interface CartRepoPort {
 
     Cart save(Cart cart);
 
-    // Xóa các dòng biến thể đã mất khỏi mọi giỏ và cập nhật thời điểm thay đổi giỏ.
     int removeItemsByVariantIds(List<Long> variantIds, LocalDateTime now);
 }

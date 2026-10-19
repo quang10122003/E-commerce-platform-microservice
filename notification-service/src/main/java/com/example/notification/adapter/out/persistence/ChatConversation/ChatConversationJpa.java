@@ -14,18 +14,24 @@ import java.util.Optional;
 
 public interface ChatConversationJpa extends JpaRepository<ChatConversationsEntity, Long> {
 
-    // Ưu tiên room cập nhật mới nhất; ID phân xử khi trùng thời điểm cập nhật.
     @Query("""
             select conversation from ChatConversationsEntity conversation
             where conversation.customerId = :customerId
+              and exists (
+                select message.id from ChatMessageEntity message
+                where message.chatConversationsEntity = conversation
+              )
             order by conversation.updatedAt desc, conversation.id desc
             """)
     Page<ChatConversationsEntity> findConversationsByCustomerId(@Param("customerId") Long customerId, Pageable pageable);
 
-    // Lọc đúng vai trò shop, không trộn các room tài khoản đã mở khi mua hàng.
     @Query("""
             select conversation from ChatConversationsEntity conversation
             where conversation.shopId = :shopId
+              and exists (
+                select message.id from ChatMessageEntity message
+                where message.chatConversationsEntity = conversation
+              )
             order by conversation.updatedAt desc, conversation.id desc
             """)
     Page<ChatConversationsEntity> findConversationsByShopId(@Param("shopId") Long shopId, Pageable pageable);
@@ -44,11 +50,11 @@ public interface ChatConversationJpa extends JpaRepository<ChatConversationsEnti
     void insertIfAbsent(@Param("customerId") Long customerId, @Param("shopId") Long shopId,
                         @Param("productId") Long productId);
 
-    // Tra cứu room hiện có mà không khóa khoảng trống khi chưa có dữ liệu.
+    // Tránh khóa khoảng trống khi room chưa tồn tại để không cản các lần mở chat đồng thời.
     Optional<ChatConversationsEntity> findByCustomerIdAndShopIdAndProductId(
             Long customerId, Long shopId, Long productId);
 
-    // Đọc phiên bản hiện tại sau upsert, kể cả room vừa được transaction khác tạo.
+    // Cần đọc phiên bản hiện tại sau upsert vì room có thể vừa được transaction khác tạo.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<ChatConversationsEntity> findLockedByCustomerIdAndShopIdAndProductId(
             Long customerId, Long shopId, Long productId);

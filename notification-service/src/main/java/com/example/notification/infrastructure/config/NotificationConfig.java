@@ -20,7 +20,6 @@ import java.util.List;
 @Slf4j
 public class NotificationConfig {
 
-    // Lắp ghép use case gửi email qua port và template hiện có.
     @Bean
     NotificationApplicationService sendEmailUserRegisteredUseCase(
             EmailSenderPort emailSenderPort,
@@ -29,7 +28,6 @@ public class NotificationConfig {
         return new NotificationApplicationService(emailSenderPort, template);
     }
 
-    // Đăng ký strategy xử lý event đăng ký người dùng.
     @Bean
     UserRegisteredEventHandler userRegisteredEventHandler(
             NotificationApplicationService notificationApplicationService,
@@ -38,19 +36,16 @@ public class NotificationConfig {
         return new UserRegisteredEventHandler(notificationApplicationService, parserPort);
     }
 
-    // Công khai boundary xử lý event auth cho consumer, không lộ registry ra adapter.
     @Bean
     ProcessAuthEventUseCase processAuthEventUseCase(KafkaEventHandlerRegistry eventHandlerRegistry) {
         return new AuthEventApplicationService(eventHandlerRegistry);
     }
 
-    // Khởi tạo template email tại tầng infrastructure để application không phụ thuộc Spring.
     @Bean
     UserRegisteredEmailTemplate userRegisteredEmailTemplate(MailSenderProperties mailSenderProperties) {
         return new UserRegisteredEmailTemplate(mailSenderProperties.welcomeSender());
     }
 
-    // Gom các strategy event auth để định tuyến theo eventType.
     @Bean
     KafkaEventHandlerRegistry authEventHandlerRegistry(
             List<EventHandler> eventHandlers

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 @Component
 public class ChatMessgerMapper {
-    // Entity -> domain. Không đọc chatConversationsEntity nên không kích hoạt lazy load.
+    // Không đọc quan hệ room để tránh kích hoạt lazy load khi ánh xạ tin nhắn.
     public ChatMessage toDomain(ChatMessageEntity entity) {
         return new ChatMessage(
                 entity.getId(),
@@ -23,7 +23,6 @@ public class ChatMessgerMapper {
         return entities.stream().map(this::toDomain).toList();
     }
 
-    // Domain -> entity, gắn với room entity đang có trong tay.
     public ChatMessageEntity toEntity(ChatMessage message, ChatConversationsEntity conversation) {
         return new ChatMessageEntity(
                 conversation,

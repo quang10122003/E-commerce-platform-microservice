@@ -29,7 +29,7 @@ public class CartRepoAdapter implements CartRepoPort {
         return cartMapper.toDomain(cartJpaRepo.save(cartMapper.toEntity(cart)));
     }
 
-    // Thực hiện cập nhật timestamp và xóa item bằng transaction do application quản lý.
+    // Cập nhật timestamp và xóa item phải dùng chung transaction của application.
     @Override
     public int removeItemsByVariantIds(List<Long> variantIds, LocalDateTime now) {
         if (variantIds.isEmpty()) {

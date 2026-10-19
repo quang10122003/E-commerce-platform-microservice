@@ -11,13 +11,11 @@ import java.util.List;
 public record CartRepone(Long CartId, int totalItems, int totalQuantity, List<CartItemInfo> item) {
 
     @Builder
-    // thông tin các thuộc tính có thể có của cartItem
     public record VariantOptions(String name, String value) {
 
     }
 
     @Builder
-    // thông tin của sản phẩm trong giỏ hàng
     public record CartItemInfo(Long cartItemId, Long productId, Long productVariantId,
                                Long shopId, String shopName, String productName,
                                String imageUrl, boolean hasOption,
@@ -26,7 +24,6 @@ public record CartRepone(Long CartId, int totalItems, int totalQuantity, List<Ca
 
     }
 
-    // Ưu đãi hiện áp dụng cho một đơn vị sản phẩm trong giỏ hàng.
     public record Sale(BigDecimal salePrice, OffsetDateTime endsAt) {
     }
 }

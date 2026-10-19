@@ -14,13 +14,10 @@ public interface TokenServicePort {
     boolean isRefreshTokenValid(String token, User user );
 
     boolean isAccessTokenValid(String token, User user );
-    // lấy token từ authorizationHeader
     String extractBearerToken(String authorizationHeader);
 
-    // lấy thời gian hết hạn AccessToken theo Duration
     Duration getAccessTokenTtl();
 
-    // lấy thời gian hết hạn RefreshToken theo Duration
     Duration getRefreshTokenTtl();
 
     Long getIdFromToken (String token);

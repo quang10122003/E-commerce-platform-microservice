@@ -1,4 +1,3 @@
-// Response chuẩn dùng chung.
 package com.example.common.response;
 
 import java.time.Instant;

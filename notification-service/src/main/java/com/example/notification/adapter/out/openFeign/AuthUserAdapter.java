@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 public class AuthUserAdapter implements CurrentUserPort {
     private final AuthUserFeignClient authUserFeignClient;
 
-    // Chuyển dữ liệu tích hợp sang DTO application, không ghi log thông tin người dùng.
     @Override
     public CurrentUserInfoResponse getUserInfo() {
         return  authUserFeignClient.getInfoUser();

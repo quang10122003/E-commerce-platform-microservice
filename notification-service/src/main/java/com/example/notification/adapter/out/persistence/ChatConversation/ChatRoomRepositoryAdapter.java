@@ -3,6 +3,7 @@ package com.example.notification.adapter.out.persistence.ChatConversation;
 import com.example.notification.adapter.entity.ChatMessageEntity;
 import com.example.common.response.PageQuery;
 import com.example.common.response.PageResponse;
+import com.example.notification.application.dto.ReadChatMessagesResult;
 import com.example.notification.adapter.entity.ChatConversationsEntity;
 import com.example.notification.adapter.mapper.ChatConversationMapper;
 import com.example.notification.adapter.mapper.ChatMessgerMapper;
@@ -32,7 +33,7 @@ public class ChatRoomRepositoryAdapter implements ChatRoomRepositoryPort {
     private final ChatConversationMapper chatConversationMapper;
     private final ChatMessgerMapper chatMessgerMapper;
 
-    // Lưu room bằng upsert để bảo vệ unique key khi nhiều request cùng tạo.
+    // Upsert bảo vệ unique key khi nhiều request cùng mở một room.
     @Override
     public ChatConversation save(ChatConversation conversation) {
         conversationJpa.insertIfAbsent(conversation.getCustomerId(), conversation.getShopId(),
@@ -43,7 +44,6 @@ public class ChatRoomRepositoryAdapter implements ChatRoomRepositoryPort {
                 .orElseThrow(() -> new IllegalStateException("Không tìm thấy room sau khi tạo"));
     }
 
-    // Chỉ truy vấn và chuyển entity sang domain, không quyết định tạo room.
     @Override
     public Optional<ChatConversation> findByCustomerIdAndShopIdAndProductId(
             Long customerId, Long shopId, Long productId) {
@@ -51,28 +51,26 @@ public class ChatRoomRepositoryAdapter implements ChatRoomRepositoryPort {
                 .map(chatConversationMapper::toDomain);
     }
 
-    // Chỉ lấy metadata room người dùng tham gia, không truy vấn tin nhắn theo từng room.
+    // Không tải tin nhắn theo từng room để tránh truy vấn N+1 khi phân trang.
     @Override
     public PageResponse<ChatConversation> findConversationsByCustomerId(Long customerId, PageQuery pageQuery) {
         return toConversationPage(conversationJpa.findConversationsByCustomerId(customerId,
                 PageRequest.of(pageQuery.pageIndex(), pageQuery.size())));
     }
 
-    // Chỉ đọc các room tài khoản hiện tại tiếp nhận với tư cách shop.
     @Override
     public PageResponse<ChatConversation> findConversationsByShopId(Long shopId, PageQuery pageQuery) {
         return toConversationPage(conversationJpa.findConversationsByShopId(shopId,
                 PageRequest.of(pageQuery.pageIndex(), pageQuery.size())));
     }
 
-    // Chuyển trang JPA sang kiểu phân trang dùng chung của application.
     private PageResponse<ChatConversation> toConversationPage(
             Page<ChatConversationsEntity> page) {
         return new PageResponse<>(page.getContent().stream().map(chatConversationMapper::toDomain).toList(),
                 page.getNumber() + 1, page.getSize(), page.getTotalElements(), page.getTotalPages());
     }
 
-    // Lấy tin cuối theo lô; room rỗng không xuất hiện trong kết quả tra cứu.
+    // Room chưa có tin nhắn sẽ không có phần tử trong kết quả tra cứu.
     @Override
     public Map<Long, ChatMessage> findLatestMessagesByConversationIds(List<Long> conversationIds) {
         if (conversationIds.isEmpty()) {
@@ -83,19 +81,28 @@ public class ChatRoomRepositoryAdapter implements ChatRoomRepositoryPort {
                         chatMessgerMapper::toDomain));
     }
 
-    // Tải metadata room mà không kéo theo lịch sử tin nhắn.
+    @Override
+    public Map<Long, Long> countUnreadMessagesByConversationIds(List<Long> conversationIds, Long readerId) {
+        if (conversationIds.isEmpty()) {
+            return Map.of();
+        }
+        return messageJpa.countUnreadMessagesByConversationIds(conversationIds, readerId).stream()
+                .collect(Collectors.toMap(ChatMessageJpa.UnreadMessageCount::getConversationId,
+                        ChatMessageJpa.UnreadMessageCount::getUnreadCount));
+    }
+
     @Override
     public Optional<ChatConversation> findById(Long conversationId) {
         return conversationJpa.findById(conversationId).map(chatConversationMapper::toDomain);
     }
 
-    // Dùng khóa database để tuần tự hóa các thao tác ghi trong cùng room.
+    // Khóa phải bao trùm thao tác ghi để tin nhắn và metadata room không cập nhật chéo nhau.
     @Override
     public Optional<ChatConversation> findByIdForUpdate(Long conversationId) {
         return conversationJpa.findLockedById(conversationId).map(chatConversationMapper::toDomain);
     }
 
-    // Flush để nhận ID và timestamp DB trước khi ánh xạ response phát socket.
+    // Phải flush trước khi dựng payload socket để có ID và timestamp do database sinh.
     @Override
     public List<ChatMessage> saveMessages(ChatConversation conversation) {
         ChatConversationsEntity entity = conversationJpa.findById(conversation.getId())
@@ -105,7 +112,7 @@ public class ChatRoomRepositoryAdapter implements ChatRoomRepositoryPort {
         return chatMessgerMapper.toDomains(savedMessages);
     }
 
-    // Không gán audit time; database tự cập nhật updated_at khi metadata thay đổi.
+    // Database tự quản lý audit time; không gán lại khi cập nhật metadata.
     @Override
     public void updateLastMessageAt(ChatConversation conversation) {
         ChatConversationsEntity entity = conversationJpa.findById(conversation.getId())
@@ -114,29 +121,28 @@ public class ChatRoomRepositoryAdapter implements ChatRoomRepositoryPort {
         conversationJpa.flush();
     }
 
-    // Tái sử dụng mapper tin nhắn và không tải lịch sử vào aggregate room.
     @Override
     public List<ChatMessage> findMessagesByConversationId(Long conversationId) {
         return chatMessgerMapper.toDomains(
                 messageJpa.findByChatConversationsEntity_IdOrderByCreatedAtAscIdAsc(conversationId));
     }
 
-    // Chuyển toàn bộ kết quả đã sắp xếp tại database sang domain, không giới hạn số tin.
     @Override
     public List<ChatMessage> findMessagesByConversationIdNewestFirst(Long conversationId) {
         return chatMessgerMapper.toDomains(
                 messageJpa.findByChatConversationsEntity_IdOrderByCreatedAtDescIdDesc(conversationId));
     }
 
-    // Dirty checking cập nhật đúng các tin được chọn trong transaction đang khóa room.
+    // Dirty checking cần transaction đang giữ khóa room để lưu trạng thái đọc nhất quán.
     @Override
-    public Optional<Long> markReceivedMessagesRead(Long conversationId, Long readerId) {
+    public ReadChatMessagesResult markReceivedMessagesRead(Long conversationId, Long readerId) {
         List<ChatMessageEntity> unreadMessages = messageJpa
                 .findByChatConversationsEntity_IdAndSenderIdNotAndReadFalseOrderByIdDesc(conversationId, readerId);
         unreadMessages.forEach(message -> message.markRead());
         messageJpa.flush();
-        return messageJpa
+        Long lastReadMessageId = messageJpa
                 .findFirstByChatConversationsEntity_IdAndSenderIdNotAndReadTrueOrderByIdDesc(conversationId, readerId)
-                .map(message -> message.getId());
+                .map(message -> message.getId()).orElse(null);
+        return new ReadChatMessagesResult(lastReadMessageId, unreadMessages.size());
     }
 }

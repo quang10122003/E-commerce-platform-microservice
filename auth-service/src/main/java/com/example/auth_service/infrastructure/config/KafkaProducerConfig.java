@@ -27,7 +27,6 @@ public class KafkaProducerConfig {
     @Value("${spring.kafka.producer.properties.enable.idempotence:true}")
     private boolean enableIdempotence;
 
-    // Tạo producer factory dùng chung cho KafkaTemplate của outbox.
     @Bean
     ProducerFactory<String, String> producerFactory() {
         Map<String, Object> properties = new HashMap<>();
@@ -45,7 +44,6 @@ public class KafkaProducerConfig {
     }
     
 
-    // Tạo topic auth từ cùng constant mà publisher sử dụng.
     @Bean
     NewTopic orderEventsTopic() {
         return TopicBuilder.name(Constant.AUTH_EVENTS_TOPIC)

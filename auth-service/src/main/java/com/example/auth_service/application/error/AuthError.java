@@ -1,4 +1,3 @@
-// aplication erorr của auth_service
 package com.example.auth_service.application.error;
 
 import com.example.common.error.ErrorCode;

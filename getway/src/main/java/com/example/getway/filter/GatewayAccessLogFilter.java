@@ -16,9 +16,6 @@ import org.springframework.web.server.ServerWebExchange;
 
 import reactor.core.publisher.Mono;
 
-/**
- * Gắn request_id và ghi log thông tin xử lý request tại gateway.
- */
 @Component
 public class GatewayAccessLogFilter implements org.springframework.cloud.gateway.filter.GlobalFilter, Ordered {
 

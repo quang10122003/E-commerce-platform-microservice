@@ -30,7 +30,7 @@ public class User {
     private Instant createdAt;
     private Instant updatedAt;
 
-    // Tạo User mới trong nghiệp vụ đăng ký, để ID và thời gian do persistence sinh.
+    // ID và thời gian do persistence sinh, không tự gán khi đăng ký.
     public static User create(
             String email,
             String password,
@@ -55,7 +55,6 @@ public class User {
         return !locked;
     }
 
-    // Kiểm tra tài khoản có bị khóa hay không
     public void assertUserNotLocked() {
         if (this.isLocked()) {
             throw new BusinessException(AuthError.USER_LOCKED);

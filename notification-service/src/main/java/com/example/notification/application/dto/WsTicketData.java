@@ -2,6 +2,6 @@ package com.example.notification.application.dto;
 
 import java.time.Instant;
 
-// Dữ liệu phía server phân biệt hạn dùng vé và hạn sử dụng phiên socket.
+// Hạn vé chỉ giới hạn CONNECT, không thay thế hạn của phiên socket.
 public record WsTicketData(WsTicketIdentity identity, Instant expiresAt) {
 }

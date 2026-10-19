@@ -13,7 +13,6 @@ public class JsonUtils {
 
     private final ObjectMapper objectMapper;
 
-    // Chuyển object thành JSON dùng chung giữa các service.
     public String toJson(Object payload) {
         try {
             return objectMapper.writeValueAsString(payload);
@@ -22,7 +21,6 @@ public class JsonUtils {
         }
     }
 
-    // Chuyển JSON thành object để các layer phía trên không phụ thuộc kiểu lưu trữ.
     public Object fromJson(String payload) {
         try {
             return objectMapper.readValue(payload, Object.class);

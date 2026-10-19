@@ -36,7 +36,7 @@ public class CartEntity {
     @BatchSize(size = 50)
     private List<CartItemEntity> items = new ArrayList<>();
 
-    // Helper kỹ thuật: đồng bộ 2 chiều, KHÔNG chứa nghiệp vụ
+    // Quan hệ JPA hai chiều phải đồng bộ để trạng thái bộ nhớ khớp khóa ngoại khi lưu.
     void attachItem(CartItemEntity item) {
         items.add(item);
         item.setCart(this);

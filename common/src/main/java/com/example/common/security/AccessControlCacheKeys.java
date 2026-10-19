@@ -1,6 +1,6 @@
 package com.example.common.security;
 
-// Tập trung quy ước key Redis dùng chung giữa auth-service và Gateway.
+// Auth và Gateway phải dùng cùng quy ước key để đọc đúng trạng thái thu hồi và khóa.
 public final class AccessControlCacheKeys {
 
     private static final String PREFIX = "auth";
@@ -8,12 +8,10 @@ public final class AccessControlCacheKeys {
     private AccessControlCacheKeys() {
     }
 
-    // Tạo key blacklist cho JWT đã bị thu hồi.
     public static String blacklistJwt(String jwt) {
         return PREFIX + ":blacklist:jwt:" + jwt;
     }
 
-    // Tạo key trạng thái khóa của user.
     public static String userLocked(String userId) {
         return PREFIX + ":user:locked:" + userId;
     }

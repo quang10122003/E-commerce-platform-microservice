@@ -41,7 +41,6 @@ public class ChatMessageEntity {
             columnDefinition = "DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)")
     private LocalDateTime updatedAt;
 
-    // Nhận dữ liệu tin nhắn đã được tạo và kiểm tra tại domain.
     public ChatMessageEntity(ChatConversationsEntity conversation, Long senderId, String content,
                              boolean read) {
         this.chatConversationsEntity = conversation;
@@ -50,7 +49,7 @@ public class ChatMessageEntity {
         this.read = read;
     }
 
-    // Chỉ thay đổi trạng thái đọc; database tự cập nhật thời điểm sửa.
+    // Database quản lý thời điểm sửa; cập nhật trạng thái đọc không được tự gán timestamp.
     public void markRead() {
         this.read = true;
     }

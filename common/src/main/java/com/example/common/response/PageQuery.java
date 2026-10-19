@@ -14,7 +14,7 @@ public record PageQuery(int page, int size) {
         }
     }
 
-    // Method riêng để lấy giá trị  index page cho backend vì FE gửi page đầu bằng 1
+    // Frontend đánh số trang từ 1, còn truy vấn backend bắt đầu từ 0.
     public int pageIndex() {
         return page - 1;
     }

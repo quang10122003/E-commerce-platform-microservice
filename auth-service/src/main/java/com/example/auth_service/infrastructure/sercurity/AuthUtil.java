@@ -92,7 +92,6 @@ public class AuthUtil {
         return isTokenValid(token, userDetails, TypeToken.REFRESH_TOKEN.getName());
     }
 
-    // check token hớp lệ hay ko
     private boolean isTokenValid(String token, UserDetails userDetails, String expectedTokenType) {
         final String email = extractEmail(token);
         final String tokenType = extractTokenType(token);
@@ -101,12 +100,10 @@ public class AuthUtil {
                 && !isTokenExpired(token);
     }
 
-    // check toke còn hạn k
     private boolean isTokenExpired(String token) {
         return extractAllClaims(token).getExpiration().before(new Date());
     }
 
-    // giải mã token
     private Claims extractAllClaims(String token) {
         return jwtVerifier.extractAllClaims(token);
     }

@@ -28,7 +28,6 @@ import java.security.Principal;
 public class ChatWebSocketController {
     private final SendChatMessageUseCase sendChatMessageUseCase;
 
-    // Chuyển dữ liệu STOMP và danh tính CONNECT thành đầu vào thuần Java cho use case.
     @MessageMapping("/chat/rooms/{roomId}/send")
     public void sendConversationMessage(@DestinationVariable("roomId") Long roomId,
                             @Valid @Payload SendChatMessageRequest request, Principal principal) {
@@ -44,7 +43,7 @@ public class ChatWebSocketController {
         sendChatMessageUseCase.sendConversationMessage(roomId, senderId, request.content());
     }
 
-    // Chỉ phản hồi lỗi nghiệp vụ cho session gửi tin, không phát lỗi lên topic room.
+    // Lỗi chỉ gửi về session gọi để không lộ lỗi nghiệp vụ cho các thành viên khác trong room.
     @MessageExceptionHandler(BusinessException.class)
     @SendToUser(value = "/queue/chat/errors", broadcast = false)
     public ApiResponse<Void> handleBusinessException(BusinessException exception) {
@@ -53,7 +52,7 @@ public class ChatWebSocketController {
         return ApiResponse.error(error.getMessage(), new ApiErrorDto(error.getCode(), error.getMessage()));
     }
 
-    // Không đưa nội dung payload lỗi vào response hoặc log khi binding/validation thất bại.
+    // Payload không hợp lệ có thể chứa dữ liệu nhạy cảm, không đưa vào response hoặc log.
     @MessageExceptionHandler({MethodArgumentNotValidException.class, MessageConversionException.class,
             ConversionException.class, IllegalArgumentException.class})
     @SendToUser(value = "/queue/chat/errors", broadcast = false)
@@ -63,7 +62,7 @@ public class ChatWebSocketController {
         return ApiResponse.error(message, new ApiErrorDto("BAD_REQUEST", message));
     }
 
-    // Giữ chi tiết lỗi hệ thống ở backend, không lộ dữ liệu nội bộ cho client.
+    // Chi tiết lỗi hệ thống chỉ giữ ở backend để tránh lộ dữ liệu nội bộ.
     @MessageExceptionHandler(Exception.class)
     @SendToUser(value = "/queue/chat/errors", broadcast = false)
     public ApiResponse<Void> handleUnexpectedException(Exception exception) {

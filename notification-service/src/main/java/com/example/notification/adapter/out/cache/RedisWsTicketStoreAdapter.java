@@ -4,7 +4,7 @@ import com.example.common.exception.BusinessException;
 import com.example.notification.adapter.out.cache.key.NotificationCacheKeys;
 import com.example.notification.application.dto.WsTicketData;
 import com.example.notification.application.port.out.WsTicketStorePort;
-import com.example.notification.domain.error.DomainWebSocketError;
+import com.example.notification.application.error.WebSocketError;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -23,18 +23,17 @@ public class RedisWsTicketStoreAdapter implements WsTicketStorePort {
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
 
-    // SET NX kèm TTL không ghi đè vé đã cấp cho kết nối khác.
     @Override
     public boolean saveWsTicketIfAbsent(String ticket, WsTicketData data, Duration ttl) {
         try {
             return Boolean.TRUE.equals(stringRedisTemplate.opsForValue().setIfAbsent(
                     NotificationCacheKeys.createWebSocketTicketKey(ticket), objectMapper.writeValueAsString(data), ttl));
         } catch (DataAccessException | JacksonException exception) {
-            throw createTicketStoreUnavailableException(exception);
+            throw TicketStoreUnavailableException(exception);
         }
     }
 
-    // Chỉ một instance lấy được dữ liệu vé; các lần dùng lại nhận kết quả rỗng.
+    // Đọc và xóa phải atomic để hai kết nối không thể dùng chung một vé.
     @Override
     public Optional<WsTicketData> getAndDeleteWsTicket(String ticket) {
         try {
@@ -42,13 +41,12 @@ public class RedisWsTicketStoreAdapter implements WsTicketStorePort {
                     NotificationCacheKeys.createWebSocketTicketKey(ticket));
             return value == null ? Optional.empty() : Optional.of(objectMapper.readValue(value, WsTicketData.class));
         } catch (DataAccessException | JacksonException exception) {
-            throw createTicketStoreUnavailableException(exception);
+            throw TicketStoreUnavailableException(exception);
         }
     }
 
-    // Fail closed như adapter Redis của gateway, không log vé hoặc nội dung xác thực.
-    private BusinessException createTicketStoreUnavailableException(Exception exception) {
+    private BusinessException TicketStoreUnavailableException(Exception exception) {
         log.error("Kho vé WebSocket không khả dụng: type={}", exception.getClass().getSimpleName());
-        return new BusinessException(DomainWebSocketError.WS_TICKET_UNAVAILABLE);
+        return new BusinessException(WebSocketError.WS_TICKET_UNAVAILABLE);
     }
 }

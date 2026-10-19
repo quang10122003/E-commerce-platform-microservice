@@ -6,7 +6,6 @@ import com.example.common.error.AuthorizationError;
 import com.example.common.exception.BusinessException;
 import com.example.common.response.PageQuery;
 import com.example.common.response.PageResponse;
-import com.example.notification.application.constant.NotificationTime;
 import com.example.notification.application.dto.response.ChatConversationSummaryResponse.CustomerInfo;
 import com.example.notification.application.dto.response.ChatConversationSummaryResponse.ShopInfo;
 import com.example.notification.application.dto.response.ChatConversationSummaryResponse;
@@ -19,11 +18,12 @@ import com.example.notification.application.port.out.client.CurrentUserPort;
 import com.example.notification.application.port.out.client.ProductClientPort;
 import com.example.notification.application.port.out.repo.ChatRoomRepositoryPort;
 import com.example.notification.domain.model.ChatConversation;
-import com.example.notification.domain.error.DomainChatError;
+import com.example.notification.application.error.ChatError;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.time.Clock;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -34,45 +34,59 @@ public class ChatConversationQueryService implements ListChatConversationsUseCas
     private final ChatRoomRepositoryPort chatRoomRepositoryPort;
     private final ChatParticipantClientPort chatParticipantClientPort;
     private final ProductClientPort productClientPort;
+    private final Clock clock;
 
-    // Kiểm tra thành viên trước khi đọc toàn bộ lịch sử, không đánh dấu đã đọc.
+    // Đọc lịch sử không đồng nghĩa đã đọc tin; trạng thái đọc có use case riêng.
     @Override
     @Transactional(readOnly = true)
     public List<ChatMessageResponse> getConversationMessagesNewestFirst(Long conversationId) {
         if (conversationId == null || conversationId <= 0) {
-            throw new BusinessException(DomainChatError.CHAT_ROOM_INVALID);
+            throw new BusinessException(ChatError.CHAT_ROOM_INVALID);
         }
         Long userId = getAuthenticatedUserIdOrThrow();
         chatRoomRepositoryPort.findById(conversationId)
-                .orElseThrow(() -> new BusinessException(DomainChatError.CHAT_ROOM_NOT_FOUND))
+                .orElseThrow(() -> new BusinessException(ChatError.CHAT_ROOM_NOT_FOUND))
                 .requireParticipant(userId);
         return chatRoomRepositoryPort.findMessagesByConversationIdNewestFirst(conversationId).stream()
-                .map(message -> ChatMessageResponse.from(conversationId, message))
+                .map(message -> ChatMessageResponse.from(conversationId, message, clock.getZone()))
                 .toList();
     }
 
-    // Chỉ đọc room bên mua và thông tin hiển thị của shop trong trang hiện tại.
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ChatConversationSummaryResponse<ShopInfo>> listCurrentCustomerConversations(PageQuery pageQuery) {
-        PageResponse<ChatConversation> page = chatRoomRepositoryPort.findConversationsByCustomerId(getAuthenticatedUserIdOrThrow(), pageQuery);
+        Long readerId = getAuthenticatedUserIdOrThrow();
+        PageResponse<ChatConversation> page = chatRoomRepositoryPort.findConversationsByCustomerId(readerId, pageQuery);
         List<Long> shopIds = page.items().stream().map(ChatConversation::getShopId).distinct().toList();
         Map<Long, ShopInfo> shops = shopIds.isEmpty() ? Map.<Long, ShopInfo>of() : chatParticipantClientPort.findShopInfosByIds(shopIds);
-        return buildConversationSummaryPage(page, room -> shops.getOrDefault(room.getShopId(),
+        return buildConversationSummaryPage(page, readerId, room -> shops.getOrDefault(room.getShopId(),
                 new ShopInfo(room.getShopId(), null, null)));
     }
 
-    // Chỉ đọc room bên bán và tên các khách đối thoại trong trang hiện tại.
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ChatConversationSummaryResponse<CustomerInfo>> listCurrentShopConversations(PageQuery pageQuery) {
-        PageResponse<ChatConversation> page = chatRoomRepositoryPort.findConversationsByShopId(getAuthenticatedUserIdOrThrow(), pageQuery);
+        Long readerId = getAuthenticatedUserIdOrThrow();
+        PageResponse<ChatConversation> page = chatRoomRepositoryPort.findConversationsByShopId(readerId, pageQuery);
         List<Long> customerIds = page.items().stream().map(ChatConversation::getCustomerId).distinct().toList();
         Map<Long, String> names = customerIds.isEmpty() ? Map.<Long, String>of() : chatParticipantClientPort.findCustomerNamesByIds(customerIds);
-        return buildConversationSummaryPage(page, room -> new CustomerInfo(room.getCustomerId(), names.get(room.getCustomerId())));
+        return buildConversationSummaryPage(page, readerId,
+                room -> new CustomerInfo(room.getCustomerId(), names.get(room.getCustomerId())));
     }
 
-    // Dùng danh tính từ flow xác thực hiện có, không nhận ID tài khoản từ client.
+    @Transactional(readOnly = true)
+    public Map<Long, Integer> countUnreadMessages(List<Long> conversationIds, Long readerId) {
+        if (readerId == null || readerId <= 0) {
+            throw new BusinessException(AuthorizationError.UNAUTHENTICATED);
+        }
+        if (conversationIds.isEmpty()) {
+            return Map.of();
+        }
+        return chatRoomRepositoryPort.countUnreadMessagesByConversationIds(conversationIds, readerId).entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> Math.toIntExact(entry.getValue())));
+    }
+
+    // Không nhận ID tài khoản từ client để tránh giả mạo danh tính khi đọc room.
     private Long getAuthenticatedUserIdOrThrow() {
         CurrentUserInfoResponse user = currentUserPort.getUserInfo();
         if (user == null || user.userId() == null || user.userId() <= 0) {
@@ -81,13 +95,14 @@ public class ChatConversationQueryService implements ListChatConversationsUseCas
         return user.userId();
     }
 
-    // Ghép tin cuối và sản phẩm theo lô; metadata bị xóa không làm mất room hay sai tổng trang.
+    // Metadata bị xóa không được làm mất room hoặc thay đổi tổng số phần tử của trang.
     private <T> PageResponse<ChatConversationSummaryResponse<T>> buildConversationSummaryPage(
-            PageResponse<ChatConversation> page, Function<ChatConversation, T> partnerMapper) {
+            PageResponse<ChatConversation> page, Long readerId, Function<ChatConversation, T> partnerMapper) {
         if (page.items().isEmpty()) {
             return new PageResponse<>(List.of(), page.page(), page.pageSize(), page.totalItems(), page.totalPages());
         }
         List<Long> roomIds = page.items().stream().map(ChatConversation::getId).toList();
+        Map<Long, Integer> unreadMessageCounts = countUnreadMessages(roomIds, readerId);
         List<Long> productIds = page.items().stream().map(ChatConversation::getProductId).distinct().toList();
         Map<Long, ChatMessage> messages = chatRoomRepositoryPort.findLatestMessagesByConversationIds(roomIds);
         Map<Long, ChatProductInfo> products = productClientPort.findProductInfosByIds(productIds).stream()
@@ -97,10 +112,11 @@ public class ChatConversationQueryService implements ListChatConversationsUseCas
             ChatMessage message = messages.get(room.getId());
             return new ChatConversationSummaryResponse<>(room.getId(), partnerMapper.apply(room), room.getProductId(),
                     product == null ? null : product.name(), product == null ? null : product.imageUrl(),
-                    message == null ? null : ChatMessageResponse.from(room.getId(), message),
-                    NotificationTime.toOffsetDateTime(room.getLastMessageAt()),
-                    NotificationTime.toOffsetDateTime(room.getCreatedAt()),
-                    NotificationTime.toOffsetDateTime(room.getUpdatedAt()));
+                    message == null ? null : ChatMessageResponse.from(room.getId(), message, clock.getZone()),
+                    room.getLastMessageAt() == null ? null : room.getLastMessageAt().atZone(clock.getZone()).toOffsetDateTime(),
+                    room.getCreatedAt() == null ? null : room.getCreatedAt().atZone(clock.getZone()).toOffsetDateTime(),
+                    room.getUpdatedAt() == null ? null : room.getUpdatedAt().atZone(clock.getZone()).toOffsetDateTime(),
+                    unreadMessageCounts.getOrDefault(room.getId(), 0));
         }).toList();
         return new PageResponse<>(items, page.page(), page.pageSize(), page.totalItems(), page.totalPages());
     }

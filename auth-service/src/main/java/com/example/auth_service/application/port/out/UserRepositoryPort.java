@@ -11,7 +11,6 @@ import java.util.Optional;
 
 public interface UserRepositoryPort {
     List<UserDisplayInfoResponse> findUserDisplayInfosByIds(Collection<Long> userIds);
-//    lấy thông tin của shop
     Optional<ShopAddressView> findShopAddressById(Long shopId);
 
     Optional<User> findByEmail(String email);

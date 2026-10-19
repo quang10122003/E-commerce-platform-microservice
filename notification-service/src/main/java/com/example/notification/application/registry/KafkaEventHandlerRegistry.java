@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-// Định tuyến event auth đến đúng strategy theo eventType.
 public class KafkaEventHandlerRegistry {
 
     private final Map<String, EventHandler> handlers;
@@ -24,7 +23,6 @@ public class KafkaEventHandlerRegistry {
                 ));
     }
 
-    // Tìm và trả về strategy phụ trách event type.
     public EventHandler handle(String eventType) {
         return handlers.get(eventType);
     }

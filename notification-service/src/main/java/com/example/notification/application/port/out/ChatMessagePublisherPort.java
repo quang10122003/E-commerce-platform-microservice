@@ -2,6 +2,8 @@ package com.example.notification.application.port.out;
 
 public interface ChatMessagePublisherPort {
 
-    // Phát payload tới topic được chỉ định khi transaction đã commit thành công.
+    // Chỉ phát sau commit để client không nhận dữ liệu đã rollback.
     void publishAfterCommit(String topic, Object message);
+
+    void publishToUserAfterCommit(Long userId, String destination, Object message);
 }

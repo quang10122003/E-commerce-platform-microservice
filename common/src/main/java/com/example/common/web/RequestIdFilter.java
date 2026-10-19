@@ -13,9 +13,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-/**
- * Nhận hoặc tạo request_id, sau đó đưa mã truy vết vào MDC cho toàn bộ request.
- */
 @Component
 @Order(Integer.MIN_VALUE)
 public class RequestIdFilter extends OncePerRequestFilter {

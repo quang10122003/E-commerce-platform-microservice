@@ -1,4 +1,3 @@
-// helper load key từ chuỗi  public  để giải mã token dùng chung cho các service
 package com.example.common.security;
 
 
@@ -8,7 +7,6 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 public class RsaKeyUtils {
-    // tạo PublicKey để ký verify token từ base64key
     public static PublicKey loadPublicKey(String base64Key) {
         try {
             byte[] decoded = Base64.getDecoder().decode(base64Key);

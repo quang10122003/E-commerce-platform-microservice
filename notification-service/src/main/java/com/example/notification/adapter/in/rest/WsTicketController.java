@@ -3,7 +3,6 @@ package com.example.notification.adapter.in.rest;
 import io.jsonwebtoken.Claims;
 import com.example.common.error.AuthorizationError;
 import com.example.common.exception.BusinessException;
-import com.example.common.response.ApiResponse;
 import com.example.common.security.AuthorizationUtils;
 import com.example.common.security.JwtVerifier;
 import com.example.notification.application.dto.WsTicketIdentity;
@@ -28,17 +27,15 @@ public class WsTicketController {
     private final IssueWsTicketUseCase issueWsTicketUseCase;
     private final JwtVerifier jwtVerifier;
 
-    // Chỉ đọc access JWT từ luồng HTTP đã bảo vệ, không nhận danh tính hoặc token qua body.
     @PostMapping("/ws-ticket")
-    public ResponseEntity<ApiResponse<WsTicketResponse>> issueWebSocketConnectionTicket(
+    public ResponseEntity<WsTicketResponse> issueWebSocketConnectionTicket(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         WsTicketIdentity identity = extractIdentityFromAuthorizationHeader(authorization);
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
                 .header(HttpHeaders.PRAGMA, "no-cache")
-                .body(ApiResponse.success("Cấp vé WebSocket thành công", issueWsTicketUseCase.issueWebSocketConnectionTicket(identity)));
+                .body(issueWsTicketUseCase.issueWebSocketConnectionTicket(identity));
     }
 
-    // Đọc claim đã xác minh ở adapter để application không phụ thuộc JWT hoặc SecurityContext.
     private WsTicketIdentity extractIdentityFromAuthorizationHeader(String authorization) {
         String token = AuthorizationUtils.extractBearerToken(authorization);
         try {

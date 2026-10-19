@@ -16,7 +16,6 @@ import org.springframework.web.server.ServerWebExchange;
 
 import reactor.core.publisher.Mono;
 
-// Adapter nhận request tại Gateway và kích hoạt use case kiểm soát truy cập.
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RequiredArgsConstructor
@@ -31,15 +30,13 @@ public class GatewayAccessControlFilter implements org.springframework.cloud.gat
                 .getHeaders()
                 .getFirst(HttpHeaders.AUTHORIZATION);
 
-        // API public vẫn cho phép request không có token đi tiếp.
-        // Cho phép request đi tiếp khi header không có token thực tế.
         if (authorizationHeader == null
                 || authorizationHeader.isBlank()
                 || authorizationHeader.trim().equalsIgnoreCase("Bearer")) {
             return chain.filter(exchange);
         }
 
-        // Khi client gửi token, token phải hợp lệ và không bị thu hồi hoặc khóa user.
+        // Token đã gửi vẫn phải được kiểm tra, kể cả khi endpoint cho phép truy cập công khai.
         String token = AuthorizationUtils.extractBearerToken(authorizationHeader);
         authorizeAccessUseCase.authorize(token);
         return chain.filter(exchange);

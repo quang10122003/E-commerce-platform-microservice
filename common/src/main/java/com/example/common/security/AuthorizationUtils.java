@@ -4,7 +4,6 @@ package com.example.common.security;
 import com.example.common.error.AuthorizationError;
 import com.example.common.exception.BusinessException;
 
-// Cung cấp hàm dùng chung để đọc Bearer token từ Authorization header.
 public final class AuthorizationUtils {
 
     private static final String BEARER_PREFIX = "Bearer ";
@@ -12,7 +11,6 @@ public final class AuthorizationUtils {
     private AuthorizationUtils() {
     }
 
-    // Kiểm tra Authorization header và trả về Bearer token đã được chuẩn hóa.
     public static String extractBearerToken(String authorizationHeader) {
         if (authorizationHeader == null || authorizationHeader.isBlank()) {
             throw new BusinessException(AuthorizationError.UNAUTHENTICATED);

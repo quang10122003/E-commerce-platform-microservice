@@ -27,7 +27,6 @@ public class AuthServiceInternal implements InternalGetUserInfoUseCase, GetPubli
     TokenServicePort tokenServicePort;
     UserRepositoryPort userRepositoryPort;
 
-    // Lấy tên khách theo lô để service chat không phải truy vấn từng tài khoản.
     @Override
     @Transactional(readOnly = true)
     public List<UserDisplayInfoResponse> getUserDisplayInfosByIds(List<Long> userIds) {
@@ -58,7 +57,6 @@ public class AuthServiceInternal implements InternalGetUserInfoUseCase, GetPubli
 
     }
 
-    // Chỉ trả ID, tên và URL logo cho các tài khoản người bán được yêu cầu.
     @Override
     public List<ShopInfoResponse> getShopInfos(List<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {

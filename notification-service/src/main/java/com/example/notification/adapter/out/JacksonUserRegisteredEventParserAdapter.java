@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
-// Adapter dùng Jackson để chuyển message broker thành event application.
 @Component
 @RequiredArgsConstructor
 public class JacksonUserRegisteredEventParserAdapter implements UserRegisteredEventParserPort {

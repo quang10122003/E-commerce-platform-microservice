@@ -22,11 +22,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    // Chuyển response lỗi xác thực sang JSON theo định dạng API chung.
      JsonUtils jsonUtils;
 
 
-    // Trả lỗi 401 khi request chưa được xác thực.
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException exception) throws IOException {

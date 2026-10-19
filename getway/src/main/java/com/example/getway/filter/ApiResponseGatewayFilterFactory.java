@@ -12,9 +12,6 @@ import org.springframework.stereotype.Component;
 
 import reactor.core.publisher.Mono;
 
-/**
- * Bọc response JSON thành cấu trúc ApiResponse chuẩn trước khi trả về client.
- */
 @Component
 public class ApiResponseGatewayFilterFactory
         extends AbstractGatewayFilterFactory<ApiResponseGatewayFilterFactory.Config> {
@@ -32,7 +29,6 @@ public class ApiResponseGatewayFilterFactory
 
     @Override
     public GatewayFilter apply(Config config) {
-        // tapk filter để getway sử dụng
         ModifyResponseBodyGatewayFilterFactory.Config rewriteConfig =
                 new ModifyResponseBodyGatewayFilterFactory.Config();
 

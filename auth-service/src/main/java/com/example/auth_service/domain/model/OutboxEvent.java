@@ -3,7 +3,6 @@ package com.example.auth_service.domain.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-// Mô hình domain của một outbox event trước khi được lưu xuống cơ sở dữ liệu.
 public record OutboxEvent(
         UUID eventId,
         String aggregateType,

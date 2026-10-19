@@ -54,7 +54,6 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
 
         String normalizedEmail = ValidationUtils.normalizeEmail(request.getEmail());
 
-        // Xác thực qua port để không phụ thuộc trực tiếp vào Spring Security
         AuthenticatedUser authenticatedUser = authenticationManagerPort.authenticate(
                 normalizedEmail,
                 request.getPassword());
@@ -108,9 +107,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
         String email = tokenServicePort.getEmailFromToken(refreshTokenRequest);
         User user = userRepositoryPort.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND));
-        // check tài khoản bị khóa hay k
         user.assertUserNotLocked();
-        // check token hợp lệ vs user hay k
         if(!tokenServicePort.isRefreshTokenValid(refreshTokenRequest,user)){
            throw  new BusinessException(AuthError.REFRESH_TOKEN_INVALID);
         }
@@ -120,7 +117,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
         String accessToken = tokenServicePort.generateAccessToken(user);
         String refreshToken = tokenServicePort.generateRefreshToken(user);
 
-        // Ghi nhận kết quả cấp lại token, không ghi access token hoặc refresh token vào log.
+        // Không ghi token vào log vì đây là thông tin xác thực.
         log.info("Làm mới token thành công: user_id={}", user.getId());
 
         return RefreshTokenRepone.builder().accessToken(accessToken).refreshToken(refreshToken).build();
@@ -136,7 +133,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
         user.assertUserNotLocked();
         boolean isValid = tokenServicePort.isAccessTokenValid(token,user);
 
-        // Ghi nhận kết quả kiểm tra token để hỗ trợ truy vết request mà không lộ token.
+        // Không ghi token vào log vì đây là thông tin xác thực.
         log.debug("Kiểm tra access token: user_id={}, hợp lệ={}", user.getId(), isValid);
 
         return AccessTokenValidationResponse.builder()
@@ -161,7 +158,6 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
 
     private void publishUserRegisteredEvent(User user) {
         UUID eventId = UUID.randomUUID();
-//        EventType eventType = EventType.USER_REGISTERED;
         LocalDateTime now = LocalDateTime.now(clock);
         outboxEventPort.save(new OutboxEvent(
                 eventId, Constant.USER, String.valueOf(user.getId()), UserRegisteredEventDto.Event_Type,
@@ -169,7 +165,6 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
                         user.getId(), user.getEmail(), user.getFullName(), now), now));
     }
 
-    // core tạo user mới cho đăng ký
     private User createNewUser(RegisterRquest request) {
         String email = ValidationUtils.normalizeEmail(request.getEmail());
         if (userRepositoryPort.findByEmail(email).isPresent()) {
@@ -183,11 +178,9 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
         return userRepositoryPort.save(newUser);
     }
 
-    // thêm accessToken vào blick list cache
     private void revokeAccessToken(String accessToken) {
         accessControlCachePort.blacklistToken(accessToken, tokenServicePort.getAccessTokenTtl());
     }
-    // thêm refreshToken vào blick list cache
     private void revokeRefreshToken(String refreshToken) {
         accessControlCachePort.blacklistToken(refreshToken, tokenServicePort.getRefreshTokenTtl());
     }

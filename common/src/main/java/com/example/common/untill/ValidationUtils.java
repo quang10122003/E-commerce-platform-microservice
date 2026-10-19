@@ -8,13 +8,11 @@ public final class ValidationUtils {
     private ValidationUtils() {
     }
 
-    // Kiểm tra số nguyên dương nếu có giá trị, cho phép null.
     public static void requirePositiveIfPresent(Integer value, ErrorCode errorCode) {
         if (value != null && value <= 0) {
             throw new BusinessException(errorCode);
         }
     }
-    // Chuẩn hóa chuỗi: loại khoảng trắng 2 đầu và đổi chuỗi rỗng thành null.
     public static String normalize(String value) {
         if (value == null) {
             return null;
@@ -24,7 +22,6 @@ public final class ValidationUtils {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    // Chuẩn hóa chuỗi bắt buộc, nếu rỗng thì ném lỗi tương ứng.
     public static String requireNormalized(String value, ErrorCode errorCode) {
         String normalizedValue = normalize(value);
         if (normalizedValue == null) {
@@ -33,13 +30,11 @@ public final class ValidationUtils {
         return normalizedValue;
     }
 
-    // Chuẩn hóa email về dạng dùng chung trong hệ thống.
     public static String normalizeEmail(String email) {
         String normalizedEmail = normalize(email);
         return normalizedEmail == null ? null : normalizedEmail.toLowerCase(Locale.ROOT);
     }
 
-    // Kiểm tra chuỗi có dữ liệu hợp lệ hay không.
     public static boolean hasText(String value) {
         return normalize(value) != null;
     }

@@ -23,7 +23,6 @@ public record CartInfoRepone(
     public record VariantOption(String name, String value) {
     }
 
-    // Nhận giá sale và thời điểm kết thúc hiện tại từ Product Service.
     public record Sale(BigDecimal salePrice, OffsetDateTime endsAt) {
     }
 }

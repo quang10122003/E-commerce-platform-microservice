@@ -8,7 +8,6 @@ public final class UserInternalInfoResponseMapper {
     private UserInternalInfoResponseMapper() {
     }
 
-    // Chuyển thông tin User domain sang response dùng cho API nội bộ.
     public static UserInternaInfoRespone toResponse(User user) {
         if (user == null) {
             return null;

@@ -1,6 +1,5 @@
 package com.example.common.error;
 
-// Khai báo các lỗi xác thực và phân quyền dùng chung.
 public enum AuthorizationError implements ErrorCode {
     UNAUTHENTICATED("UNAUTHENTICATED", "Authentication is required to access this resource", 401),
     ACCESS_DENIED("ACCESS_DENIED", "You do not have permission to access this resource", 403),
@@ -12,7 +11,6 @@ public enum AuthorizationError implements ErrorCode {
     private final String message;
     private final int httpStatusCode;
 
-    // Khởi tạo thông tin phản hồi cho từng loại lỗi Authorization.
     AuthorizationError(String code, String message, int httpStatusCode) {
         this.code = code;
         this.message = message;

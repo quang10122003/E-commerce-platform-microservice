@@ -16,7 +16,6 @@ public class CustomerUserDetailService implements UserDetailsService {
 
     UserRepoJpa UserRepoJpa;
 
-    // Tải user theo email để Spring Security xác thực đăng nhập
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return UserRepoJpa.findByEmail(username)

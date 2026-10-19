@@ -6,13 +6,12 @@ import com.example.notification.domain.error.DomainChatError;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-// Tin nhắn bất biến, chỉ được tạo qua hành vi gửi tin của room.
 public record ChatMessage(Long id, Long senderId, String content, boolean read,
                           LocalDateTime createdAt, LocalDateTime updatedAt) {
 
     public static final int MAX_CONTENT_LENGTH = 4000;
 
-    // Tin đã lưu phải có timestamp; tin mới chờ database sinh thời gian.
+    // Tin mới chưa có timestamp vì thời gian được database sinh khi lưu.
     public ChatMessage {
         if (senderId == null || senderId <= 0 || content == null || content.isBlank()
                 || content.length() > MAX_CONTENT_LENGTH) {
@@ -24,7 +23,6 @@ public record ChatMessage(Long id, Long senderId, String content, boolean read,
         }
     }
 
-    // Tạo tin nhắn chưa đọc và chuẩn hóa khoảng trắng ở hai đầu.
     static ChatMessage create(Long senderId, String content) {
         return new ChatMessage(null, senderId, content == null ? null : content.strip(), false, null, null);
     }

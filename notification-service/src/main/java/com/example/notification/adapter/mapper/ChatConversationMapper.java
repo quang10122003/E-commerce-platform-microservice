@@ -18,7 +18,6 @@ public class ChatConversationMapper {
                 entity.getUpdatedAt());
     }
 
-    // Domain (room mới, chưa có id) -> entity mới để insert.
     public ChatConversationsEntity toNewEntity(ChatConversation domain) {
         return new ChatConversationsEntity(
                 domain.getCustomerId(),

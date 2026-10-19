@@ -15,7 +15,7 @@ public interface CartJpaRepo extends JpaRepository<CartEntity,Long> {
     @EntityGraph(attributePaths = "items")
     Optional<CartEntity> findByUserId(Long userId);
 
-    // Cập nhật giỏ bị ảnh hưởng trước khi xóa item, trong cùng transaction của application service.
+    // Phải cập nhật giỏ trước khi xóa item, trong cùng transaction để không mất dấu giỏ bị ảnh hưởng.
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("""
             update CartEntity c set c.updatedAt = :now
@@ -24,7 +24,7 @@ public interface CartJpaRepo extends JpaRepository<CartEntity,Long> {
     int updateCartsContainingVariants(@Param("variantIds") List<Long> variantIds,
                                      @Param("now") LocalDateTime now);
 
-    // Bulk delete chỉ theo ID trong event, nhận lại cùng event sẽ trả về số dòng xóa bằng 0.
+    // Event nhận lại có thể xóa 0 dòng; đây là kết quả hợp lệ, không phải lỗi.
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("delete from CartItemEntity i where i.productVariantId in :variantIds")
     int deleteItemsByVariantIds(@Param("variantIds") List<Long> variantIds);

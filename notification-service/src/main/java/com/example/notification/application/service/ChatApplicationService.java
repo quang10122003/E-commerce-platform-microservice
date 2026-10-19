@@ -7,7 +7,7 @@ import com.example.notification.application.port.in.CreateChatConversationsUseCa
 import com.example.notification.application.port.out.client.CurrentUserPort;
 import com.example.notification.application.port.out.client.ProductClientPort;
 import com.example.notification.application.port.out.repo.ChatRoomRepositoryPort;
-import com.example.notification.domain.error.DomainChatError;
+import com.example.notification.application.error.ChatError;
 import com.example.notification.domain.model.ChatConversation;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,15 +23,14 @@ public class ChatApplicationService implements CreateChatConversationsUseCase, C
     CurrentUserPort currentUserPort;
     ChatRoomRepositoryPort chatRoomRepositoryPort;
 
-    // Tìm hoặc tạo room của người đang đăng nhập, chỉ trả ID và không tải tin nhắn.
     @Override
     @Transactional
     public ChatConversationResponse getOrCreateConversationByProductId(Long productId) {
         if (productId == null ) {
-            throw new BusinessException(DomainChatError.CHAT_ROOM_INVALID);
+            throw new BusinessException(ChatError.CHAT_ROOM_INVALID);
         }
         if (!productClientPort.existsById(productId)) {
-            throw new BusinessException(DomainChatError.CHAT_PRODUCT_NOT_FOUND);
+            throw new BusinessException(ChatError.CHAT_PRODUCT_NOT_FOUND);
         }
         Long shopId = productClientPort.getShopId(productId);
         Long customerId = currentUserPort.getUserInfo().userId();
@@ -43,12 +42,12 @@ public class ChatApplicationService implements CreateChatConversationsUseCase, C
         return new ChatConversationResponse(conversation.getId());
     }
 
-    // Dùng danh tính đã xác thực để bảo vệ topic của từng cuộc trò chuyện.
+    // chekc room tồn tại hay k và user có quyền vào room k
     @Override
     @Transactional(readOnly = true)
     public void requireConversationParticipant(Long conversationId, Long userId) {
         chatRoomRepositoryPort.findById(conversationId)
-                .orElseThrow(() -> new BusinessException(DomainChatError.CHAT_ROOM_NOT_FOUND))
+                .orElseThrow(() -> new BusinessException(ChatError.CHAT_ROOM_NOT_FOUND))
                 .requireParticipant(userId);
     }
 }

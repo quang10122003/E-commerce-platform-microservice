@@ -37,14 +37,12 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
     ProductClientPort productClientPort;
     Clock clock;
 
-    // Lấy giỏ hàng và ghép thông tin sản phẩm, không thay đổi dữ liệu đã lưu.
     @Override
     @Transactional(readOnly = true)
     public CartRepone getCart() {
         Long userId = currentUserPort.getInfo().userId();
         log.debug("Bắt đầu lấy giỏ hàng: user_id={}", userId);
         Optional<Cart> cartOption = cartRepoPort.findByUserId(userId);
-        // Trả giỏ rỗng khi người dùng chưa có giỏ hàng.
         if (cartOption.isEmpty()) {
             log.debug("Trả giỏ hàng rỗng: user_id={}", userId);
             return CartRepone.builder()
@@ -56,11 +54,9 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
         }
 
         Cart cart = cartOption.get();
-        // Lấy ID biến thể để truy vấn thông tin sản phẩm trong giỏ.
         List<Long> variantIds = cart.getItems().stream()
                 .map(CartItem::getProductVariantId)
                 .toList();
-        // Lấy thông tin từ product service, bỏ qua truy vấn nếu giỏ rỗng.
         List<CartInfoRepone> productInfoList = variantIds.isEmpty()
                 ? List.of()
                 : productClientPort.getCartInfo(variantIds);
@@ -71,7 +67,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                         productInfo -> productInfo,
                         (existing, duplicate) -> existing));
 
-        // Chỉ ghép item có thông tin sản phẩm vào response, không xóa item khỏi giỏ.
+        // Thiếu metadata sản phẩm chỉ ẩn item khỏi response, không xóa dữ liệu giỏ đã lưu.
         List<CartRepone.CartItemInfo> responseItems = cart.getItems().stream()
                 .filter(cartItem -> productInfoByVariantId.containsKey(cartItem.getProductVariantId()))
                 .map(cartItem -> toCartItemInfo(
@@ -89,7 +85,6 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 .build();
     }
 
-    // Ghép thông tin CartItemInfo của CartRepone
     private CartRepone.CartItemInfo toCartItemInfo(CartItem cartItem, CartInfoRepone productInfo) {
         List<CartRepone.VariantOptions> variantOptions = productInfo.variantOptions().stream()
                 .map(option -> new CartRepone.VariantOptions(option.name(), option.value()))
@@ -113,14 +108,12 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 .build();
     }
 
-    // Thêm một sản phẩm bằng luồng thêm giỏ với số lượng mặc định.
     @Override
     @Transactional
     public void  addCartItem(Long productVariantId) {
         addCartItem(productVariantId, null);
     }
 
-    // Kiểm tra số lượng tùy chọn trước khi thêm biến thể vào giỏ.
     @Override
     @Transactional
     public void addCartItem(Long productVariantId, Integer quantity) {
@@ -132,10 +125,8 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
         LocalDateTime now = LocalDateTime.now(clock);
         Cart cart;
         Optional<Cart> optionalCart = cartRepoPort.findByUserId(userId);
-        // Tạo giỏ mới nếu người dùng chưa có giỏ hàng.
         cart = optionalCart.orElseGet(() -> Cart.create(userId, now));
 
-        // Dùng overload mặc định của domain khi không truyền số lượng.
         if (quantity == null) {
             cart.addItem(productVariantId, now);
         } else {
@@ -146,7 +137,6 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 userId, productVariantId, quantity == null ? 1 : quantity);
     }
 
-    // Cập nhật số lượng biến thể trong giỏ của người dùng hiện tại.
     @Override
     @Transactional
     public void updateCartItemQuantity(Long productVariantId, int quantity) {
@@ -161,7 +151,6 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 userId, productVariantId, quantity);
     }
 
-    // Xóa biến thể khỏi giỏ của người dùng hiện tại.
     @Override
     @Transactional
     public void removeCartItem(Long productVariantId) {
@@ -176,7 +165,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 userId, productVariantId);
     }
 
-    // Dọn biến thể đã xóa trên mọi giỏ, không phụ thuộc người đăng nhập và an toàn khi nhận lại event.
+    // Dọn dữ liệu theo event không phụ thuộc phiên đăng nhập và phải an toàn khi event được nhận lại.
     @Transactional
     public void removeDeletedProductVariants(ProductDeleteEvent event) {
 
@@ -189,7 +178,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
         removeDeletedVariants(event.eventId(), event.eventType(), event.productId(), event.variantIds());
     }
 
-    // Dọn một biến thể đã xóa trên mọi giỏ trong cùng transaction.
+    // Dọn biến thể trên mọi giỏ trong cùng transaction, không chỉ giỏ của người đăng nhập.
     @Transactional
     public void removeDeletedProductVariant(ProductvariantDeleteEvent event) {
         if (event == null || event.eventId() == null || event.productId() == null ||
@@ -200,7 +189,6 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
         removeDeletedVariants(event.eventId(), event.eventType(), event.productId(), List.of(event.variantId()));
     }
 
-    // Dùng chung thao tác dọn giỏ cho event xóa sản phẩm và xóa một biến thể.
     private void removeDeletedVariants(UUID eventId, String eventType, Long productId, List<Long> deletedVariantIds) {
         List<Long> variantIds = deletedVariantIds.stream().distinct().toList();
 
@@ -219,7 +207,6 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 eventId, eventType, productId, variantIds.size(), removedItems);
     }
 
-    // Đếm số dòng biến thể trong giỏ, trả 0 khi chưa có giỏ hàng.
     @Override
     @Transactional(readOnly = true)
     public int getCountItemCart() {

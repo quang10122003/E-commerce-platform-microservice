@@ -26,7 +26,6 @@ public class CartCotroller {
     public ResponseEntity<CartRepone> getCart(){
         return ResponseEntity.ok(getCartUseCase.getCart());
     }
-    // Thêm biến thể với số lượng tùy chọn, mặc định thêm một sản phẩm.
     @PostMapping()
     public ResponseEntity<Void> addCart(@RequestParam Long productVariantId,
                                         @Valid @RequestBody(required = false) AddCartItemRequest request){

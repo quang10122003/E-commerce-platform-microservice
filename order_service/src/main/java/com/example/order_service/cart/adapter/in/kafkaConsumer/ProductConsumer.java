@@ -21,7 +21,6 @@ public class ProductConsumer {
     ObjectMapper objectMapper;
     ProcessProductEventUseCase processProductEventUseCase;
 
-    // Đọc metadata tại adapter và gọi application duy nhất qua input port.
     @KafkaListener(topics = Constant.PRODUCT_EVENTS_TOPIC)
     public void listen(String event) {
         String eventId = null;

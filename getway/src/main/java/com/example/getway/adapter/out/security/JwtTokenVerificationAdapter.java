@@ -14,7 +14,6 @@ import lombok.experimental.FieldDefaults;
 
 import org.springframework.stereotype.Component;
 
-// Adapter xác thực chữ ký và các claim của JWT bằng public key.
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -29,7 +28,6 @@ public class JwtTokenVerificationAdapter implements TokenVerificationPort {
             String tokenType = claims.get("tokenType", String.class);
             Object userId = claims.get("userId");
 
-            // Chỉ access token mới được phép đi tới các API phía sau Gateway.
             if (!"access".equals(tokenType) || userId == null) {
                 throw new BusinessException(AuthorizationError.UNAUTHENTICATED);
             }

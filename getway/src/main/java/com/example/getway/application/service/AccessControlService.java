@@ -11,7 +11,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-// Điều phối xác thực token và kiểm tra trạng thái truy cập tại Gateway.
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AccessControlService implements AuthorizeAccessUseCase {
@@ -19,17 +18,14 @@ public class AccessControlService implements AuthorizeAccessUseCase {
     TokenVerificationPort tokenVerificationPort;
     AccessControlCachePort accessControlCachePort;
 
-    // Xác thực token, kiểm tra user bị khóa và kiểm tra token bị thu hồi.
     @Override
     public void authorize(String token) {
         TokenIdentity identity = tokenVerificationPort.verify(token);
 
-        // Chặn user bị khóa trước khi kiểm tra token bị thu hồi.
         if (accessControlCachePort.isUserLocked(identity.userId())) {
             throw new BusinessException(AuthorizationError.USER_LOCKED);
         }
 
-        // Chặn token đã bị logout hoặc thu hồi.
         if (accessControlCachePort.isTokenBlacklisted(token)) {
             throw new BusinessException(AuthorizationError.TOKEN_BLACKLISTED);
         }

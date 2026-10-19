@@ -21,7 +21,6 @@ public class WebSocketConfig
         this.allowedOrigins = allowedOrigins;
     }
 
-    // Xác thực vé trên CONNECT và giữ bảo vệ các frame STOMP inbound.
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(webSocketJwtInterceptor);
@@ -35,11 +34,13 @@ public class WebSocketConfig
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        // Nơi server gửi thông báo đến client
+        // gửi tin nhắn từ server về clent đăng ký
         registry.enableSimpleBroker("/topic", "/queue");
 
-        // Prefix cho message client gửi lên server
+        // clinet gửi server
         registry.setApplicationDestinationPrefixes("/app");
+//        tiền tố dùng để gửi tin nhắn đến người dùng cụ thể
+        registry.setUserDestinationPrefix("/user");
         
     }
 }

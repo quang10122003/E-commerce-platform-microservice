@@ -22,7 +22,6 @@ import org.springframework.web.server.WebExceptionHandler;
 import reactor.core.publisher.Mono;
 import lombok.extern.slf4j.Slf4j;
 
-// Adapter chuyển BusinessException thành response JSON chuẩn của Gateway.
 @Component
 @Order(-2)
 @RequiredArgsConstructor
@@ -35,7 +34,6 @@ public class GatewayExceptionHandler implements WebExceptionHandler {
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable throwable) {
         if (!(throwable instanceof BusinessException businessException)) {
-            // Ghi lại lỗi gateway không thuộc nhóm lỗi nghiệp vụ trước khi chuyển cho handler mặc định.
             log.error("Gateway không xử lý được request: path={}",
                     exchange.getRequest().getPath(), throwable);
             return Mono.error(throwable);

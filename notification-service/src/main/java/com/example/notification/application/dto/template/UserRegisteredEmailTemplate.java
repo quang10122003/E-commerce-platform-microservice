@@ -6,7 +6,6 @@ import java.util.List;
 import com.example.notification.application.dto.event.UserRegisteredEvent;
 import com.example.notification.application.dto.request.EmailMessage;
 import com.example.notification.application.dto.template.interfaces.EmailTemplate;
-// tempale tạo EmailMessage  Dto cho case UserRegistered
 public class UserRegisteredEmailTemplate
         implements EmailTemplate<UserRegisteredEvent> {
 

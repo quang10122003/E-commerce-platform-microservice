@@ -25,10 +25,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SecurityConfig {
 
-    // Filter JWT dùng chung từ module common
     JwtAuthFilter jwtAuthFilter;
 
-    // Danh sách endpoint công khai và đường dẫn xử lý lỗi.
     static String[] PUBLIC_ENDPOINTS = {
         "/api/auth/register",
             "/api/auth/login",
@@ -40,7 +38,6 @@ public class SecurityConfig {
 
     };
 
-    // Cấu hình bảo mật cho auth-service
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
             DaoAuthenticationProvider authenticationProvider,
@@ -51,11 +48,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        // Chỉ mở GET thông tin shop; các API internal vẫn yêu cầu xác thực.
                         .requestMatchers(HttpMethod.GET, "/api/internal/shops/{shopId}/info").permitAll()
                         .anyRequest().authenticated()
                 )
-                // Trả lỗi xác thực và phân quyền theo định dạng API dùng chung.
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
@@ -65,13 +60,11 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Mã hóa mật khẩu khi đăng ký
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // Cấu hình provider xác thực dựa trên UserDetailsService
     @Bean
     public DaoAuthenticationProvider authenticationProvider(CustomerUserDetailService customerUserDetailService,
             PasswordEncoder passwordEncoder) {
@@ -80,7 +73,6 @@ public class SecurityConfig {
         return provider;
     }
 
-    // Trả về AuthenticationManager chuẩn của Spring Security
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();

@@ -12,21 +12,20 @@ import java.time.Duration;
 
 @Configuration
 public class WsTicketConfig {
-    // Dùng SecureRandom của Java để sinh vé, không dùng JWT làm vé kết nối.
+    // Vé kết nối dùng giá trị ngẫu nhiên thay JWT để không đưa JWT vào vé CONNECT.
     @Bean
     SecureRandom wsTicketSecureRandom() {
         return new SecureRandom();
     }
 
-    // Lắp ghép hai input port cấp/tiêu thụ vé qua cùng output port lưu trữ.
     @Bean
     WsTicketApplicationService wsTicketApplicationService(WsTicketStorePort wsTicketStorePort,
-                                                        SecureRandom wsTicketSecureRandom, Clock chatClock,
+                                                        SecureRandom wsTicketSecureRandom, Clock clock,
                                                         @Value("${app.websocket.ticket-ttl-seconds:30}") long ticketTtlSeconds) {
         if (ticketTtlSeconds <= 0) {
             throw new IllegalArgumentException("TTL vé WebSocket phải lớn hơn 0");
         }
-        return new WsTicketApplicationService(wsTicketStorePort, wsTicketSecureRandom, chatClock,
+        return new WsTicketApplicationService(wsTicketStorePort, wsTicketSecureRandom, clock,
                 Duration.ofSeconds(ticketTtlSeconds));
     }
 }

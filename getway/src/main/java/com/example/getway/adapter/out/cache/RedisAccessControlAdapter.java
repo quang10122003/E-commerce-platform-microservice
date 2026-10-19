@@ -12,7 +12,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-// Adapter đọc trạng thái blacklist token và khóa user từ Redis.
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -41,7 +40,7 @@ public class RedisAccessControlAdapter implements AccessControlCachePort {
         }
     }
 
-    // Chuyển lỗi Redis thành lỗi nghiệp vụ để Gateway trả response báo kiểm soát truy cập tạm thời không khả dụng tầng getway
+    // Gateway từ chối truy cập khi không kiểm tra được Redis, thay vì coi token là hợp lệ.
     private RuntimeException accessControlUnavailable(DataAccessException ex) {
         log.error("Không thể kiểm tra trạng thái truy cập trên Redis", ex);
         return new com.example.common.exception.BusinessException(

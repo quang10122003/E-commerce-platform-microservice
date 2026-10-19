@@ -49,7 +49,6 @@ public class ChatConversationsEntity {
         this.productId = productId;
     }
 
-    // Ánh xạ metadata đã được domain xử lý vào entity đang được quản lý.
     public void updateLastMessageAt(LocalDateTime lastMessageAt) {
         this.lastMessageAt = lastMessageAt;
     }

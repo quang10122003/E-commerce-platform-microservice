@@ -34,13 +34,13 @@ public class WebSocketJwtInterceptor implements ChannelInterceptor {
     private final CheckChatConversationAccessUseCase checkChatConversationAccessUseCase;
     private final Clock clock;
 
-    // Xác thực CONNECT và bảo vệ các frame đọc/ghi dữ liệu sau khi kết nối.
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
         if (accessor == null || accessor.getCommand() == null) {
             return message;
         }
+
         if (StompCommand.CONNECT.equals(accessor.getCommand()) || StompCommand.STOMP.equals(accessor.getCommand())) {
             authenticateWithWsTicket(accessor);
         } else if (StompCommand.SEND.equals(accessor.getCommand())
@@ -52,7 +52,7 @@ public class WebSocketJwtInterceptor implements ChannelInterceptor {
                     && (destination == null || !destination.startsWith("/app/"))) {
                 throw new BusinessException(AuthorizationError.ACCESS_DENIED);
             }
-            // Queue chỉ nhận lỗi; topic chat được kiểm tra thành viên trước khi subscribe.
+            // Topic chat cần kiểm tra thành viên; queue riêng chỉ cho phép destination của chính phiên.
             if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
                 requireSubscriptionAllowed(accessor, destination);
             }
@@ -67,8 +67,10 @@ public class WebSocketJwtInterceptor implements ChannelInterceptor {
             throw new BusinessException(AuthorizationError.ACCESS_DENIED);
         }
         Matcher matcher = CHAT_TOPIC.matcher(destination);
+        // sub toppic public
         if (matcher.matches()) {
             try {
+                // lấy room từ topic sub và user id từ auth của phiên socket
                 checkChatConversationAccessUseCase.requireConversationParticipant(Long.parseLong(matcher.group(1)),
                         Long.parseLong(accessor.getUser().getName()));
             } catch (NumberFormatException exception) {
@@ -77,6 +79,7 @@ public class WebSocketJwtInterceptor implements ChannelInterceptor {
             return;
         }
         if (!"/user/queue/chat/errors".equals(destination)
+                && !"/user/queue/chat/conversations".equals(destination)
                 && (!destination.startsWith("/topic/") || destination.contains("/chat/"))) {
             throw new BusinessException(AuthorizationError.ACCESS_DENIED);
         }
@@ -92,13 +95,16 @@ public class WebSocketJwtInterceptor implements ChannelInterceptor {
             throw new BusinessException(AuthorizationError.UNAUTHENTICATED);
         }
         String ticket = AuthorizationUtils.extractBearerToken(authorization);
+        // lấy thông tin đăng nhập từ ticket
         WsTicketIdentity identity = consumeWsTicketUseCase.consumeWebSocketTicketAndGetIdentity(ticket);
+        // tạo list quyền theo chuẩn SimpleGrantedAuthority
         List<SimpleGrantedAuthority> authorities = identity.roles().stream().map(SimpleGrantedAuthority::new).toList();
+        // set auth cho phiên WebSocket.
         accessor.setUser(UsernamePasswordAuthenticationToken.authenticated(identity.userId().toString(), null, authorities));
         accessor.getSessionAttributes().put(SESSION_EXPIRES_AT, identity.sessionExpiresAt());
     }
 
-    // Frame SEND/SUBSCRIBE dùng danh tính CONNECT và hạn phiên độc lập với TTL của vé.
+    // check auth của phiên WebSocket.
     private void requireValidSocketSession(StompHeaderAccessor accessor) {
         if (!(accessor.getUser() instanceof Authentication authentication) || !authentication.isAuthenticated()
                 || accessor.getSessionAttributes() == null

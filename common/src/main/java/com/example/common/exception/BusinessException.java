@@ -13,7 +13,6 @@ public class BusinessException extends RuntimeException {
         this.errorCode = errorCode;
     }
 
-    // Tạo lỗi nghiệp vụ kèm thông tin chi tiết phát sinh động tại thời điểm kiểm tra.
     public BusinessException(ErrorCode errorCode, String detail) {
         super(errorCode.getMessage() + ": " + detail);
         this.errorCode = errorCode;

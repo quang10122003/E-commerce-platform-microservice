@@ -22,11 +22,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ApiAccessDeniedHandler implements AccessDeniedHandler {
 
-    // Chuyển response lỗi phân quyền sang JSON theo định dạng API chung.
     JsonUtils jsonUtils;
 
 
-    // Trả lỗi 403 khi người dùng đã xác thực nhưng không có quyền truy cập.
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response,
             AccessDeniedException exception) throws IOException {

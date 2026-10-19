@@ -9,7 +9,6 @@ import java.util.List;
 
 @FeignClient(name = "producr-service")
 public interface ProductFeignClient {
-    // Lấy thông tin các phân loại sản phẩm để hiển thị giỏ hàng.
     @PostMapping("/api/internal/cart-info")
     List<CartInfoRepone> getCartInfo(@RequestBody List<Long> variantIds);
 }

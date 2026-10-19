@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-// Consumer nhận event auth và chỉ chuyển vào application qua input port.
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -21,7 +20,6 @@ public class AuthConsumer {
     ObjectMapper objectMapper;
     ProcessAuthEventUseCase processAuthEventUseCase;
 
-    // Kiểm tra metadata ở adapter, giữ nguyên payload cho strategy xử lý.
     @KafkaListener(topics = Constant.AUTH_EVENTS_TOPIC)
     public void listen(String message) {
         String eventId = null;

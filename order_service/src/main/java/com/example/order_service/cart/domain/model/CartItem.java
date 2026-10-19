@@ -15,7 +15,7 @@ public class CartItem {
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // Khởi tạo item mới; package-private để Cart là nơi duy nhất tạo item trong aggregate.
+    // Constructor giới hạn trong package để Cart kiểm soát việc tạo item của aggregate.
     CartItem(Long id, Long productVariantId, int quantity,
              LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
@@ -31,13 +31,11 @@ public class CartItem {
         this.updatedAt = updatedAt;
     }
 
-    // Dựng lại item đã lưu từ dữ liệu persistence.
     public static CartItem reconstitute(Long id, Long productVariantId, int quantity,
                                         LocalDateTime createdAt, LocalDateTime updatedAt) {
         return new CartItem(id, productVariantId, quantity, createdAt, updatedAt);
     }
 
-    // Cộng số lượng của một item.
     void increaseQuantity(int amount, LocalDateTime now) {
         requirePositive(amount);
         // Dùng long để tránh tràn int khi cộng dồn
@@ -46,14 +44,13 @@ public class CartItem {
         updatedAt = now;
     }
 
-    // Gán số lượng mới cho item.
     void updateQuantity(int quantity, LocalDateTime now) {
         requirePositive(quantity);
         this.quantity = quantity;
         updatedAt = now;
     }
 
-    // Giảm số lượng item; Cart chịu trách nhiệm xóa item nếu lượng giảm chạm về 0.
+    // Cart chịu trách nhiệm xóa item khi số lượng về 0; item không tự rời aggregate.
     void decreaseQuantity(int amount, LocalDateTime now) {
         requirePositive(amount);
         if (amount >= quantity) {

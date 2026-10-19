@@ -9,7 +9,7 @@ import com.example.notification.application.dto.response.WsTicketResponse;
 import com.example.notification.application.port.in.ConsumeWsTicketUseCase;
 import com.example.notification.application.port.in.IssueWsTicketUseCase;
 import com.example.notification.application.port.out.WsTicketStorePort;
-import com.example.notification.domain.error.DomainWebSocketError;
+import com.example.notification.application.error.WebSocketError;
 import lombok.RequiredArgsConstructor;
 
 import java.security.SecureRandom;
@@ -26,12 +26,15 @@ public class WsTicketApplicationService implements IssueWsTicketUseCase, Consume
     private final Clock clock;
     private final Duration ticketTtl;
 
-    // Sinh vé opaque 256 bit, giới hạn hạn dùng vé bởi cả TTL và access JWT gốc.
+    // tạo ticket
     @Override
     public WsTicketResponse issueWebSocketConnectionTicket(WsTicketIdentity identity) {
         validateIdentityAndSocketSession(identity);
         Instant now = clock.instant();
+
+        // Vé không được sống lâu hơn phiên JWT đã cấp nó.
         Instant expiresAt = now.plus(ticketTtl);
+
         if (identity.sessionExpiresAt().isBefore(expiresAt)) {
             expiresAt = identity.sessionExpiresAt();
         }
@@ -39,8 +42,9 @@ public class WsTicketApplicationService implements IssueWsTicketUseCase, Consume
         if (ttl.toMillis() <= 0) {
             throw new BusinessException(AuthorizationError.UNAUTHENTICATED);
         }
+
         WsTicketData data = new WsTicketData(identity, expiresAt);
-        // Chỉ thử lại khi trùng vé ngẫu nhiên; không retry hoặc che lỗi kho lưu trữ.
+        // Chỉ thử lại khi trùng vé để không ghi đè vé đã cấp; giới hạn ba lần để tránh lặp vô hạn.
         for (int attempt = 0; attempt < 3; attempt++) {
             byte[] randomBytes = new byte[32];
             secureRandom.nextBytes(randomBytes);
@@ -49,10 +53,10 @@ public class WsTicketApplicationService implements IssueWsTicketUseCase, Consume
                 return new WsTicketResponse(ticket, expiresAt.atZone(clock.getZone()).toOffsetDateTime());
             }
         }
-        throw new BusinessException(DomainWebSocketError.WS_TICKET_UNAVAILABLE);
+        throw new BusinessException(WebSocketError.WS_TICKET_UNAVAILABLE);
     }
 
-    // Chỉ nhận đúng định dạng vé opaque, không fallback về access/refresh JWT.
+    // đổi tick lấy danh tính phien socket
     @Override
     public WsTicketIdentity consumeWebSocketTicketAndGetIdentity(String ticket) {
         if (ticket == null || !TICKET_PATTERN.matcher(ticket).matches()) {
@@ -67,7 +71,6 @@ public class WsTicketApplicationService implements IssueWsTicketUseCase, Consume
         return data.identity();
     }
 
-    // Không cấp hoặc chấp nhận vé khi danh tính thiếu dữ liệu hoặc phiên đã hết hạn.
     private void validateIdentityAndSocketSession(WsTicketIdentity identity) {
         if (identity == null || identity.userId() == null || identity.userId() <= 0
                 || identity.sessionExpiresAt() == null || !identity.sessionExpiresAt().isAfter(clock.instant())

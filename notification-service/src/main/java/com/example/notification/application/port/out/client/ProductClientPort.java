@@ -5,12 +5,12 @@ import com.example.notification.application.dto.response.ChatProductInfo;
 import java.util.List;
 
 public interface ProductClientPort {
-    // Tra cứu tên và ảnh sản phẩm theo lô, bỏ qua sản phẩm đã bị xóa.
+    // Sản phẩm đã xóa được bỏ qua, không làm hỏng danh sách chat.
     List<ChatProductInfo> findProductInfosByIds(List<Long> productIds);
 
-    // Kiểm tra sản phẩm còn tồn tại, kể cả khi không còn ACTIVE.
+    // Sản phẩm ngừng bán vẫn được coi là tồn tại để không mất liên kết chat.
     boolean existsById(Long productId);
 
-    // Lấy ID shop sở hữu sản phẩm, không che lỗi khi sản phẩm không tồn tại.
+    // Không nuốt lỗi sản phẩm không tồn tại khi xác định chủ shop.
     Long getShopId(Long productId);
 }
