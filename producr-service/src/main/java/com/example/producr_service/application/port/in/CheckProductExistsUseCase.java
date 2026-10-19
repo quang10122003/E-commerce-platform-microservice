@@ -4,6 +4,5 @@ import com.example.producr_service.application.dto.response.ProductExistsRespons
 
 public interface CheckProductExistsUseCase {
 
-    // Kiểm tra sản phẩm theo ID cho service gọi nội bộ.
     ProductExistsResponse checkExists(Long productId);
 }

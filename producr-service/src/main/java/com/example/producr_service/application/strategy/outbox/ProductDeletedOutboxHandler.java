@@ -21,7 +21,7 @@ public class ProductDeletedOutboxHandler implements OutboxEventHandler {
         return ProductDeletedOutboxPayload.EVENT_TYPE;
     }
 
-    // Xóa document tìm kiếm sau khi transaction xóa sản phẩm đã commit.
+    // Chỉ xóa chỉ mục sau commit để rollback không làm mất kết quả tìm kiếm của sản phẩm còn tồn tại.
     @Override
     public void handle(OutboxEventDto event) {
         ProductDeletedOutboxPayload payload = mapJsonToObjPort.readValue(

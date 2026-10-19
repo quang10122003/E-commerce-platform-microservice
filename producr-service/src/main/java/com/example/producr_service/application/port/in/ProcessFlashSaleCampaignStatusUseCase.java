@@ -7,9 +7,8 @@ import java.util.Optional;
 import com.example.producr_service.application.dto.response.FlashSaleCampaignStatusTransition;
 
 public interface ProcessFlashSaleCampaignStatusUseCase {
-    // Lấy ID các chương trình đến hạn chuyển trạng thái.
     List<Long> findIdsDueForStatusTransition();
 
-    // Trả trạng thái trước/sau khi thay đổi; rỗng nếu không lấy được khóa hoặc không đổi trạng thái.
+    // Kết quả rỗng cũng có thể do không lấy được khóa, không nhất thiết thiếu chương trình.
     Optional<FlashSaleCampaignStatusTransition> processEvent(Long campaignId);
 }

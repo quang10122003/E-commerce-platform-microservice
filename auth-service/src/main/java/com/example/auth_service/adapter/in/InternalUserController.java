@@ -30,14 +30,12 @@ public class InternalUserController {
     private final InternalGetUserInfoUseCase internalGetUserInfoUseCase;
     private final GetPublicShopInfoUseCase getPublicShopInfoUseCase;
 
-    // Cung cấp tên khách theo lô cho danh sách room, không trả dữ liệu liên hệ.
     @PostMapping("user-info")
     List<UserDisplayInfoResponse> getUserDisplayInfosByIds(
             @RequestBody @Size(max = 50) List<@NotNull @Positive Long> userIds) {
         return internalGetUserInfoUseCase.getUserDisplayInfosByIds(userIds);
     }
 
-//    endpoint lấy thônng tin shop ko cần token
     @GetMapping("/shops/{shopId}/info")
     public PublicShopInfoResponse getPublicShopInfo(@PathVariable("shopId") @Positive Long shopId) {
         return getPublicShopInfoUseCase.getPublicShopInfo(shopId);
@@ -47,7 +45,6 @@ public class InternalUserController {
         return internalGetUserInfoUseCase.getInfoUserInternal(authorizationHeader);
     }
 
-    // Tra cứu tên shop theo lô để tránh gọi Auth service cho từng sản phẩm.
     @PostMapping("shop-info")
     List<ShopInfoResponse> getShopInfos(@RequestBody List<Long> userIds) {
         return internalGetUserInfoUseCase.getShopInfos(userIds);

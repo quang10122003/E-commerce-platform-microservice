@@ -11,15 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
-// Điều phối xử lý event outbox và quản lý transaction cho từng lần cập nhật trạng thái.
 public class ProductOutboxStatusService implements ProcessProductOutboxUseCase {
 
-    // Port đọc và cập nhật trạng thái event outbox.
     private final OutboxPort outboxPort;
-    // Registry chọn handler tương ứng với loại event.
     private final OutboxEventHandlerRegistry outboxEventHandlerRegistry;
 
-    // Nhận port lưu trữ và registry handler từ cấu hình ứng dụng.
     public ProductOutboxStatusService(
             OutboxPort outboxPort,
             OutboxEventHandlerRegistry outboxEventHandlerRegistry
@@ -28,14 +24,13 @@ public class ProductOutboxStatusService implements ProcessProductOutboxUseCase {
         this.outboxEventHandlerRegistry = outboxEventHandlerRegistry;
     }
 
-    // Đọc các event đã đến hạn xử lý trong transaction chỉ đọc.
     @Override
     @Transactional(readOnly = true)
     public List<OutboxEventDto> findPending() {
         return outboxPort.findPending();
     }
 
-    // Xử lý event và ghi nhận thành công trong cùng transaction để tải đủ dữ liệu sản phẩm.
+    // Handler cần transaction còn mở để tải đủ dữ liệu trước khi đánh dấu event thành công.
     @Override
     @Transactional
     public boolean processEvent(OutboxEventDto candidate) {
@@ -52,7 +47,7 @@ public class ProductOutboxStatusService implements ProcessProductOutboxUseCase {
         return true;
     }
 
-    // Ghi nhận lỗi và lịch thử lại của event trong một transaction riêng.
+    // Lỗi phải được ghi bằng transaction riêng để không mất lịch retry theo transaction xử lý đã rollback.
     @Override
     @Transactional
     public void markFailed(UUID eventId, String errorMessage) {

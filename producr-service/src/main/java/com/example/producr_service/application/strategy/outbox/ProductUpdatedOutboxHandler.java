@@ -9,7 +9,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-// Cập nhật chỉ mục tìm kiếm theo sản phẩm đã lưu thành công trong database.
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ProductUpdatedOutboxHandler implements OutboxEventHandler {
@@ -17,7 +16,6 @@ public class ProductUpdatedOutboxHandler implements OutboxEventHandler {
     ProductSearchIndexPort productSearchIndexPort;
     MapJsonToObjPort mapJsonToObjPort;
 
-    // Nhận riêng sự kiện chỉnh sửa sản phẩm từ registry outbox.
     @Override
     public String eventType() {
         return ProductUpdatedOutboxPayload.EVENT_TYPE;

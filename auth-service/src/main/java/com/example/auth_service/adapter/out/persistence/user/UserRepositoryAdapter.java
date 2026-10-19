@@ -17,9 +17,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Adapter chuyển đổi giữa domain và persistence cho User.
- */
 @Component
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 @RequiredArgsConstructor
@@ -28,7 +25,6 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     UserRepoJpa userRepoJpa;
     UserMapper userMapper;
 
-    // Đọc projection tên khách theo lô, không tải entity và roles.
     @Override
     public List<UserDisplayInfoResponse> findUserDisplayInfosByIds(Collection<Long> userIds) {
         return userIds.isEmpty() ? List.of() : userRepoJpa.findUserDisplayInfosByIds(userIds);
@@ -53,7 +49,6 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
 
     @Override
     public User save(User user) {
-        // Lưu domain user rồi đổi ngược về domain để trả ra cho application
         return userMapper.toDomain(userRepoJpa.save(userMapper.toEntity(user)));
     }
 

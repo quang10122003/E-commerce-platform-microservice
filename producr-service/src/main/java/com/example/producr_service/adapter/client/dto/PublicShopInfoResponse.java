@@ -1,4 +1,4 @@
 package com.example.producr_service.adapter.client.dto;
 
-// Location từ Auth là địa chỉ shop đầy đủ, chưa tách tỉnh/thành.
+// Địa chỉ từ Auth chưa tách tỉnh/thành, không coi toàn bộ location là tên tỉnh.
 public record PublicShopInfoResponse(Long shopId, String shopName, String location) {}

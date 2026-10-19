@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ShopInfoClientPort {
-    // Đọc địa chỉ shop
     Optional<String> findPublicShopAddress(Long shopId);
 
     List<ShopInfoResponse> getShopInfos(List<Long> shopIds);

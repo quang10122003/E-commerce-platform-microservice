@@ -5,11 +5,10 @@ import com.example.producr_service.domain.error.DomainProductError;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-// Domain service dùng chung cho chính sách giá và tồn kho khi tham gia Flash Sale.
 public final class FlashSaleRules {
     private FlashSaleRules() {}
 
-    // Tính giá VND nguyên, làm tròn xuống để đăng ký và mua dùng cùng công thức.
+    // Giá VND làm tròn xuống đến đơn vị nguyên để đăng ký và mua dùng cùng công thức.
     public static BigDecimal calculateSalePrice(BigDecimal originalPrice, BigDecimal discountPercent) {
         if (originalPrice == null || originalPrice.signum() <= 0
                 || discountPercent == null || discountPercent.signum() <= 0
@@ -18,14 +17,14 @@ public final class FlashSaleRules {
         }
         BigDecimal priceSale = originalPrice.multiply(BigDecimal.valueOf(100).subtract(discountPercent))
                 .divide(BigDecimal.valueOf(100), 0, RoundingMode.FLOOR);
-        // nếu tính tonas giá sale <0 thì gắn giá sale = 1
+        // Làm tròn có thể ra 0 đồng dù phần trăm giảm dưới 100%; giá sale tối thiểu là 1 đồng.
         if (priceSale.signum() <= 0) {
             priceSale = BigDecimal.ONE;
         }
         return priceSale;
     }
 
-    // Yêu cầu tồn kho ít nhất gấp đôi hạn mức đăng ký, không giữ tồn kho.
+    // Tồn kho phải có khoảng đệm gấp đôi hạn mức đăng ký; kiểm tra này không giữ hàng.
     public static void validateRegistrationStock(int stockQuantity, int registeredQuantity) {
         if (registeredQuantity <= 0 || stockQuantity < 2L * registeredQuantity) {
             throw new BusinessException(DomainProductError.FLASH_SALE_REGISTRATION_STOCK_INVALID);

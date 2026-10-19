@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
-// Adapter phát hành event auth bằng Kafka.
 @Component
 @RequiredArgsConstructor
 public class KafkaAuthEventProducer implements AuthEventPublisherPort {
@@ -18,7 +17,7 @@ public class KafkaAuthEventProducer implements AuthEventPublisherPort {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final JsonUtils jsonUtils;
 
-    // Chờ Kafka xác nhận gửi và truyền lỗi về flow xử lý outbox.
+    // Phải chờ Kafka xác nhận để lỗi gửi không bị ghi nhận là outbox đã thành công.
     @Override
     public void publish(OutboxEventDto event) {
         try {

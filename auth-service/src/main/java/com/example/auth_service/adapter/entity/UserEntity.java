@@ -107,7 +107,6 @@ public class UserEntity implements UserDetails {
         return !isLocked;
     }
 
-    // Chặn đăng nhập nếu tài khoản đang bị khóa
     @Override
     public boolean isAccountNonLocked() {
         return !isLocked;

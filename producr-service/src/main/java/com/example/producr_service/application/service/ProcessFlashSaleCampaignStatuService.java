@@ -17,7 +17,6 @@ import java.util.Optional;
 import java.time.Clock;
 import java.time.LocalDateTime;
 
-// Điều phối xử lý trạng thái chương trình sale qua port và registry.
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ProcessFlashSaleCampaignStatuService implements ProcessFlashSaleCampaignStatusUseCase {
@@ -33,7 +32,6 @@ public class ProcessFlashSaleCampaignStatuService implements ProcessFlashSaleCam
         return flashSaleCampaignRepositoryPort.findIdsDueForStatusTransition(LocalDateTime.now(clock));
     }
 
-    // Khóa phần chương trình và chỉ lưu trạng thái khi handler thực sự thay đổi.
     @Transactional
     @Override
     public Optional<FlashSaleCampaignStatusTransition> processEvent(Long campaignId) {
@@ -44,7 +42,6 @@ public class ProcessFlashSaleCampaignStatuService implements ProcessFlashSaleCam
         }
         FlashSaleCampaign saleCampaign = saleCampaignOption.get();
         FlashSaleCampaignStatus previousStatus = saleCampaign.getStatus();
-        // Bỏ qua chương trình đã hủy hoặc kết thúc trước khi lấy được khóa.
         if (previousStatus == FlashSaleCampaignStatus.CANCELLED
                 || previousStatus == FlashSaleCampaignStatus.DONE) {
             return Optional.empty();
@@ -54,7 +51,7 @@ public class ProcessFlashSaleCampaignStatuService implements ProcessFlashSaleCam
         if (saleCampaign.getStatus() == previousStatus) {
             return Optional.empty();
         }
-        // chỉ gọi saveStatus k gọi save vì job chỉ lấy saleCampaign ko có item nếu gọi save thì xóa hết item
+        // Chỉ gọi saveStatus vì aggregate không có items; gọi save có thể xóa toàn bộ đăng ký.
         flashSaleCampaignRepositoryPort.saveStatus(campaignId, saleCampaign.getStatus());
         return Optional.of(new FlashSaleCampaignStatusTransition(previousStatus, saleCampaign.getStatus()));
     }

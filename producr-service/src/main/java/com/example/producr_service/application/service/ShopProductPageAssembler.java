@@ -15,15 +15,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// Dựng dữ liệu trang quản lý sản phẩm từ các model đã được repository trả về.
 public class ShopProductPageAssembler {
 
-    // Lấy ID của các sản phẩm trong trang để truy vấn phân loại theo lô.
     public List<Long> getListIdProduct(Collection<Product> products) {
         return products.stream().map(Product::getId).toList();
     }
 
-    // Dựng trang response và giữ nguyên thông tin phân trang từ trang sản phẩm.
     public PageResponse<SellerProductItemResponse> buildSellerProductPage(
             PageResponse<Product> productPage,
             Map<Long, List<ProductVariant>> variantsByProductId
@@ -34,7 +31,6 @@ public class ShopProductPageAssembler {
                 productPage.totalItems(), productPage.totalPages());
     }
 
-    // Ghép từng sản phẩm với các phân loại đã tải bằng ID sản phẩm.
     public List<SellerProductItemResponse> buildListSellerProductItemResponse(
             List<Product> products,
             Map<Long, List<ProductVariant>> variantsByProductId
@@ -45,7 +41,6 @@ public class ShopProductPageAssembler {
                 .toList();
     }
 
-    // Dùng cùng cách dựng trạng thái, phân loại với API quản lý sản phẩm.
     public List<ShopFlashSaleProductResponse> buildFlashSaleProducts(
             List<Product> products, Map<Long, List<ProductVariant>> variantsByProductId) {
         return buildListSellerProductItemResponse(products, variantsByProductId).stream()
@@ -54,7 +49,6 @@ public class ShopProductPageAssembler {
                 .toList();
     }
 
-    // Chuyển sản phẩm và phân loại sang một dòng quản lý của người bán.
     private SellerProductItemResponse toSellerItem(Product product, List<ProductVariant> variants) {
         Map<Long, ProductAttribute> attributeByValueId = product.getAttributes().stream()
                 .flatMap(attribute -> attribute.getValues().stream()
@@ -66,7 +60,7 @@ public class ShopProductPageAssembler {
                 .map(variant -> toSellerVariant(variant, attributeByValueId))
                 .toList();
 
-        // Hết hàng được ưu tiên hiển thị cho cả sản phẩm đang bán và đang ẩn.
+        // Hết hàng được ưu tiên hơn trạng thái ẩn để phản ánh khả năng bán thực tế.
         boolean inStock = variants.stream().anyMatch(ProductVariant::isInStock);
         SellerProductItemResponse.DisplayStatus displayStatus = !inStock
                 ? SellerProductItemResponse.DisplayStatus.OUT_OF_STOCK
@@ -79,7 +73,6 @@ public class ShopProductPageAssembler {
                 product.getCategoryId(), product.getCategoryName(), displayStatus, variantResponses);
     }
 
-    // Tra tên thuộc tính của từng giá trị đã chọn trong phân loại.
     private SellerProductItemResponse.Variant toSellerVariant(
             ProductVariant variant,
             Map<Long, ProductAttribute> attributeByValueId
@@ -94,7 +87,6 @@ public class ShopProductPageAssembler {
                 variant.getStockQuantity(), attributes);
     }
 
-    // Tìm thuộc tính cha theo ID giá trị để trả đúng tên và ID thuộc tính.
     private SellerProductItemResponse.VariantAttribute toSellerVariantAttribute(
             AttributeValue value,
             Map<Long, ProductAttribute> attributeByValueId

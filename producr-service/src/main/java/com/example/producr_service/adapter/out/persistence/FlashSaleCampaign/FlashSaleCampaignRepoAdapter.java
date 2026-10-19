@@ -29,20 +29,17 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
     FlashSaleCampaignMapper flashSaleCampaignMapper;
     ProductVariantJpa productVariantJpa;
 
-    // Dùng findById có sẵn của JPA, chỉ map thông tin chương trình.
     @Override
     public Optional<FlashSaleCampaignView> findViewById(Long campaignId) {
         return flashSaleCampaignJpa.findById(campaignId).map(flashSaleCampaignMapper::toView);
     }
 
-    // Kiểm tra lịch trùng, bỏ qua chương trình đã hủy hoặc hoàn thành.
     @Override
     public boolean existsOverlapping(LocalDateTime startsAt, LocalDateTime endsAt) {
         return flashSaleCampaignJpa.existsOverlapping(
                 startsAt, endsAt, List.of(FlashSaleCampaignStatus.CANCELLED, FlashSaleCampaignStatus.DONE));
     }
 
-    // Tái sử dụng index trang của PageQuery; thứ tự và bộ lọc được áp dụng ngay trong DB.
     @Override
     public PageResponse<FlashSaleCampaignView> findAll(PageQuery pageQuery, LocalDateTime from,
                                                  LocalDateTime to, FlashSaleCampaignStatus status,
@@ -66,13 +63,12 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
         return flashSaleCampaignJpa.findByIdForUpdate(campaignId).map(flashSaleCampaignMapper::toDomain);
     }
 
-    // Khóa chia sẻ trong transaction rồi chuyển dữ liệu thành domain.
     @Override
     public Optional<FlashSaleCampaign> findByIdForShare(Long campaignId) {
         return flashSaleCampaignJpa.findByIdForShare(campaignId).map(flashSaleCampaignMapper::toDomain);
     }
 
-    // Đồng bộ aggregate đầy đủ trên entity đang quản lý, giữ ID và lịch sử của item.
+    // Phải giữ entity đang quản lý để không tạo lại ID hoặc mất lịch sử của item.
     @Override
     public void save(FlashSaleCampaign campaign) {
         if (campaign.getId() == null) {
@@ -91,7 +87,7 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
         return flashSaleCampaignJpa.findIdsDueForStatusTransition(now);
     }
 
-    // Dựng phần chương trình cho handler; kết quả chỉ được lưu qua saveStatus.
+    // Kết quả không có items nên chỉ được lưu qua saveStatus, không lưu lại toàn aggregate.
     @Override
     public Optional<FlashSaleCampaign> findStatusByIdForSkip(Long id) {
         return flashSaleCampaignJpa.findByIdForUpdateSkipLocked(id)

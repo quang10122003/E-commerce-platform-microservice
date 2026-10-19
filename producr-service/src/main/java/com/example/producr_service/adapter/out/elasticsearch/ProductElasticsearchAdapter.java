@@ -45,10 +45,8 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
 
     private static final String BRANDS_AGGREGATION = "matched_brands";
 
-    // Chuyển aggregate Product sang document dành cho Elasticsearch.
     ProductSearchDocumentMapper productSearchDocumentMapper;
 
-    // Thực hiện thao tác lưu document vào Elasticsearch.
     ProductSearchRepository productSearchRepository;
 
     ElasticsearchOperations elasticsearchOperations;
@@ -58,7 +56,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
     BrandRepositoryPort brandRepositoryPort;
     ProductMapper productMapper;
 
-    // Tạo document từ Product đã có tên danh mục và thương hiệu rồi lưu vào Elasticsearch.
     @Override
     public void index(Product product, String location) {
         ProductSearchDocument document =
@@ -72,7 +69,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
         productSearchRepository.deleteById(productId);
     }
 
-    // Tìm kiếm catalog product bằng cursor để hỗ trợ infinity scroll.
     @Override
     public ProductCatalogSearchResponse search(ProductScrollFilter filter) {
         // Lấy dư một item để xác định còn batch kế tiếp hay không.
@@ -83,7 +79,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
 
         NativeQueryBuilder queryBuilder = NativeQuery.builder()
                 .withQuery(boolQueryBuilder -> boolQueryBuilder.bool(bool -> {
-                    // Tìm theo tên product khi client truyền keyword.
                     if (hasText(filter.keyword())) {
                         String keyword = filter.keyword().trim();
                         bool.must(multiMatch -> multiMatch.multiMatch(multiMatchQuery -> multiMatchQuery
@@ -97,7 +92,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                                 )
                         ));
 
-                        // Ưu tiên product có tên khớp đúng cụm keyword người dùng nhập.
                         bool.should(matchPhrase -> matchPhrase.matchPhrase(matchPhraseQuery -> matchPhraseQuery
                                 .field(ProductSearchDocumentFields.NAME)
                                 .query(keyword)
@@ -105,7 +99,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                         ));
                     }
 
-                    // Lọc theo category khi client truyền categoryId.
                     if (filter.categoryId() != null) {
                         bool.filter(term -> term.term(termQuery -> termQuery
                                 .field(ProductSearchDocumentFields.CATEGORY_ID)
@@ -113,7 +106,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                         ));
                     }
 
-                    // So sánh giá lọc với maxPrice của mỗi product.
                     if (filter.minPrice() != null) {
                         bool.filter(range -> range.range(rangeQuery -> rangeQuery
                                 .number(numberRange -> numberRange
@@ -123,7 +115,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                         ));
                     }
 
-                    // Giới hạn giá tối đa dựa trên maxPrice của mỗi product.
                     if (filter.maxPrice() != null) {
                         bool.filter(range -> range.range(rangeQuery -> rangeQuery
                                 .number(numberRange -> numberRange
@@ -133,13 +124,11 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                         ));
                     }
 
-                    // Chỉ hiển thị product đang hoạt động cho shop.
                     bool.filter(term -> term.term(termQuery -> termQuery
                             .field(ProductSearchDocumentFields.STATUS + ".keyword")
                             .value(ProductStatus.ACTIVE.name())
                     ));
 
-                    // filter theo tính thành
                     if (!filter.locations().isEmpty()) {
                         bool.filter(terms -> terms.terms(termsQuery -> termsQuery
                                 .field(ProductSearchDocumentFields.LOCATION)
@@ -153,7 +142,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                 }))
                 ;
 
-        // Lọc hit theo danh sách brand exact nhưng vẫn giữ aggregation đủ brand khớp keyword.
+        // Bộ lọc brand chỉ áp dụng cho hit để aggregation vẫn chứa đủ brand khớp tìm kiếm.
         if (!filter.brandIds().isEmpty()) {
             queryBuilder.withFilter(terms -> terms.terms(termsQuery -> termsQuery
                     .field(ProductSearchDocumentFields.BRAND_ID)
@@ -163,7 +152,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
             ));
         }
 
-        // Chọn thứ tự ưu tiên theo lựa chọn sắp xếp của người dùng.
         if (filter.sortOption() == ProductSortOption.MOST_SOLD) {
             queryBuilder.withSort(sort -> sort.field(field -> field
                     .field(ProductSearchDocumentFields.TOTAL_SOLD)
@@ -195,7 +183,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                 .withPageable(pageable)
                 .build();
 
-        // Tiếp tục lấy dữ liệu sau item cuối của batch trước.
         if (hasText(filter.cursor())) {
             query.setSearchAfter(productSearchCursorCodec.decode(
                     filter.cursor(),
@@ -219,7 +206,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                 .map(productMapper::toResponse)
                 .toList();
 
-        // Cursor mới được tạo từ giá trị sort của item cuối cùng đã trả về.
         String nextCursor = hasNext
                 ? productSearchCursorCodec.encode(
                         visibleHits.getLast().getSortValues(),
@@ -235,7 +221,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
         );
     }
 
-    // Chuyển các bucket brandId thành danh sách brand cho response catalog.
     private List<ProductBrandOption> extractBrands(SearchHits<ProductSearchDocument> searchHits) {
         if (!searchHits.hasAggregations()) {
             return List.of();

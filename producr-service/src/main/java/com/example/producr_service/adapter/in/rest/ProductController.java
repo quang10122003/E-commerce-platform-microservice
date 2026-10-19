@@ -9,12 +9,14 @@ import com.example.producr_service.adapter.DTO.request.VariantImageMeta;
 import com.example.producr_service.application.dto.request.*;
 import com.example.producr_service.application.dto.response.ProductResponse;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
+import com.example.producr_service.application.dto.response.ProductPriceRangeResponse;
 import com.example.producr_service.application.dto.response.SellerProductItemResponse;
 import com.example.producr_service.application.dto.response.ShopProductDetailResponse;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductvariantUseCase;
 import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
+import com.example.producr_service.application.port.in.GetProductPriceRangeUseCase;
 import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
 import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
 import com.example.producr_service.application.port.in.UpdateProductUseCase;
@@ -58,6 +60,13 @@ public class ProductController {
     UpdateProductUseCase updateProductUseCase;
     GetUserProductDetailUseCase getUserProductDetailUseCase;
     GetVariantSaleUseCase getVariantSaleUseCase;
+    GetProductPriceRangeUseCase getProductPriceRangeUseCase;
+
+    @GetMapping("/{productId}/price-range")
+    public ResponseEntity<ProductPriceRangeResponse> getProductPriceRange(
+            @PathVariable("productId") @Positive Long productId) {
+        return ResponseEntity.ok(getProductPriceRangeUseCase.getProductPriceRange(productId));
+    }
 
     // Đọc chi tiết product công khai cùng trạng thái và tổ hợp variant.
     @GetMapping("/{productId}")

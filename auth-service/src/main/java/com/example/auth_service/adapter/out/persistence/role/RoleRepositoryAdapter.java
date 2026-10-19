@@ -12,9 +12,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-/**
- * RoleRepositoryAdapter
- */
 @Repository
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)

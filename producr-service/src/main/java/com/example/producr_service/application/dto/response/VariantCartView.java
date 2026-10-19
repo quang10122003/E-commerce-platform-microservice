@@ -10,7 +10,6 @@ public record VariantCartView(
         Long productId,
         Long shopId,
         String productName,
-        // ảnh của product
         String productImageUrl,
         ProductStatus status,
         BigDecimal price,
@@ -19,6 +18,5 @@ public record VariantCartView(
         List<ImageView> images
 ) {
     public record OptionView(Long attributeId, Long valueId, String name, String value) {}
-    // ảnh của Variant
     public record ImageView(Long id, String url, boolean primary) {}
 }

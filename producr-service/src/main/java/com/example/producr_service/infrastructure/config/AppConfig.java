@@ -9,7 +9,6 @@ import java.time.ZoneId;
 
 @Configuration
 public class AppConfig {
-    // Cung cấp nguồn thời gian theo múi giờ Việt Nam.
     @Bean
     Clock clock() {
         return Clock.system(ZoneId.of("Asia/Ho_Chi_Minh"));

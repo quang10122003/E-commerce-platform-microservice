@@ -17,7 +17,6 @@ import java.util.Optional;
 public class ShopInfoClientAdapter implements ShopInfoClientPort {
     private final AuthUserFeignClient authUserFeignClient;
 
-    // lấy thông tin shop public
     @Override
     public Optional<String> findPublicShopAddress(Long shopId) {
         try {

@@ -40,19 +40,16 @@ public class ShopFlashSaleController {
 
     private final GetShopFlashSaleCampaignDetailUseCase getShopFlashSaleCampaignDetailUseCase;
 
-    // lấy snap shot tên và thông tin dealline đnagw ký của 1 sale để fe dùng
     @GetMapping("/{campaignId}")
     public ResponseEntity<ShopFlashSaleCampaignDetailResponse> getCampaignDetail(@PathVariable Long campaignId) {
         return ResponseEntity.ok(getShopFlashSaleCampaignDetailUseCase.getShopCampaignDetail(campaignId));
     }
 
-    // Trả thông tin toàn bộ sản phẩm của Shop để chọn trong biểu mẫu đăng ký sale.
     @GetMapping("/products")
     public ResponseEntity<List<ShopFlashSaleProductResponse>> getProducts() {
         return ResponseEntity.ok(getShopFlashSaleProductsUseCase.getShopFlashSaleProducts());
     }
 
-    // Đăng ký một variant vào chương trình, thành công không trả nội dung.
     @PostMapping("/{campaignId}/items")
     public ResponseEntity<Void> register(@PathVariable Long campaignId,
             @Valid @RequestBody RegisterFlashSaleItemRequest request) {
@@ -62,14 +59,12 @@ public class ShopFlashSaleController {
         return ResponseEntity.noContent().build();
     }
 
-    // Trả giá sale dự kiến từ giá variant hiện tại và phần trăm Shop nhập.
     @PostMapping("/variants/{variantId}/preview-price")
     public ResponseEntity<FlashSalePriceResponse> previewPrice(@PathVariable Long variantId,
             @Valid @RequestBody PreviewFlashSalePriceRequest request) {
         return ResponseEntity.ok(previewFlashSalePriceUseCase.previewPrice(variantId, request));
     }
 
-    // Đọc các chương trình DRAFT cho Shop, mặc định trang 1 và 20 bản ghi.
     @GetMapping
     public ResponseEntity<PageResponse<ShopFlashSaleCampaignResponse>> getCampaigns(
             @RequestParam(defaultValue = "1") int page,

@@ -27,7 +27,7 @@ public class AttributeEntity {
     @EqualsAndHashCode.Include
     private Long id;
 
-    // FK products_id - ON DELETE CASCADE o DB
+    // Database xóa thuộc tính qua ON DELETE CASCADE, không dựa vào cascade của JPA.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "products_id", nullable = false)
     private ProductEntity product;
@@ -35,7 +35,6 @@ public class AttributeEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
-    // Tải các giá trị thuộc tính theo lô khi dựng trang sản phẩm.
     @BatchSize(size = 50)
     @OneToMany(mappedBy = "attribute", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

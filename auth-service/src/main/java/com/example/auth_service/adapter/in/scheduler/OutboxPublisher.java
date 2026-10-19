@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-// Scheduler lấy event pending và đưa vào application qua registry xử lý.
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -37,7 +36,7 @@ public class OutboxPublisher {
         }
     }
 
-    // Gọi strategy tương ứng và chỉ đánh dấu thành công sau khi phát hành hoàn tất.
+    // Chỉ đánh dấu thành công sau khi phát hành để event lỗi vẫn được thử lại.
     private void publish(OutboxEventDto event) {
         try {
             processAuthOutboxUseCase.processEvent(event);

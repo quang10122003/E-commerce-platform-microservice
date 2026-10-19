@@ -18,7 +18,6 @@ import org.springframework.kafka.core.ProducerFactory;
 @Configuration
 public class KafkaProducerConfig {
 
-    // Tạo producer gửi payload đã serialize thành String theo convention của Auth Service.
     @Bean
     ProducerFactory<String, String> producerFactory(
             @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
@@ -37,13 +36,11 @@ public class KafkaProducerConfig {
         return new DefaultKafkaProducerFactory<>(properties);
     }
 
-    // Cung cấp KafkaTemplate dùng chung cho các publisher được bổ sung sau.
     @Bean
     KafkaTemplate<String, String> kafkaTemplate(ProducerFactory<String, String> producerFactory) {
         return new KafkaTemplate<>(producerFactory);
     }
 
-    // Khai báo topic event product với số partition và replica giống Auth Service.
     @Bean
     NewTopic productEventsTopic() {
         return TopicBuilder.name(Constant.PRODUCT_EVENTS_TOPIC)

@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ShopProductDetailMapper {
-    // Chuyển sản phẩm domain thành dữ liệu chi tiết dành cho form chỉnh sửa của người bán.
     public ShopProductDetailResponse toShopProductDetailResponse(Product product) {
         List<ProductAttribute> sourceAttributes = product.getAttributes();
         List<ShopProductDetailResponse.Attribute> attributes = sourceAttributes.stream()
@@ -29,7 +28,7 @@ public class ShopProductDetailMapper {
                 product.getImageUrl(), attributes, variants);
     }
 
-    // Tìm vị trí từng giá trị đã chọn để frontend gửi lại đúng tổ hợp phân loại.
+    // Form gửi tổ hợp bằng vị trí nên phải giữ đúng thứ tự giá trị trong thuộc tính.
     private ShopProductDetailResponse.Variant toShopVariantResponse(
             ProductVariant variant, List<ProductAttribute> attributes) {
         List<ShopProductDetailResponse.Selection> selections = new ArrayList<>();

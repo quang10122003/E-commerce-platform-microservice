@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import com.example.auth_service.domain.model.OutboxStatus;
 
-// DTO chứa dữ liệu outbox trao đổi giữa application và adapter.
 public record OutboxEventDto(
         UUID eventId,
         String aggregateType,

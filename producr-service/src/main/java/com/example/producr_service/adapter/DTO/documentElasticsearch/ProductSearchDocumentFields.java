@@ -1,6 +1,5 @@
 package com.example.producr_service.adapter.DTO.documentElasticsearch;
 
-// Tập trung tên field của product document để dùng thống nhất khi mapping và query ES.
 public final class ProductSearchDocumentFields {
 
     public static final String PRODUCT_ID = "productId";

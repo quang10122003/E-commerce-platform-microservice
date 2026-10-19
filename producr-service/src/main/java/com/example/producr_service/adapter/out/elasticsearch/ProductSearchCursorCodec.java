@@ -11,14 +11,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 
-// Mã hóa và giải mã cursor dựa trên các giá trị sort của Elasticsearch.
 @Component
 @RequiredArgsConstructor
 public class ProductSearchCursorCodec {
 
     private final ObjectMapper objectMapper;
 
-    // Mã hóa giá trị sort của item cuối thành cursor an toàn cho URL.
     public String encode(List<Object> sortValues, ProductSortOption sortOption) {
         if (sortValues == null || sortValues.size() != 2) {
             throw new IllegalArgumentException("Cursor sort values khong hop le");
@@ -38,7 +36,6 @@ public class ProductSearchCursorCodec {
         }
     }
 
-    // Giải mã cursor của client thành giá trị search_after cho Elasticsearch.
     public List<Object> decode(String encodedCursor, ProductSortOption sortOption) {
         try {
             byte[] json = Base64.getUrlDecoder().decode(encodedCursor.getBytes(StandardCharsets.UTF_8));
@@ -56,7 +53,6 @@ public class ProductSearchCursorCodec {
         }
     }
 
-    // Lưu hai giá trị sort cần thiết để lấy batch product tiếp theo.
     public record ProductScrollCursor(
             ProductSortOption sortOption,
             Object sortValue,

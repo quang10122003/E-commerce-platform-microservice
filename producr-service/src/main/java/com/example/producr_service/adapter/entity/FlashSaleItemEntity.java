@@ -21,7 +21,7 @@ public class FlashSaleItemEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Chương trình sở hữu đăng ký; không cascade xóa sang chương trình.
+    // Xóa đăng ký không được cascade ngược sang chương trình sở hữu.
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "flash_sale_campaigns_id", nullable = false)
     private FlashSaleCampaignEntity campaign;
@@ -37,7 +37,6 @@ public class FlashSaleItemEntity {
     @Column(name = "product_name", nullable = false)
     private String productName;
 
-    // Thuộc tính tại thời điểm đăng ký, lưu JSON dạng TEXT.
     @Column(name = "variant_attributes", nullable = false, columnDefinition = "TEXT")
     private String variantAttributes;
 

@@ -32,7 +32,7 @@ public class FlashSaleCampaignEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Tải theo lô; xóa item khỏi collection sẽ xóa bản ghi, Admin block vẫn giữ item.
+    // orphanRemoval xóa bản ghi khi item rời collection; Admin block phải giữ item lại.
     @BatchSize(size = 50)
     @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY,
             cascade = CascadeType.ALL, orphanRemoval = true)
@@ -53,7 +53,6 @@ public class FlashSaleCampaignEntity {
     @Column(name = "ends_at", nullable = false)
     private LocalDateTime endsAt;
 
-    // Lưu trạng thái vòng đời theo enum nghiệp vụ FlashSaleCampaignStatus.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FlashSaleCampaignStatus status;
@@ -64,7 +63,7 @@ public class FlashSaleCampaignEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    // DB tự cập nhật thời gian khi bản ghi thay đổi.
+    // Database tự cập nhật thời gian sửa; application không được tự gán trường này.
     @Column(name = "updated_at", nullable = false, updatable = false)
     private LocalDateTime updatedAt;
 }

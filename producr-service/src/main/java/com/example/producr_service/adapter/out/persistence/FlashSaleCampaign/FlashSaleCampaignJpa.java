@@ -17,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 
 public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEntity, Long> {
 
-    // Chỉ đọc ID các lịch đến hạn chuyển trạng thái cho lượt job.
     @Query(value = """
             select id from flash_sale_campaigns
             where (status = 'DRAFT' and starts_at <= :now)
@@ -26,23 +25,23 @@ public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEnt
             """, nativeQuery = true)
     List<Long> findIdsDueForStatusTransition(@Param("now") LocalDateTime now);
 
-    // Khóa độc quyền cho job và bỏ qua chương trình đang được transaction khác giữ khóa.
+    // Bỏ qua chương trình đang bị khóa để các instance job không chờ hoặc xử lý trùng nhau.
     @Query(value = """
             select * from flash_sale_campaigns where id = :id for update skip locked
             """, nativeQuery = true)
     Optional<FlashSaleCampaignEntity> findByIdForUpdateSkipLocked(@Param("id") Long id);
 
-    // Khóa chia sẻ theo khóa chính, phối hợp với khóa độc quyền của thao tác hủy.
+    // Khóa chia sẻ phải tồn tại trong transaction mua để thao tác hủy không chen ngang.
     @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("select c from FlashSaleCampaignEntity c where c.id = :campaignId")
     Optional<FlashSaleCampaignEntity> findByIdForShare(@Param("campaignId") Long campaignId);
 
-    // Khóa độc quyền theo khóa chính; chờ các transaction mua giữ FOR SHARE hoàn tất.
+    // Thao tác hủy phải chờ các transaction mua đang giữ khóa chia sẻ hoàn tất.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from FlashSaleCampaignEntity c where c.id = :campaignId")
     Optional<FlashSaleCampaignEntity> findByIdForUpdate(@Param("campaignId") Long campaignId);
 
-    // Lọc trước phân trang; ưu tiên trạng thái rồi khoảng cách thời gian cả trước và sau now.
+    // Khoảng cách thời gian xét cả lịch quá khứ và tương lai, không chỉ lịch sắp bắt đầu.
     @Query(value = """
             select c.*
             from flash_sale_campaigns c
@@ -51,7 +50,7 @@ public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEnt
               and (:status is null or c.status = :status)
               and (:registrationOpen is null
                    or (:registrationOpen = true and c.status = 'DRAFT' and c.registration_deadline > :now)
-                   or (:registrationOpen = false and (c.status <> 'DRAFT' or c.registration_deadline <= :now)))
+                   or (:registrationOpen = false and (c.status != 'DRAFT' or c.registration_deadline <= :now)))
             order by case c.status
                          when 'PUBLISHED' then 0
                          when 'DRAFT' then 1
@@ -71,7 +70,7 @@ public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEnt
               and (:status is null or c.status = :status)
               and (:registrationOpen is null
                    or (:registrationOpen = true and c.status = 'DRAFT' and c.registration_deadline > :now)
-                   or (:registrationOpen = false and (c.status <> 'DRAFT' or c.registration_deadline <= :now)))
+                   or (:registrationOpen = false and (c.status != 'DRAFT' or c.registration_deadline <= :now)))
             """,
             nativeQuery = true)
     Page<FlashSaleCampaignEntity> findCampaigns(
@@ -83,7 +82,7 @@ public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEnt
             Pageable pageable
     );
 
-    // Bỏ qua chương trình đã hủy hoặc hoàn thành và cho phép hai lịch tiếp giáp nhau.
+    // Hai lịch tiếp giáp không xung đột; chương trình đã hủy hoặc hoàn thành không chiếm lịch.
     @Query("""
             select count(c) > 0
             from FlashSaleCampaignEntity c

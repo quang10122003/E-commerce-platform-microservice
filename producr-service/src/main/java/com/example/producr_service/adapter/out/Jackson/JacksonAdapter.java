@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class JacksonAdapter implements MapJsonToObjPort {
     ObjectMapper objectMapper;
-    // Dùng cấu hình Jackson hiện có để chuyển payload đã đọc từ DB thành DTO cụ thể.
     @Override
     public <T> T readValue(Object payload, Class<T> payloadType) {
         try {

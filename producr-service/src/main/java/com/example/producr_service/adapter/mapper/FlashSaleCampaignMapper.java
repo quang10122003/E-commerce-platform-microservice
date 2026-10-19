@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 public class FlashSaleCampaignMapper {
     private final FlashSaleItemMapper itemMapper;
 
-    // Tạo entity cho aggregate mới; aggregate đã lưu được cập nhật tại chỗ.
     public FlashSaleCampaignEntity toEntity(FlashSaleCampaign campaign,
             Function<Long, ProductVariantEntity> variantReference) {
         FlashSaleCampaignEntity entity = new FlashSaleCampaignEntity();
@@ -27,7 +26,6 @@ public class FlashSaleCampaignMapper {
         return entity;
     }
 
-    // Map các trường của chương trình; collection được đồng bộ riêng bên dưới.
     private void updateHeader(FlashSaleCampaign campaign, FlashSaleCampaignEntity entity) {
         entity.setName(campaign.getName());
         entity.setDescription(campaign.getDescription());
@@ -40,7 +38,7 @@ public class FlashSaleCampaignMapper {
         entity.setUpdatedAt(campaign.getUpdatedAt());
     }
 
-    // Dựng aggregate đầy đủ để các thao tác cập nhật luôn giữ cả đăng ký hiện có.
+    // Cần đầy đủ đăng ký để lưu aggregate không vô tình xóa các item chưa được tải.
     public FlashSaleCampaign toDomain(FlashSaleCampaignEntity entity) {
         return FlashSaleCampaign.reconstitute(
                 entity.getId(),
@@ -57,7 +55,7 @@ public class FlashSaleCampaignMapper {
         );
     }
 
-    // Dùng cho job đổi trạng thái, không tải items; chỉ lưu qua saveStatus, không dùng save aggregate.
+    // Chỉ lưu qua saveStatus; lưu aggregate thiếu items có thể xóa đăng ký hiện có.
     public FlashSaleCampaign toStatusDomain(FlashSaleCampaignEntity entity) {
         return FlashSaleCampaign.reconstitute(
                 entity.getId(), entity.getName(), entity.getDescription(), entity.getRegistrationDeadline(),
@@ -65,7 +63,7 @@ public class FlashSaleCampaignMapper {
                 entity.getCreatedAt(), entity.getUpdatedAt(), java.util.List.of());
     }
 
-    // Đọc phần chương trình mà không truy cập collection LAZY khi phân trang.
+    // Không chạm collection LAZY khi phân trang để tránh tải toàn bộ đăng ký.
     public FlashSaleCampaignView toView(FlashSaleCampaignEntity entity) {
         return new FlashSaleCampaignView(entity.getId(), entity.getName(), entity.getDescription(),
                 entity.getRegistrationDeadline(), entity.getStartsAt(), entity.getEndsAt(), entity.getStatus(),

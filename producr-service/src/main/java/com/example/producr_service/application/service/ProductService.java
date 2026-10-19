@@ -11,6 +11,7 @@ import com.example.producr_service.application.dto.request.CreateProductData;
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
 import com.example.producr_service.application.dto.request.SellerProductFilter;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
+import com.example.producr_service.application.dto.response.ProductPriceRangeResponse;
 import com.example.producr_service.application.dto.response.ProductResponse;
 import com.example.producr_service.application.dto.response.SellerProductItemResponse;
 import com.example.producr_service.application.dto.response.ShopFlashSaleProductResponse;
@@ -46,7 +47,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase, GetShopFlashSaleProductsUseCase, GetUserProductDetailUseCase {
+public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase, GetShopFlashSaleProductsUseCase, GetUserProductDetailUseCase, GetProductPriceRangeUseCase {
     ProductImageRollbackPort productImageRollbackPort;
     ProductImageUploadService productImageUploadService;
     ProductCreationService productCreationService;
@@ -61,6 +62,15 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     ProductUpdateService productUpdateService;
     Clock clock;
     ShopInfoClientPort shopInfoClientPort;
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProductPriceRangeResponse getProductPriceRange(Long productId) {
+        Product product = productRepositoryPort.findById(productId)
+                .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
+        Product.PriceRange priceRange = product.getPriceRange();
+        return new ProductPriceRangeResponse(product.getId(), priceRange.getMin().getAmount(), priceRange.getMax().getAmount());
+    }
 
     // Giữ phiên đọc cho ảnh và thuộc tính; trả cả trạng thái product để FE xử lý hiển thị.
     @Override

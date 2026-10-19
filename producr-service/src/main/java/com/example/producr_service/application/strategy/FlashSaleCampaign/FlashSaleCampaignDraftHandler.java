@@ -24,7 +24,6 @@ public class FlashSaleCampaignDraftHandler implements FlashSaleCampaignStatuHand
     public void handle(FlashSaleCampaign flashSaleCampaign) {
 
         LocalDateTime now = LocalDateTime.now(clock);
-        // Đã đến hoặc qua thời điểm bắt đầu sale.
         if (!now.isBefore(flashSaleCampaign.getStartsAt())) {
             flashSaleCampaign.updateStatus(FlashSaleCampaignStatus.PUBLISHED);
             // Kết thúc ngay lịch đã hết hạn, không công bố sale quá hạn giữa hai lượt job.

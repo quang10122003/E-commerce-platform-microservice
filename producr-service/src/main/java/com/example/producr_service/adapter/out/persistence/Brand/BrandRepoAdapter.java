@@ -23,13 +23,11 @@ public class BrandRepoAdapter implements BrandRepositoryPort {
         return brandJpa.existsById(id);
     }
 
-    // Lấy brand theo ID và chuyển entity thành domain model.
     @Override
     public Optional<Brand> findById(Long id) {
         return brandJpa.findById(id).map(brandMapper::toDomain);
     }
 
-    // Lấy toàn bộ brand và chuyển entity thành domain model.
     @Override
     public List<Brand> getAllBrands() {
         return brandJpa.findAll().stream().map(brandMapper::toDomain).toList();

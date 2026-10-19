@@ -31,7 +31,7 @@ public class ProductVariantEntity {
     @EqualsAndHashCode.Include
     private Long id;
 
-    // FK products_id - ON DELETE CASCADE o DB
+    // Database xóa phân loại qua ON DELETE CASCADE khi sản phẩm cha bị xóa.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "products_id", nullable = false)
     private ProductEntity product;

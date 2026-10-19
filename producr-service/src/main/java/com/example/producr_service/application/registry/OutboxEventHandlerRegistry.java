@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-// Định tuyến event outbox đến đúng strategy theo eventType.
 public class OutboxEventHandlerRegistry {
 
     private final Map<String, OutboxEventHandler> handlers;
@@ -25,7 +24,6 @@ public class OutboxEventHandlerRegistry {
                 ));
     }
 
-    // Tìm và trả về strategy phụ trách event type.
     public OutboxEventHandler handle(String eventType) {
         return Optional.ofNullable(handlers.get(eventType))
                 .orElseThrow(() -> new IllegalStateException(

@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-// Scheduler nhận event đến hạn và đưa vào application xử lý retry.
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -37,7 +36,6 @@ public class ProductOutboxRetryScheduler {
         }
     }
 
-    // Chạy strategy tương ứng và cập nhật trạng thái retry của event.
     private void processEvent(OutboxEventDto event) {
         try {
             if (!processProductOutboxUseCase.processEvent(event)) {

@@ -20,7 +20,6 @@ public class FlashSaleItemMapper {
      JsonUtils jsonUtils;
      ProductVariantMapper productVariantMapper;
 
-    // Chuyển dữ liệu JPA thành snapshot phục vụ kiểm tra và lưu đăng ký.
     public FlashSaleVariantSnapshot toSnapshot(ProductVariantEntity variant) {
         ProductEntity product = variant.getProduct();
         List<FlashSaleVariantSnapshot.Attribute> attributes = variant.getAttributeValues().stream()
@@ -33,7 +32,6 @@ public class FlashSaleItemMapper {
                 variant.getStockQuantity(), attributes);
     }
 
-    // Chuyển đăng ký domain thành entity; JSON chỉ được xử lý ở adapter.
     public FlashSaleItemEntity toEntity(FlashSaleItem item,
             FlashSaleCampaignEntity campaign, ProductVariantEntity variantEntity) {
         FlashSaleItemEntity entity = new FlashSaleItemEntity();
@@ -57,7 +55,7 @@ public class FlashSaleItemMapper {
         entity.setUpdatedAt(item.updatedAt());
     }
 
-    // Đọc snapshot TEXT qua JsonUtils và dựng lại domain, kể cả variant đã bị xóa.
+    // Variant có thể đã bị xóa, nên phải khôi phục đăng ký từ snapshot đã lưu.
     public FlashSaleItem toDomain(FlashSaleItemEntity entity) {
         Object decoded = jsonUtils.fromJson(entity.getVariantAttributes());
         if (!(decoded instanceof java.util.List<?> values)) {

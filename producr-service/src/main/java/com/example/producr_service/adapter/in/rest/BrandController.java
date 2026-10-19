@@ -14,10 +14,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("api/brands")
 public class BrandController {
-    // Use case phục vụ thao tác lấy danh sách brand.
     private final GetBrandsUseCase getBrandsUseCase;
 
-    // Trả về danh sách brand cho client.
     @GetMapping
     public ResponseEntity<List<BrandResponse>> getAllBrands() {
         return ResponseEntity.ok(getBrandsUseCase.getBrands());

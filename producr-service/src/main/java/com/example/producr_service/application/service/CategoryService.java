@@ -16,7 +16,6 @@ public class CategoryService implements GetCategoriesUseCase {
     @Transactional(readOnly = true)
     @Override
     public List<CategoryResponse> getCategories() {
-        // Lấy domain từ repository rồi chuyển thành response ở application layer.
         return categoryRepoPort.getAllCategories()
                 .stream()
                 .map(CategoryResponse::from)

@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FlashSaleItemJpa extends JpaRepository<FlashSaleItemEntity, Long> {
-    // Đọc hạn mức sale theo variant và thời gian; liên kết null tự bị loại bởi INNER JOIN.
+    // INNER JOIN cố ý loại đăng ký có variant đã bị xóa khỏi ưu đãi hiện tại.
     @Query("""
             select new com.example.producr_service.application.dto.response.FlashSaleOfferView(
                 v.id, i.discountPercent, i.registeredQuantity, i.soldQuantity, c.endsAt)
@@ -32,7 +32,6 @@ public interface FlashSaleItemJpa extends JpaRepository<FlashSaleItemEntity, Lon
             @Param("itemStatus") FlashSaleItemStatus itemStatus,
             @Param("campaignStatus") FlashSaleCampaignStatus campaignStatus);
 
-    // Lấy ưu đãi cho cả giỏ với cùng điều kiện của API sale một variant.
     @Query("""
             select new com.example.producr_service.application.dto.response.FlashSaleOfferView(
                 v.id, i.discountPercent, i.registeredQuantity, i.soldQuantity, c.endsAt)
@@ -49,11 +48,9 @@ public interface FlashSaleItemJpa extends JpaRepository<FlashSaleItemEntity, Lon
             @Param("itemStatus") FlashSaleItemStatus itemStatus,
             @Param("campaignStatus") FlashSaleCampaignStatus campaignStatus);
 
-    // Giữ cách kiểm tra trùng có khóa của luồng đăng ký hiện tại.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<FlashSaleItemEntity> findByCampaign_IdAndVariant_Id(Long campaignId, Long variantId);
 
-    // Lấy item của sale đang chạy, loại variant đã xóa và product không còn công khai.
     @Query("""
             select i
             from FlashSaleItemEntity i

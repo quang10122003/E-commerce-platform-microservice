@@ -2,7 +2,7 @@ package com.example.producr_service.application.dto.request;
 
 import java.time.OffsetDateTime;
 
-// Bộ lọc chương trình DRAFT; registrationOpen null nghĩa là không lọc hạn đăng ký.
+// registrationOpen null nghĩa là không lọc hạn đăng ký, không phải đã đóng đăng ký.
 public record ShopFlashSaleCampaignFilter(
         int page,
         int size,

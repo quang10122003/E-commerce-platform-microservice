@@ -7,7 +7,6 @@ import lombok.Getter;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-//lớp bọc để khơi tạo tiền chuẩn quy tắc
 @Getter
 public final class Money {
 
@@ -32,12 +31,10 @@ public final class Money {
 
 
 
-    // check xem amount của this có nhỏ hơn orther hay k
     public boolean isLessThan(Money other) {
         return this.amount.compareTo(other.amount) < 0;
     }
 
-    // check xem amount của this có lớn  hơn orther hay k
     public boolean isGreaterThan(Money other) {
         return this.amount.compareTo(other.amount) > 0;
     }

@@ -9,11 +9,9 @@ import com.example.producr_service.domain.model.VariantImage;
 import java.util.Comparator;
 import java.util.List;
 
-// Mapper thuần Java cho hợp đồng chi tiết công khai, không thay DTO quản lý sản phẩm.
 public final class UserProductDetailMapper {
     private UserProductDetailMapper() {}
 
-    // Dựng dữ liệu tổ hợp và chọn variant mặc định theo tồn kho và giá.
     public static UserProductDetailResponse toResponse(Product product, String location) {
         // Ưu tiên giá cao nhất trong nhóm còn hàng; nếu tất cả hết hàng thì chọn giá cao nhất.
         Long defaultVariantId = product.getVariants().stream()
@@ -40,7 +38,6 @@ public final class UserProductDetailMapper {
         );
     }
 
-    // Dùng quy tắc tồn kho của domain và giữ ID giá trị để FE đối chiếu tổ hợp.
     private static UserProductDetailResponse.Variant toVariantResponse(ProductVariant variant) {
         return new UserProductDetailResponse.Variant(
                 variant.getId(), variant.getPrice().getAmount(), variant.getStockQuantity(),

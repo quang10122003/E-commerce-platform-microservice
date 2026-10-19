@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import com.example.producr_service.domain.model.OutboxStatus;
 
-// DTO trao đổi dữ liệu outbox giữa application, adapter và strategy.
 public record OutboxEventDto(
         UUID eventId,
         String aggregateType,
@@ -21,7 +20,6 @@ public record OutboxEventDto(
         String errorMessage
 ) {
 
-    // Khởi tạo event mới ở trạng thái chờ xử lý.
     public OutboxEventDto(
             UUID eventId,
             String aggregateType,

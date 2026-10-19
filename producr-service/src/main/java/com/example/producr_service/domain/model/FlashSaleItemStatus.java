@@ -1,6 +1,6 @@
 package com.example.producr_service.domain.model;
 
-// REGISTERED: đang đăng ký; DISABLED: Admin vô hiệu hóa, vẫn giữ lịch sử.
+// DISABLED vẫn giữ lịch sử đăng ký, không đồng nghĩa đã xóa item.
 public enum FlashSaleItemStatus {
         REGISTERED, DISABLED
 }

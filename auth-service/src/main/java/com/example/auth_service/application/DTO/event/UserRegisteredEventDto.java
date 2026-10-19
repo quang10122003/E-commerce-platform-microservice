@@ -5,7 +5,6 @@ import jdk.dynalink.beans.StaticClass;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-// Payload chuẩn của event phát sinh sau khi đăng ký user thành công.
 public record UserRegisteredEventDto(
         UUID eventId,
         String eventType,

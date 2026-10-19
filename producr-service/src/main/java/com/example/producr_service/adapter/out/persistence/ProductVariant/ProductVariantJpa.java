@@ -18,7 +18,6 @@ import org.springframework.data.repository.query.Param;
 public interface ProductVariantJpa
         extends JpaRepository<ProductVariantEntity, Long> {
 
-    // Projection chỉ lấy dữ liệu cần để kiểm tra ưu đãi của variant thuộc product.
     @Query("""
             select new com.example.producr_service.application.dto.response.VariantPriceView(
                 v.id, v.price, v.stockQuantity, p.status)
@@ -28,14 +27,13 @@ public interface ProductVariantJpa
     Optional<VariantPriceView> findPriceView(@Param("productId") Long productId,
                                            @Param("variantId") Long variantId);
 
-    // Tải dữ liệu tạo snapshot bằng EntityGraph, không khóa product hoặc variant.
     @EntityGraph(attributePaths = {"product", "attributeValues", "attributeValues.attribute"})
     Optional<ProductVariantEntity> findSnapshotById(Long id);
 
     boolean existsBySku(String sku);
     boolean existsBySkuAndIdNot(String sku, Long variantId);
 
-    // Tải phân loại và thuộc tính của các sản phẩm trong một trang.
+    // Tải phân loại theo lô để tránh N+1 khi dựng trang sản phẩm.
     @EntityGraph(attributePaths = {"attributeValues", "attributeValues.attribute"})
     List<ProductVariantEntity> findByProduct_IdIn(Collection<Long> productIds);
 

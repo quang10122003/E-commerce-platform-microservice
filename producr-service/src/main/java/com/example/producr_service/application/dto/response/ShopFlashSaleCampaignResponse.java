@@ -13,7 +13,7 @@ public record ShopFlashSaleCampaignResponse(
         OffsetDateTime endsAt,
         boolean registrationOpen
 ) {
-    // Trả thời gian có offset và quyền đăng ký tại cùng mốc now dùng để lọc.
+    // Quyền đăng ký phải dùng cùng mốc now với bộ lọc để response không tự mâu thuẫn.
     public static ShopFlashSaleCampaignResponse from(FlashSaleCampaignView campaign, ZoneId zone, LocalDateTime now) {
         return new ShopFlashSaleCampaignResponse(campaign.id(), campaign.name(),
                 campaign.registrationDeadline().atZone(zone).toOffsetDateTime(),

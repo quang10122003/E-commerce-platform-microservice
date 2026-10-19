@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 
-//  điều kiện tìm kiếm product và cursor cho infinity scroll.
 public record ProductScrollFilter(
         String keyword,
         Long categoryId,
@@ -17,7 +16,6 @@ public record ProductScrollFilter(
         ProductSortOption sortOption
 ) {
 
-    // Dùng tiêu chí liên quan khi client không truyền lựa chọn sắp xếp.
     public ProductScrollFilter {
         sortOption = sortOption == null ? ProductSortOption.RELEVANCE : sortOption;
         locations = locations == null

@@ -6,6 +6,5 @@ import java.util.List;
 
 public interface GetCategoriesUseCase {
 
-    // Lấy danh sách category để cung cấp cho API.
     List<CategoryResponse> getCategories();
 }

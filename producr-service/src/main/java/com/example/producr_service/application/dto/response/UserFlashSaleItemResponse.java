@@ -2,7 +2,6 @@ package com.example.producr_service.application.dto.response;
 
 import java.math.BigDecimal;
 
-// Dữ liệu card của một phân loại tham gia sale.
 public record UserFlashSaleItemResponse(
         Long productId,
         Long variantId,
@@ -18,7 +17,7 @@ public record UserFlashSaleItemResponse(
         Availability availability
 ) {
 
-    // Trạng thái hiển thị, không lưu vào database.
+    // Trạng thái này chỉ phục vụ hiển thị, không phải trạng thái được lưu trong database.
     public enum Availability {
         AVAILABLE,
         OUT_OF_STOCK,

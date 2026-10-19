@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FlashSaleCampaignPublishedHandler implements FlashSaleCampaignStatuHandler {
-    // Nguồn thời gian được truyền từ infrastructure.
     Clock clock;
 
     @Override

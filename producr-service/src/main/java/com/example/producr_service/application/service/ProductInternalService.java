@@ -45,7 +45,7 @@ public class ProductInternalService implements GetCartInfoUseCase, CheckProductE
     VariantSaleResolver variantSaleResolver;
     Clock clock;
 
-    // Tra cứu tên và ảnh sản phẩm cho các room trong trang, không loại sản phẩm ngừng bán.
+    // Chat vẫn cần hiển thị sản phẩm ngừng bán nên không lọc theo trạng thái ACTIVE.
     @Override
     @Transactional(readOnly = true)
     public List<ProductSummaryResponse> getProductSummariesByIds(List<Long> productIds) {
@@ -56,7 +56,6 @@ public class ProductInternalService implements GetCartInfoUseCase, CheckProductE
                 .filter(Objects::nonNull).distinct().toList());
     }
 
-    // Lấy shop ID từ người tạo sản phẩm; sản phẩm không tồn tại trả lỗi 404.
     @Override
     @Transactional(readOnly = true)
     public ProductShopIdResponse getShopId(Long productId) {
@@ -65,14 +64,13 @@ public class ProductInternalService implements GetCartInfoUseCase, CheckProductE
         return new ProductShopIdResponse(shopId);
     }
 
-    // Kiểm tra sản phẩm còn trong DB, kể cả khi không còn ACTIVE.
+    // Ngừng bán không đồng nghĩa đã xóa, nên kiểm tra tồn tại không lọc ACTIVE.
     @Override
     @Transactional(readOnly = true)
     public ProductExistsResponse checkExists(Long productId) {
         return new ProductExistsResponse(productRepositoryPort.existsById(productId));
     }
 
-    // Lấy thông tin sản phẩm theo danh sách variant để phục vụ hiển thị giỏ hàng.
     @Override
     @Transactional(readOnly = true)
     public List<CartInfoRepone> getCartInfo(List<Long> variantIds) {
@@ -85,7 +83,7 @@ public class ProductInternalService implements GetCartInfoUseCase, CheckProductE
         Map<Long, ShopInfoResponse> shopInfos = shopInfoClientPort.getShopInfos(shopIds).stream()
                 .collect(Collectors.toMap(ShopInfoResponse::shopId, Function.identity()));
 
-        // Lấy sale một lần cho các variant công khai và dùng chung mốc thời gian.
+        // Các ưu đãi trong cùng response phải dùng một mốc thời gian để tránh lệch trạng thái sát hạn.
 
         List<Long> activeVariantIds = views.stream()
                 .filter(view -> view.status() == ProductStatus.ACTIVE)
@@ -99,16 +97,14 @@ public class ProductInternalService implements GetCartInfoUseCase, CheckProductE
                 .toList();
     }
 
-    // Ghép tên shop và sale vào thông tin variant trước khi trả cho Order service.
     private CartInfoRepone toCartInfoRepone(VariantCartView view, ShopInfoResponse shopInfo,
                                           List<FlashSaleOfferView> offers){
         List<CartInfoRepone.VariantOption> options  = view.options().stream().sorted(Comparator.comparing(VariantCartView.OptionView::attributeId).thenComparing(VariantCartView.OptionView::valueId)).map(optionView -> new CartInfoRepone.VariantOption(optionView.name(),optionView.value())).toList();
 
         boolean hasOption = !options.isEmpty();
 
-        // sản phẩm có  phân loai thì uw tiên lấy ảnh phân lọai , ko thì lấy ảnh product
         String imgUrl = hasOption ? pickVariantImage(view.images()).orElse(view.productImageUrl()) : view.productImageUrl();
-        // Giữ sản phẩm ngừng hoạt động trong giỏ nhưng không hiển thị sale.
+        // Sản phẩm ngừng hoạt động vẫn ở trong giỏ nhưng không được hưởng giá sale.
         VariantSaleResponse.Sale applicableSale = view.status() == ProductStatus.ACTIVE
                 ? variantSaleResolver.resolve(view.price(), view.stockQuantity(), offers) : null;
         CartInfoRepone.Sale sale = applicableSale == null ? null
@@ -121,7 +117,6 @@ public class ProductInternalService implements GetCartInfoUseCase, CheckProductE
 
     }
 
-    // lấy ảnh chỉnh cửa 1 Variant nếu k có thì lấy ảnh đầu
     private Optional<String> pickVariantImage(List<VariantCartView.ImageView> images) {
         return images.stream()
                 .filter(VariantCartView.ImageView::primary)

@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserFlashSaleController {
     private final GetUserFlashSaleItemsUseCase getUserFlashSaleItemsUseCase;
 
-    // api lấy các thẻ sản phẩm đang sale cho user
     @GetMapping("/items")
     public ResponseEntity<UserFlashSaleResponse> getItems(
             @RequestParam(name = "categoryId", required = false) Long categoryId
@@ -24,7 +23,6 @@ public class UserFlashSaleController {
         return ResponseEntity.ok(getUserFlashSaleItemsUseCase.getItems(categoryId));
     }
 
-    // Trả tối đa 5 card bán chạy còn AVAILABLE trong sale đang diễn ra.
     @GetMapping("/items/top-selling")
     public ResponseEntity<UserFlashSaleResponse> getTopSellingItems() {
         return ResponseEntity.ok(getUserFlashSaleItemsUseCase.getTopSellingItems());

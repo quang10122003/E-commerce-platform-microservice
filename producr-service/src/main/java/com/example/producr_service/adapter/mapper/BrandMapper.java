@@ -7,9 +7,7 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface BrandMapper {
 
-    // Chuyển entity brand thành domain model.
     Brand toDomain(BrandEntity entity);
 
-    // Chuyển domain model thành entity brand.
     BrandEntity toEntity(Brand domain);
 }

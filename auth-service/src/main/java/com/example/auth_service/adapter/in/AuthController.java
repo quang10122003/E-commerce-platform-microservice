@@ -29,13 +29,11 @@ public class AuthController {
    LogoutUserCase logoutUserCase;
 
 
-    // API đăng ký tài khoản
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRquest request) {
         return ResponseEntity.ok(registerUseCase.register(request));
     }
 
-    // API đăng nhập và trả token
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(loginUseCase.login(request));
@@ -52,7 +50,6 @@ public class AuthController {
     }
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequest request){
-        // Thu hồi access token và refresh token bằng cách ghi chúng vào Redis blacklist.
         logoutUserCase.logout(request);
         return  ResponseEntity.noContent().build();
     }

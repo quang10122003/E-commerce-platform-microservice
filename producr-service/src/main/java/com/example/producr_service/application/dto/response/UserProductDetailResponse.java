@@ -4,7 +4,6 @@ import com.example.producr_service.domain.model.ProductStatus;
 import java.math.BigDecimal;
 import java.util.List;
 
-// Chi tiết công khai của product
 public record UserProductDetailResponse(
         Long id, Long shopId, String name, String description, String imageUrl, ProductStatus status,
         String location,
@@ -33,7 +32,7 @@ public record UserProductDetailResponse(
 
     public record Image(Long id, String imageUrl, boolean primary) {}
 
-    // Trạng thái tồn kho của variant, không phải trạng thái quota sale.
+    // Trạng thái variant phản ánh tồn kho, không phản ánh quota còn lại của sale.
     public enum VariantStatus {
         AVAILABLE, OUT_OF_STOCK
     }

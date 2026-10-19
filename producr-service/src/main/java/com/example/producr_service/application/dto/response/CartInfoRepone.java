@@ -8,7 +8,6 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 
-// Trả thông tin hiện tại của variant để Order Service ghép với item trong giỏ.
 public record CartInfoRepone(
         Long productVariantId,
         Long productId,
@@ -24,11 +23,10 @@ public record CartInfoRepone(
         Sale sale
 ) {
 
-    // Mô tả một lựa chọn phân loại của variant.
     public record VariantOption(String name, String value) {
     }
 
-    // Giá sale một đơn vị và thời điểm kết thúc; null khi không còn ưu đãi áp dụng.
+    // sale null nghĩa là không còn ưu đãi áp dụng, không phải giá sale bằng 0.
     public record Sale(BigDecimal salePrice, OffsetDateTime endsAt) {
     }
 }

@@ -11,7 +11,6 @@ import com.example.auth_service.adapter.entity.OutboxEventEntity;
 
 public interface OutboxEventRepoJpaJpa extends JpaRepository<OutboxEventEntity, Long> {
 
-    // Lấy event theo thứ tự ID tăng dần.
     List<OutboxEventEntity> findByStatusOrderByIdAsc(
             OutboxEventEntity.Status status);
 

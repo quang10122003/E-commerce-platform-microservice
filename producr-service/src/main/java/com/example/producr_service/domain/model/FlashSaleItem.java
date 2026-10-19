@@ -12,7 +12,6 @@ public record FlashSaleItem(Long id, Long campaignId, Long variantId, Long shopI
         List<Attribute> attributes, BigDecimal discountPercent, int registeredQuantity,
         long soldQuantity, FlashSaleItemStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
 
-    // Giữ snapshot bất biến và bảo vệ dữ liệu cơ bản của đăng ký.
     public FlashSaleItem {
         if ((id != null && id <= 0) || campaignId == null || campaignId <= 0 || shopId == null || shopId <= 0
                 || productName == null || productName.isBlank() || productName.length() > 255
@@ -29,7 +28,7 @@ public record FlashSaleItem(Long id, Long campaignId, Long variantId, Long shopI
         Objects.requireNonNull(updatedAt, "Thời điểm cập nhật không được null");
     }
 
-    // Tạo đăng ký mới sau khi kiểm tra giá và khoảng đệm tồn kho, không giữ hàng.
+    // Kiểm tra tồn kho khi đăng ký không đồng nghĩa giữ hàng cho sale.
     public static FlashSaleItem register(Long campaignId, RegistrationVariant variant,
             BigDecimal discountPercent, int registeredQuantity, LocalDateTime now) {
         if (variant.variantId() == null || variant.variantId() <= 0) {
@@ -43,7 +42,7 @@ public record FlashSaleItem(Long id, Long campaignId, Long variantId, Long shopI
                 FlashSaleItemStatus.REGISTERED, now, now);
     }
 
-    // Admin vô hiệu hóa đăng ký nhưng giữ nguyên snapshot và số lượng đã mua.
+    // Admin vô hiệu hóa vẫn phải giữ snapshot và số lượng đã mua để bảo toàn lịch sử.
     public FlashSaleItem disable(LocalDateTime now) {
         if (status == FlashSaleItemStatus.DISABLED) {
             return this;
@@ -52,7 +51,6 @@ public record FlashSaleItem(Long id, Long campaignId, Long variantId, Long shopI
                 discountPercent, registeredQuantity, soldQuantity, FlashSaleItemStatus.DISABLED, createdAt, now);
     }
 
-    // Dữ liệu sản phẩm cần cho nghiệp vụ đăng ký vào 1 sale
     public record RegistrationVariant(Long variantId, Long shopId, String productName,
             BigDecimal price, int stockQuantity, List<Attribute> attributes) {
         public RegistrationVariant {

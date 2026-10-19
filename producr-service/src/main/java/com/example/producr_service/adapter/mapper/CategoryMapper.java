@@ -6,9 +6,7 @@ import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {
-    // Chuyển entity category thành domain model.
     Category toDomain(CategoryEntity entity);
 
-    // Chuyển domain category thành entity lưu trữ.
     CategoryEntity toEntity(Category domain);
 }

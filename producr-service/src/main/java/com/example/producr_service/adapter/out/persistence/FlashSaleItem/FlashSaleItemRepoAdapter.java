@@ -28,14 +28,12 @@ public class FlashSaleItemRepoAdapter implements FlashSaleItemRepositoryPort {
      FlashSaleItemJpa flashSaleItemJpa;
      ProductVariantMapper productVariantMapper;
 
-    // Truy vấn projection ưu đãi, không khóa dữ liệu hoặc xử lý quota tại adapter.
     @Override
     public List<FlashSaleOfferView> findOngoingOffers(Long productId, Long variantId, LocalDateTime now) {
         return flashSaleItemJpa.findOngoingOffers(productId, variantId, now, ProductStatus.ACTIVE,
                 FlashSaleItemStatus.REGISTERED, FlashSaleCampaignStatus.PUBLISHED);
     }
 
-    // Đọc ưu đãi theo danh sách variant, bỏ qua truy vấn khi danh sách rỗng.
     @Override
     public List<FlashSaleOfferView> findOngoingOffersByVariantIds(List<Long> variantIds, LocalDateTime now) {
         if (variantIds.isEmpty()) {
@@ -45,7 +43,6 @@ public class FlashSaleItemRepoAdapter implements FlashSaleItemRepositoryPort {
                 FlashSaleItemStatus.REGISTERED, FlashSaleCampaignStatus.PUBLISHED);
     }
 
-    // Đọc sản phẩm và variant hiện có để tạo snapshot, không giữ khóa khi kiểm tra.
     @Override
     public Optional<FlashSaleVariantSnapshot> findVariant(Long variantId) {
         return productVariantJpa.findSnapshotById(variantId).map(flashSaleItemMapper::toSnapshot);
@@ -53,7 +50,6 @@ public class FlashSaleItemRepoAdapter implements FlashSaleItemRepositoryPort {
 
     @Override
     public List<UserFlashSaleItemView> findItemsInOngoingCampaigns(Long categoryId, LocalDateTime now) {
-        // lấy ra thông tin các sản phẩm đang trong sale và k bị admin lock và k bị shop khóa fillter theo category
          return flashSaleItemJpa.findItemsInOngoingCampaigns(
                 categoryId,now, FlashSaleCampaignStatus.PUBLISHED, FlashSaleItemStatus.REGISTERED, ProductStatus.ACTIVE
         ).stream().map(flashSaleItemMapper::toUserFlashSaleItemView).toList();

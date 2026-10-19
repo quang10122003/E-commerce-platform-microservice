@@ -18,19 +18,16 @@ public class CategoryRepoAdapter implements CategoryRepoPort {
     CategoryJpa categoryJpa;
     CategoryMapper categoryMapper;
 
-    // Kiểm tra category có tồn tại theo mã định danh.
     @Override
     public boolean existsById(Long id) {
         return categoryJpa.existsById(id);
     }
 
-    // Lấy category theo ID và chuyển entity thành domain model.
     @Override
     public Optional<Category> findById(Long id) {
         return categoryJpa.findById(id).map(categoryMapper::toDomain);
     }
 
-    // Lấy toàn bộ category và chuyển entity thành domain model.
     @Override
     public List<Category> getAllCategories() {
         return categoryJpa.findAll().stream().map(categoryMapper::toDomain).toList();

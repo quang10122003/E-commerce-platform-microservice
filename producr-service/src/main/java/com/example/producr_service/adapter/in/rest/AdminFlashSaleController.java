@@ -32,14 +32,13 @@ public class AdminFlashSaleController {
 
     private final CancelFlashSaleCampaignUseCase cancelFlashSaleCampaignUseCase;
 
-    // Hủy chương trình; trả 204 cả khi chương trình đã được hủy trước đó.
+    // Hủy lại chương trình đã hủy vẫn trả 204 để request lặp không trở thành lỗi.
     @PutMapping("/{campaignId}/cancel")
     public ResponseEntity<Void> cancel(@PathVariable Long campaignId) {
         cancelFlashSaleCampaignUseCase.cancel(campaignId);
         return ResponseEntity.noContent().build();
     }
 
-    // Đọc danh sách chương trình, mặc định trang 1 với 20 bản ghi.
     @GetMapping
     public ResponseEntity<PageResponse<FlashSaleCampaignResponse>> getCampaigns(
             @RequestParam(defaultValue = "1") int page,
@@ -51,7 +50,6 @@ public class AdminFlashSaleController {
                 new FlashSaleCampaignFilter(page, size, from, to, status)));
     }
 
-    // Tạo chương trình Flash Sale (admin)
     @PostMapping
     public ResponseEntity<Void> create(@Valid @RequestBody CreateFlashSaleCampaignRequest request) {
         createFlashSaleCampaignUseCase.create(request);

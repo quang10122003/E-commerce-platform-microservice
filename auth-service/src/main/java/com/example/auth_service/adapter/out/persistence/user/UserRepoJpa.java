@@ -13,10 +13,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserRepoJpa extends JpaRepository<UserEntity, Long> {
-    // Chỉ đọc tên hiển thị, không đưa email và thông tin liên hệ vào danh sách chat.
+    // Danh sách chat không được làm lộ email hoặc thông tin liên hệ.
     @Query("select new com.example.auth_service.application.DTO.repone.UserDisplayInfoResponse(u.id, u.fullName) from UserEntity u where u.id in :userIds")
     List<UserDisplayInfoResponse> findUserDisplayInfosByIds(@Param("userIds") Collection<Long> userIds);
-    // Projection giới hạn dữ liệu đọc và chỉ nhận tài khoản có vai trò shop.
     @Query("""
             select new com.example.auth_service.application.DTO.repone.ShopAddressView(
                 u.id, u.shopName, u.shopAddress)

@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-// chương trình sale
 @Getter
 public class FlashSaleCampaign {
     private final  Long id;
@@ -20,20 +19,19 @@ public class FlashSaleCampaign {
     private  LocalDateTime registrationDeadline;
     private  LocalDateTime startsAt;
     private  LocalDateTime endsAt;
-    // Vòng đời chương trình; quyền đăng ký và mua còn phụ thuộc các mốc thời gian.
+    // Trạng thái vòng đời chưa đủ quyết định quyền đăng ký hoặc mua; còn phải kiểm tra mốc thời gian.
     private  FlashSaleCampaignStatus status;
     private  Long createdBy;
     private  LocalDateTime createdAt;
     private  LocalDateTime updatedAt;
-    // Aggregate luôn chứa đầy đủ đăng ký; dữ liệu đọc danh sách dùng DTO riêng.
+    // Aggregate phải chứa đủ đăng ký; dữ liệu đọc thiếu items dùng DTO riêng để không lưu nhầm.
     private final List<FlashSaleItem> items = new ArrayList<>();
 
-    // Không cho caller thay đổi collection ngoài các hàm nghiệp vụ.
+    // Không cho sửa collection trực tiếp để không bỏ qua ràng buộc nghiệp vụ của aggregate.
     public List<FlashSaleItem> getItems() {
         return Collections.unmodifiableList(items);
     }
 
-    // Khởi tạo state hợp lệ dùng chung cho tạo mới và dựng lại dữ liệu.
     private FlashSaleCampaign(Long id, String name, String description,
                               LocalDateTime registrationDeadline, LocalDateTime startsAt,
                               LocalDateTime endsAt, FlashSaleCampaignStatus status,
@@ -60,7 +58,6 @@ public class FlashSaleCampaign {
         this.updatedAt = Objects.requireNonNull(updatedAt, "Thời điểm cập nhật không được null");
     }
 
-    // Kiểm tra điều kiện và thêm đăng ký vào aggregate đã tải đầy đủ.
     public FlashSaleItem addItem(FlashSaleItem.RegistrationVariant variant,
             BigDecimal discountPercent, int registeredQuantity, LocalDateTime now) {
         validateRegistration(now);
@@ -73,7 +70,7 @@ public class FlashSaleCampaign {
         return item;
     }
 
-    // Shop xóa vật lý đăng ký của mình chỉ khi DRAFT và chưa hết hạn.
+    // Shop chỉ được xóa đăng ký khi còn DRAFT và chưa hết hạn, không can thiệp sale đã công bố.
     public void removeItem(Long itemId, Long shopId, LocalDateTime now) {
         validateRegistration(now);
         FlashSaleItem item = items.stream()
@@ -83,7 +80,7 @@ public class FlashSaleCampaign {
         updatedAt = now;
     }
 
-    // Admin block chỉ đổi trạng thái, không xóa item hoặc số liệu lịch sử.
+    // Admin block phải giữ item và số liệu lịch sử, không xóa vật lý đăng ký.
     public void disableItem(Long itemId, LocalDateTime now) {
         for (int index = 0; index < items.size(); index++) {
             FlashSaleItem item = items.get(index);
@@ -99,14 +96,12 @@ public class FlashSaleCampaign {
         throw new BusinessException(DomainProductError.FLASH_SALE_ITEM_NOT_FOUND);
     }
 
-    // Chỉ nhận đăng ký khi còn DRAFT và chưa đến hạn đóng đăng ký.
     public void validateRegistration(LocalDateTime now) {
         if (!isRegistrationOpen(now)) {
             throw new BusinessException(DomainProductError.FLASH_SALE_REGISTRATION_CLOSED);
         }
     }
 
-    // Tạo chương trình DRAFT để Shop đăng ký ngay, đến trước hạn đăng ký.
     public static FlashSaleCampaign create(
             String name,
             String description,
@@ -122,7 +117,7 @@ public class FlashSaleCampaign {
         if (!registrationDeadline.isAfter(now)) {
             throw new BusinessException(DomainProductError.FLASH_SALE_REGISTRATION_DEADLINE_PASSED);
         }
-        // Giữ đủ thời gian chuẩn bị trước khi chương trình bắt đầu.
+        // Khoảng đệm trước giờ bắt đầu dành cho việc chuẩn bị chương trình.
         if (startsAt.isBefore(now.plusHours(3))) {
             throw new BusinessException(DomainProductError.FLASH_SALE_START_TOO_SOON);
         }
@@ -133,13 +128,12 @@ public class FlashSaleCampaign {
         return campaign;
     }
 
-    // Shop chỉ được đăng ký khi chương trình còn DRAFT và chưa đến hạn.
     public boolean isRegistrationOpen(LocalDateTime now) {
         Objects.requireNonNull(now, "Thời điểm hiện tại không được null");
         return status == FlashSaleCampaignStatus.DRAFT && now.isBefore(registrationDeadline);
     }
 
-    // Chỉ cho phép chuyển trạng thái theo vòng đời; không xử lý mốc thời gian.
+    // Chuyển trạng thái không tự kiểm tra thời gian; caller phải kiểm tra mốc thời gian trước.
     public void updateStatus(FlashSaleCampaignStatus nextStatus) {
         if (nextStatus == null) {
             throw new BusinessException(DomainProductError.FLASH_SALE_STATUS_REQUIRED);
@@ -157,7 +151,7 @@ public class FlashSaleCampaign {
         status = nextStatus;
     }
 
-    // Hủy chương trình chưa hoàn thành; trả true khi thay đổi, gọi lại giữ nguyên updatedAt.
+    // Hủy lại không cập nhật updatedAt để thao tác lặp không tạo thay đổi giả.
     public boolean cancel(LocalDateTime now) {
         Objects.requireNonNull(now, "Thời điểm hiện tại không được null");
         if (status == FlashSaleCampaignStatus.CANCELLED) {
@@ -171,7 +165,7 @@ public class FlashSaleCampaign {
         return true;
     }
 
-    // Dựng aggregate đầy đủ, không yêu cầu hạn đăng ký còn ở tương lai.
+    // Khôi phục dữ liệu đã lưu không được yêu cầu hạn đăng ký còn ở tương lai.
     public static FlashSaleCampaign reconstitute(
             Long id,
             String name,
@@ -189,7 +183,6 @@ public class FlashSaleCampaign {
         }
         FlashSaleCampaign campaign = new FlashSaleCampaign(id, name, description, registrationDeadline,
                 startsAt, endsAt, status, createdBy, createdAt, updatedAt);
-        // Không nhận collection thiếu hoặc đăng ký thuộc chương trình khác.
         List<FlashSaleItem> restoredItems = List.copyOf(items);
         if (restoredItems.stream().anyMatch(item -> !id.equals(item.campaignId()))) {
             throw new IllegalArgumentException("Item không thuộc chương trình");

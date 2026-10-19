@@ -4,6 +4,7 @@ import com.example.producr_service.application.port.in.CreateProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductvariantUseCase;
 import com.example.producr_service.application.port.in.GetProductsCatalogUseCase;
+import com.example.producr_service.application.port.in.GetProductPriceRangeUseCase;
 import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
 import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
 import com.example.producr_service.application.port.in.GetUserProductDetailUseCase;
@@ -34,6 +35,11 @@ import java.time.Clock;
 
 @Configuration
 public class ProductConfig {
+    @Bean
+    GetProductPriceRangeUseCase getProductPriceRangeUseCase(ProductService productService) {
+        return productService;
+    }
+
     // Cung cấp use case đọc product công khai qua input port.
     @Bean
     GetUserProductDetailUseCase getUserProductDetailUseCase(ProductService productService) {

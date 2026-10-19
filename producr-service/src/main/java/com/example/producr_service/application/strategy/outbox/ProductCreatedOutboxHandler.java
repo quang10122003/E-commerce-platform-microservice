@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;
 
-// Đồng bộ Product đã tạo từ cơ sở dữ liệu sang Elasticsearch.
 @RequiredArgsConstructor
 public class ProductCreatedOutboxHandler implements OutboxEventHandler {
 

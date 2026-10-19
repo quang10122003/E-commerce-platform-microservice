@@ -9,13 +9,10 @@ import lombok.Data;
 @Builder
 public class AuthResponse {
 
-    // Access token trả về sau khi xác thực thành công
     private String accessToken;
 
-    // Refresh token để làm mới phiên đăng nhập
     private String refreshToken;
     Set<String> role;
-    // Thông tin cơ bản của tài khoản
     private Long userId;
     private String email;
     private String fullName;

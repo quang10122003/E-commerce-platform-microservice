@@ -30,7 +30,6 @@ public class OutboxEventRepoAdapter implements OutboxEventPort {
     @Override
     public void save(OutboxEvent event) {
         String payload = jsonUtils.toJson(event.payload());
-        // đẩy lên outbox 
         outboxEventRepoJpaJpa.save(outboxEventMapper.toEntity(event, payload));
     }
 

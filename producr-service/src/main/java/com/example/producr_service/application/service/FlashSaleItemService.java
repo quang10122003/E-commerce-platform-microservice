@@ -31,13 +31,12 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
      ProductVariantRepoPort productVariantRepoPort;
      VariantSaleResolver variantSaleResolver;
 
-    // Kiểm tra đúng product và variant trước khi xác định ưu đãi còn mua được.
     @Override
     @Transactional(readOnly = true)
     public VariantSaleResponse getVariantSale(Long productId, Long variantId) {
         VariantPriceView variant = productVariantRepoPort.findPriceView(productId, variantId)
                 .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND));
-        // Phân biệt sản phẩm không hoạt động với product hoặc variant không tồn tại.
+        // Không hoạt động và không tồn tại là hai lỗi khác nhau, không gộp chung khi tra ưu đãi.
         if (variant.productStatus() != ProductStatus.ACTIVE) {
             throw new BusinessException(ProductError.PRODUCT_INACTIVE);
         }
@@ -48,12 +47,11 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
                 variantSaleResolver.resolve(variant.price(), variant.stockQuantity(), offers));
     }
 
-    // Khóa campaign và tải đầy đủ items trước khi domain thêm đăng ký vào aggregate.
+    // Phải khóa và tải đủ items trước khi thêm đăng ký để không ghi đè cập nhật đồng thời.
     @Override
     @Transactional
     public void register(Long campaignId, RegisterFlashSaleItemRequest request) {
         Long shopId = currentUser.getUserInfo().userId();
-        // lấy chương trình sale
         FlashSaleCampaign campaign = flashSaleCampaignRepositoryPort.findByIdForUpdate(campaignId)
                 .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
 
@@ -64,7 +62,6 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
         flashSaleCampaignRepositoryPort.save(campaign);
     }
 
-    // Tính giá dự kiến từ giá hiện tại của variant thuộc Shop, không ghi dữ liệu.
     @Override
     @Transactional(readOnly = true)
     public FlashSalePriceResponse previewPrice(Long variantId, PreviewFlashSalePriceRequest request) {
@@ -73,7 +70,6 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
                 FlashSaleRules.calculateSalePrice(variant.price(), request.discountPercent()));
     }
 
-    // check quyền sở hữu variant và sản phầm phải active
     private FlashSaleVariantSnapshot ownedVariant(Long variantId, Long shopId) {
         FlashSaleVariantSnapshot variant = flashSaleItemRepositoryPort.findVariant(variantId)
                 .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND));
@@ -86,21 +82,18 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
         return variant;
     }
 
-    // lấy thông tin item của sale cho user
     @Transactional(readOnly = true)
     @Override
     public UserFlashSaleResponse getItems(Long categoryId) {
         return getSaleItems(categoryId, false);
     }
 
-    // Lấy tối đa 5 card bán chạy, bỏ qua item không còn mua được giá sale.
     @Override
     @Transactional(readOnly = true)
     public UserFlashSaleResponse getTopSellingItems() {
         return getSaleItems(null, true);
     }
 
-    // lấy danh sách item đang của sale đang đc mở , nhận cờ topSellingOnly để lấy top sản phẩn sale
     private UserFlashSaleResponse getSaleItems(Long categoryId, boolean topSellingOnly) {
         LocalDateTime now = LocalDateTime.now(clock);
         List<UserFlashSaleItemView> items = flashSaleItemRepositoryPort.findItemsInOngoingCampaigns(categoryId, now);
@@ -131,11 +124,10 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
     }
 
 
-//    dựng repone UserFlashSaleItemResponse cho api lấy thông tin sản phẩm của sale đang phát hành
     private UserFlashSaleItemResponse toUserItemResponse(UserFlashSaleItemView item) {
         VariantCartView variant = item.variant();
 
-        // Số lượng mua được bị giới hạn bởi cả quota sale và tồn kho thực tế.
+        // Quota sale không thay thế tồn kho thực tế; số lượng mua phải thỏa cả hai giới hạn.
         long quotaRemaining = Math.max(
                 0L,
                 (long) item.registeredQuantity() - item.soldQuantity()
@@ -146,9 +138,9 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
 
         // Hết quota được ưu tiên vì nhập thêm hàng cũng không khôi phục suất sale.
         UserFlashSaleItemResponse.Availability availability;
-        if (quotaRemaining == 0) {  // hết lượt mua sale
+        if (quotaRemaining == 0) {
             availability = UserFlashSaleItemResponse.Availability.SOLD_OUT;
-        } else if (stockAvailable == 0) { // tạm hết hàng
+        } else if (stockAvailable == 0) {
             availability = UserFlashSaleItemResponse.Availability.OUT_OF_STOCK;
         } else {
             availability = UserFlashSaleItemResponse.Availability.AVAILABLE;
@@ -160,7 +152,7 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
                 .map(option -> option.name() + ": " + option.value())
                 .collect(Collectors.joining(" · "));
 
-        // Ưu tiên ảnh chính của variant, rồi ảnh đầu theo ID; thiếu ảnh thì dùng ảnh product.
+        // Thiếu ảnh variant không được làm mất ảnh card, nên dùng ảnh product làm phương án dự phòng.
         String imageUrl = variant.images().stream()
                 .sorted(Comparator
                         .comparing(VariantCartView.ImageView::primary)

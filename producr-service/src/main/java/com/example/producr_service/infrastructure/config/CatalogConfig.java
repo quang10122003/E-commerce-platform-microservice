@@ -12,19 +12,16 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CatalogConfig {
 
-    // Đăng ký service lấy category theo mô hình port in/out của ứng dụng.
     @Bean
     CategoryService categoryService(CategoryRepoPort categoryRepoPort) {
         return new CategoryService(categoryRepoPort);
     }
 
-    // Cung cấp use case lấy category cho adapter vào như controller.
     @Bean
     GetCategoriesUseCase getCategoriesUseCase(CategoryService categoryService) {
         return categoryService;
     }
 
-    // Tạo bean theo port để controller không phụ thuộc implementation của service.
     @Bean
     GetBrandsUseCase getBrandsUseCase(BrandRepositoryPort brandRepositoryPort) {
         return new BrandService(brandRepositoryPort);

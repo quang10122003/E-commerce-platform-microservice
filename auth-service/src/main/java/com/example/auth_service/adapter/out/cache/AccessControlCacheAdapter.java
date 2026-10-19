@@ -44,7 +44,7 @@ public class AccessControlCacheAdapter implements AccessControlCachePort {
         } catch (DataAccessException ex) {
             log.error("Failed to check JWT blacklist in Redis", ex);
 
-            // Redis không kiểm tra được.
+            // Lỗi Redis được coi là chưa thu hồi token; luồng này không chặn truy cập khi cache lỗi.
             return false;
         }
     }
@@ -72,7 +72,7 @@ public class AccessControlCacheAdapter implements AccessControlCachePort {
         } catch (DataAccessException ex) {
             log.error("Failed to check user lock [{}] in Redis", userId, ex);
 
-            // Redis không kiểm tra được.
+            // Lỗi Redis được coi là tài khoản chưa khóa; luồng này không chặn truy cập khi cache lỗi.
             return false;
         }
     }

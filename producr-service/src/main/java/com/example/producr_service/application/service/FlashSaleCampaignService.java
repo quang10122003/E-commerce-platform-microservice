@@ -70,7 +70,6 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
         }
     }
 
-    // Đọc trang chương trình và trả thời gian có offset theo múi giờ Việt Nam.
     @Override
     @Transactional(readOnly = true)
     public PageResponse<FlashSaleCampaignResponse> getCampaigns(FlashSaleCampaignFilter filter) {
@@ -93,7 +92,7 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
         );
     }
 
-    // Chỉ lấy DRAFT, dùng cùng now cho filter, sắp xếp và trạng thái còn hạn đăng ký.
+    // Filter, sắp xếp và quyền đăng ký phải dùng cùng now để tránh kết quả mâu thuẫn sát hạn.
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ShopFlashSaleCampaignResponse> getShopCampaigns(ShopFlashSaleCampaignFilter filter) {
@@ -111,24 +110,21 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
                 campaigns.page(), campaigns.pageSize(), campaigns.totalItems(), campaigns.totalPages());
     }
 
-    // Kiểm tra phân trang và khoảng thời gian dùng chung cho Admin và Shop.
     private void validateCampaignFilter(int page, int size, OffsetDateTime from, OffsetDateTime to) {
         if (page < 1 || size < 10 || size > 30) {
             throw new BusinessException(ProductError.INVALID_FLASH_SALE_PAGINATION);
         }
-        // Cho phép lọc từng mốc; chỉ kiểm tra thứ tự khi có đủ hai thời điểm.
         if (from != null && to != null && from.toInstant().isAfter(to.toInstant())) {
             throw new BusinessException(ProductError.INVALID_FLASH_SALE_TIME_FILTER);
         }
     }
 
-    // Tạo DRAFT cho Shop đăng ký; lịch sale không được trùng DRAFT hoặc PUBLISHED.
     @Override
     @Transactional
     public void create(CreateFlashSaleCampaignRequest request) {
         Long createdBy = currentUserPort.getUserInfo().userId();
         LocalDateTime now = LocalDateTime.now(clock);
-        // Quy đổi cùng thời điểm về múi giờ Việt Nam đã cấu hình trong Clock.
+        // Offset đầu vào có thể khác múi giờ lưu trữ; phải giữ nguyên thời điểm khi quy đổi.
         LocalDateTime registrationDeadline = request.registrationDeadline()
                 .atZoneSameInstant(clock.getZone()).toLocalDateTime();
         LocalDateTime startsAt = request.startsAt()
@@ -145,7 +141,6 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
                 now
         );
 
-        // ko cho tạo chương trình trùng lịch nhau
         if (flashSaleCampaignRepositoryPort.existsOverlapping(
                 campaign.getStartsAt(), campaign.getEndsAt())) {
             throw new BusinessException(ProductError.FLASH_SALE_SCHEDULE_CONFLICT);

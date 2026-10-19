@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.util.List;
 public record FlashSaleVariantSnapshot(Long variantId, Long shopId, String productName,
         boolean active, BigDecimal price, int stockQuantity, List<Attribute> attributes) {
-    // Chuyển snapshot đọc được thành dữ liệu thuần domain cho nghiệp vụ đăng ký.
     public FlashSaleItem.RegistrationVariant toRegistrationVariant() {
         return new FlashSaleItem.RegistrationVariant(
                 variantId, shopId, productName, price, stockQuantity,

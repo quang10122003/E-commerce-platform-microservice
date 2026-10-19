@@ -1,6 +1,6 @@
 package com.example.producr_service.application.port.in;
 
 public interface CancelFlashSaleCampaignUseCase {
-    // Hủy chương trình, cho phép gọi lại khi đã hủy.
+    // Gọi hủy lại phải hợp lệ để request lặp không làm thay đổi kết quả nghiệp vụ.
     void cancel(Long campaignId);
 }

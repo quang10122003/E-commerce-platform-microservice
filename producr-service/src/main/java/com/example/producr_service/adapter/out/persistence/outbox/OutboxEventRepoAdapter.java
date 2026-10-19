@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-// Adapter persistence quản lý vòng đời event outbox tổng quát.
 @Repository
 @RequiredArgsConstructor
 public class OutboxEventRepoAdapter implements OutboxPort {
@@ -26,7 +25,6 @@ public class OutboxEventRepoAdapter implements OutboxPort {
 
     @Override
     public void save(OutboxEventDto event) {
-        // Chỉ serialize payload tại adapter trước khi lưu cột JSON.
         outboxEventJpa.save(outboxEventMapper.toEntity(event, jsonUtils.toJson(event.payload())));
     }
 

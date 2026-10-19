@@ -16,18 +16,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
-    // Chỉ đọc tên và ảnh bìa, không tải các tập thuộc tính và phân loại.
     @Query("select new com.example.producr_service.application.dto.response.ProductSummaryResponse(p.id, p.name, p.imageUrl) from ProductEntity p where p.id in :productIds")
     List<ProductSummaryResponse> findProductSummariesByIds(@Param("productIds") List<Long> productIds);
-    // Chỉ đọc ID người tạo, không lọc trạng thái bán của sản phẩm.
     @Query("select p.userId from ProductEntity p where p.id = :productId")
     Optional<Long> findOwnerIdById(@Param("productId") Long productId);
 
-    // Tải sản phẩm cùng danh mục, thương hiệu; phân loại được đọc theo lô riêng.
     @EntityGraph(attributePaths = {"category", "brand"})
     List<ProductEntity> findAllByUserId(Long userId);
 
-    // Tải tên danh mục và thương hiệu cùng trang sản phẩm.
+    // Tải kèm danh mục và thương hiệu để tránh N+1 khi dựng trang sản phẩm.
     @EntityGraph(attributePaths = {"category", "brand"})
     @Query(
             value = """

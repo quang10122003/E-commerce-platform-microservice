@@ -6,6 +6,5 @@ import com.example.producr_service.application.dto.response.FlashSaleCampaignRes
 
 public interface GetFlashSaleCampaignsUseCase {
 
-    // Đọc danh sách chương trình phân trang cho Admin, số trang đầu tiên là 1.
     PageResponse<FlashSaleCampaignResponse> getCampaigns(FlashSaleCampaignFilter filter);
 }

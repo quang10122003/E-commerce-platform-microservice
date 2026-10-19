@@ -28,20 +28,19 @@ public class InternalProductController {
     private final GetProductShopIdUseCase getProductShopIdUseCase;
     private final GetProductSummariesUseCase getProductSummariesUseCase;
 
-    // Trả tên và ảnh bìa theo lô cho service chat, không yêu cầu product ACTIVE.
+    // Chat vẫn cần thông tin hiển thị của sản phẩm ngừng bán nên không lọc ACTIVE.
     @PostMapping("/summaries")
     public List<ProductSummaryResponse> getProductSummariesByIds(
             @RequestBody @Size(max = 50) List<@NotNull @Positive Long> productIds) {
         return getProductSummariesUseCase.getProductSummariesByIds(productIds);
     }
 
-    // Trả ID shop sở hữu sản phẩm cho service khác.
     @GetMapping("/{productId}/shop-id")
     public ResponseEntity<ProductShopIdResponse> getShopId(@PathVariable("productId") Long productId) {
         return ResponseEntity.ok(getProductShopIdUseCase.getShopId(productId));
     }
 
-    // Trả kết quả tồn tại sản phẩm cho service khác, không yêu cầu product ACTIVE.
+    // Ngừng bán không đồng nghĩa đã xóa, nên kiểm tra tồn tại không lọc ACTIVE.
     @GetMapping("/{productId}/exists")
     public ResponseEntity<ProductExistsResponse> checkExists(
             @PathVariable("productId") Long productId

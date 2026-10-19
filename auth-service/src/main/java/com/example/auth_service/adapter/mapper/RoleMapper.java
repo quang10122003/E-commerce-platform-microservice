@@ -7,10 +7,8 @@ import com.example.auth_service.domain.model.Role;
 
 @Mapper(componentModel = "spring")
 public interface RoleMapper {
-     // Chuyển dữ liệu từ persistence sang domain
     Role toDomain(RoleEntity entity);
 
-    // Chuyển dữ liệu từ domain sang persistence
     RoleEntity toEntity(Role role);
 
 }

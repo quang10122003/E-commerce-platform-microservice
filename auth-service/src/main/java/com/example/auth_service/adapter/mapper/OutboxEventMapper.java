@@ -17,7 +17,6 @@ public class OutboxEventMapper {
         this.jsonUtils = jsonUtils;
     }
 
-    // Chuyển domain event sang entity để lưu payload JSON xuống database.
     public OutboxEventEntity toEntity(OutboxEvent event, String payload) {
         OutboxEventEntity entity = new OutboxEventEntity();
         entity.setEventId(event.eventId().toString());
@@ -34,7 +33,6 @@ public class OutboxEventMapper {
         return entity;
     }
 
-    // Chuyển entity sang DTO và deserialize payload thành object.
     public OutboxEventDto toDto(OutboxEventEntity entity) {
         return new OutboxEventDto(
                 java.util.UUID.fromString(entity.getEventId()),

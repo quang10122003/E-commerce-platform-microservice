@@ -16,12 +16,12 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
-    // Danh sách endpoint được truy cập công khai bằng phương thức GET.
     private static final String[] PUBLIC_ENDPOINTS = {
             "/actuator/health",
             "/actuator/info",
             "/api/products",
             "/api/products/{productId:-?[0-9]+}",
+            "/api/products/{productId:-?[0-9]+}/price-range",
             "/api/products/{productId:-?[0-9]+}/variants/{variantId:-?[0-9]+}/sale",
             "/api/categories",
             "/api/brands",
@@ -29,12 +29,10 @@ public class SecurityConfig {
             "/api/user/flash-sales/items/top-selling"
     };
 
-    // Nhận filter JWT dùng chung để xác thực các API riêng tư.
     public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
-    // Cho phép endpoint công khai; các request còn lại cần access token.
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
             ApiAuthenticationEntryPoint authenticationEntryPoint,
@@ -45,13 +43,12 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Cho phép Spring xử lý lỗi tại /error để giữ đúng mã lỗi gốc của API.
+                        // Phải cho phép /error để Spring giữ mã lỗi gốc, tránh biến lỗi xử lý thành lỗi xác thực.
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers("/api/shop/flash-sales", "/api/shop/flash-sales/**").hasAuthority("ROLE_SHOP")
                         .anyRequest().authenticated()
                 )
-                // Trả lỗi xác thực và phân quyền theo định dạng API dùng chung.
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))

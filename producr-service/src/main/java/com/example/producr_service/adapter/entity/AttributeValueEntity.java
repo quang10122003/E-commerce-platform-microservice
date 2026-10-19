@@ -17,7 +17,7 @@ public class AttributeValueEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // FK attributes_id - tro toi LOAI thuoc tinh, ON DELETE CASCADE o DB
+    // Database xóa giá trị thuộc tính qua ON DELETE CASCADE khi thuộc tính cha bị xóa.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "attributes_id", nullable = false)
     private AttributeEntity attribute;
@@ -25,7 +25,6 @@ public class AttributeValueEntity {
     @Column(name = "value", nullable = false)
     private String value;
 
-    // So sánh theo ID khi đã lưu, còn bản ghi mới chỉ bằng chính nó.
     @Override
     public boolean equals(Object other) {
         if (this == other) return true;

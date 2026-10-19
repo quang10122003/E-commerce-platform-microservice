@@ -14,10 +14,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("api/categories")
 public class CategoryController {
-    // Use case phục vụ thao tác lấy danh sách category.
     private final GetCategoriesUseCase getCategoriesUseCase;
 
-    // Trả về danh sách category cho client.
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getAllCategories() {
         return ResponseEntity.ok(getCategoriesUseCase.getCategories());

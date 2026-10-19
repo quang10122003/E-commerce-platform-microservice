@@ -10,16 +10,14 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.util.List;
 
-// Dùng chung quy tắc xác định ưu đãi còn áp dụng cho chi tiết variant và giỏ hàng.
 public class VariantSaleResolver {
     private final Clock clock;
 
-    // Nhận Clock để thời gian kết thúc sale dùng đúng múi giờ cấu hình.
+    // Offset kết thúc sale phải dùng múi giờ của Clock, không dùng múi giờ mặc định của máy.
     public VariantSaleResolver(Clock clock) {
         this.clock = clock;
     }
 
-    // Trả sale còn mua được; báo lỗi nếu lịch sale đang chạy bị chồng nhau.
     public VariantSaleResponse.Sale resolve(BigDecimal price, int stockQuantity, List<FlashSaleOfferView> offers) {
         // Không chọn ngẫu nhiên ưu đãi khi dữ liệu vi phạm quy tắc lịch sale không chồng nhau.
         if (offers.size() > 1) {

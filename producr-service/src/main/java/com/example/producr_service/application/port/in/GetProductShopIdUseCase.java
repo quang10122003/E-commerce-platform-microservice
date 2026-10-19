@@ -4,6 +4,5 @@ import com.example.producr_service.application.dto.response.ProductShopIdRespons
 
 public interface GetProductShopIdUseCase {
 
-    // Lấy ID shop của sản phẩm, báo lỗi khi sản phẩm không tồn tại.
     ProductShopIdResponse getShopId(Long productId);
 }

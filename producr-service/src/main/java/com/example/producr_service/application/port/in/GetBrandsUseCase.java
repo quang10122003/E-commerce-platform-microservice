@@ -6,6 +6,5 @@ import java.util.List;
 
 public interface GetBrandsUseCase {
 
-    // Lấy danh sách brand để cung cấp cho API.
     List<BrandResponse> getBrands();
 }
