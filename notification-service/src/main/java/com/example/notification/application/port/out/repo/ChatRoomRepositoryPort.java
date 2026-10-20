@@ -2,6 +2,7 @@ package com.example.notification.application.port.out.repo;
 
 import com.example.common.response.PageQuery;
 import com.example.common.response.PageResponse;
+import com.example.common.response.ScrollResponse;
 import com.example.notification.application.dto.ReadChatMessagesResult;
 import com.example.notification.domain.model.ChatConversation;
 import com.example.notification.domain.model.ChatMessage;
@@ -38,7 +39,7 @@ public interface ChatRoomRepositoryPort {
 
     List<ChatMessage> findMessagesByConversationId(Long conversationId);
 
-    List<ChatMessage> findMessagesByConversationIdNewestFirst(Long conversationId);
+    ScrollResponse<ChatMessage> findMessagesByConversationIdNewestFirst(Long conversationId, String cursor);
 
     ReadChatMessagesResult markReceivedMessagesRead(Long conversationId, Long readerId);
 }

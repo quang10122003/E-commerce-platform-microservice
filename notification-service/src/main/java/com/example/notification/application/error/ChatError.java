@@ -3,6 +3,7 @@ package com.example.notification.application.error;
 import com.example.common.error.ErrorCode;
 
 public enum ChatError implements ErrorCode {
+    CHAT_CURSOR_INVALID("CHAT_CURSOR_INVALID", "Cursor tin nhắn không hợp lệ", 400),
     CHAT_ROOM_NOT_FOUND("CHAT_ROOM_NOT_FOUND", "Cuộc trò chuyện không tồn tại", 404),
     CHAT_PRODUCT_NOT_FOUND("CHAT_PRODUCT_NOT_FOUND", "Sản phẩm không tồn tại", 404),
     CHAT_ROOM_INVALID("CHAT_ROOM_INVALID", "Khách hàng, shop và sản phẩm phải có ID hợp lệ", 400),

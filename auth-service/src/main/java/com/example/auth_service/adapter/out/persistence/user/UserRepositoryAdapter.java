@@ -27,13 +27,15 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
 
     @Override
     public List<UserDisplayInfoResponse> findUserDisplayInfosByIds(Collection<Long> userIds) {
-        return userIds.isEmpty() ? List.of() : userRepoJpa.findUserDisplayInfosByIds(userIds);
+        return userIds.isEmpty() ? List.of() : userRepoJpa.findUserDisplayInfosByIds(userIds).stream()
+                .map(userMapper::toUserDisplayInfo).toList();
     }
 
     // Dùng vai trò shop hiện có để tránh công khai thông tin tài khoản thường.
     @Override
     public Optional<ShopAddressView> findShopAddressById(Long shopId) {
-        return userRepoJpa.findShopAddressById(shopId, RoleEnum.SHOP.getName());
+        return userRepoJpa.findShopAddressById(shopId, RoleEnum.SHOP.getName())
+                .map(userMapper::toShopAddress);
     }
 
     @Override
@@ -44,7 +46,8 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
 
     @Override
     public List<ShopInfoResponse> findShopInfosByIds(Collection<Long> userIds) {
-        return userIds.isEmpty() ? List.of() : userRepoJpa.findShopInfosByIds(userIds);
+        return userIds.isEmpty() ? List.of() : userRepoJpa.findShopInfosByIds(userIds).stream()
+                .map(userMapper::toShopInfo).toList();
     }
 
     @Override

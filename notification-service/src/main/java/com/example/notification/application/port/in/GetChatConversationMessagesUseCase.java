@@ -2,8 +2,8 @@ package com.example.notification.application.port.in;
 
 import com.example.notification.application.dto.response.ChatMessageResponse;
 
-import java.util.List;
+import com.example.common.response.ScrollResponse;
 
 public interface GetChatConversationMessagesUseCase {
-    List<ChatMessageResponse> getConversationMessagesNewestFirst(Long conversationId);
+    ScrollResponse<ChatMessageResponse> getConversationMessagesNewestFirst(Long conversationId, String cursor);
 }

@@ -2,11 +2,13 @@ package com.example.notification.adapter.out.persistence.chatMessger;
 
 import com.example.notification.adapter.entity.ChatMessageEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 public interface ChatMessageJpa extends JpaRepository<ChatMessageEntity, Long> {
     @Query("""
@@ -43,7 +45,19 @@ public interface ChatMessageJpa extends JpaRepository<ChatMessageEntity, Long> {
 
     List<ChatMessageEntity> findByChatConversationsEntity_IdOrderByCreatedAtAscIdAsc(Long conversationId);
 
-    List<ChatMessageEntity> findByChatConversationsEntity_IdOrderByCreatedAtDescIdDesc(Long conversationId);
+    List<ChatMessageEntity> findByChatConversationsEntity_IdOrderByCreatedAtDescIdDesc(Long conversationId, Pageable pageable);
+
+    // ID phân định các tin cùng timestamp để chuyển trang không bị lặp hoặc bỏ sót.
+    @Query("""
+            select message from ChatMessageEntity message
+            where message.chatConversationsEntity.id = :conversationId
+              and (message.createdAt < :createdAt
+                or (message.createdAt = :createdAt and message.id < :messageId))
+            order by message.createdAt desc, message.id desc
+            """)
+    List<ChatMessageEntity> findMessagesBeforeCursor(@Param("conversationId") Long conversationId,
+                                                    @Param("createdAt") LocalDateTime createdAt,
+                                                    @Param("messageId") Long messageId, Pageable pageable);
 
     List<ChatMessageEntity> findByChatConversationsEntity_IdAndSenderIdNotAndReadFalseOrderByIdDesc(
             Long conversationId, Long readerId);

@@ -6,6 +6,7 @@ import com.example.common.error.AuthorizationError;
 import com.example.common.exception.BusinessException;
 import com.example.common.response.PageQuery;
 import com.example.common.response.PageResponse;
+import com.example.common.response.ScrollResponse;
 import com.example.notification.application.dto.response.ChatConversationSummaryResponse.CustomerInfo;
 import com.example.notification.application.dto.response.ChatConversationSummaryResponse.ShopInfo;
 import com.example.notification.application.dto.response.ChatConversationSummaryResponse;
@@ -39,7 +40,7 @@ public class ChatConversationQueryService implements ListChatConversationsUseCas
     // Đọc lịch sử không đồng nghĩa đã đọc tin; trạng thái đọc có use case riêng.
     @Override
     @Transactional(readOnly = true)
-    public List<ChatMessageResponse> getConversationMessagesNewestFirst(Long conversationId) {
+    public ScrollResponse<ChatMessageResponse> getConversationMessagesNewestFirst(Long conversationId, String cursor) {
         if (conversationId == null || conversationId <= 0) {
             throw new BusinessException(ChatError.CHAT_ROOM_INVALID);
         }
@@ -47,9 +48,11 @@ public class ChatConversationQueryService implements ListChatConversationsUseCas
         chatRoomRepositoryPort.findById(conversationId)
                 .orElseThrow(() -> new BusinessException(ChatError.CHAT_ROOM_NOT_FOUND))
                 .requireParticipant(userId);
-        return chatRoomRepositoryPort.findMessagesByConversationIdNewestFirst(conversationId).stream()
+        ScrollResponse<ChatMessage> messages = chatRoomRepositoryPort.findMessagesByConversationIdNewestFirst(conversationId, cursor);
+        List<ChatMessageResponse> items = messages.items().stream()
                 .map(message -> ChatMessageResponse.from(conversationId, message, clock.getZone()))
                 .toList();
+        return new ScrollResponse<>(items, messages.nextCursor(), messages.hasNext());
     }
 
     @Override

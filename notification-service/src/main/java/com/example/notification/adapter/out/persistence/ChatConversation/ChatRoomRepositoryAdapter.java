@@ -3,11 +3,14 @@ package com.example.notification.adapter.out.persistence.ChatConversation;
 import com.example.notification.adapter.entity.ChatMessageEntity;
 import com.example.common.response.PageQuery;
 import com.example.common.response.PageResponse;
+import com.example.common.response.ScrollResponse;
 import com.example.notification.application.dto.ReadChatMessagesResult;
 import com.example.notification.adapter.entity.ChatConversationsEntity;
 import com.example.notification.adapter.mapper.ChatConversationMapper;
 import com.example.notification.adapter.mapper.ChatMessgerMapper;
 import com.example.notification.adapter.out.persistence.chatMessger.ChatMessageJpa;
+import com.example.notification.adapter.out.persistence.chatMessger.ChatMessageCursorCodec;
+import com.example.notification.adapter.out.persistence.chatMessger.ChatMessageCursorCodec.ChatMessageCursor;
 import com.example.notification.application.port.out.repo.ChatRoomRepositoryPort;
 import com.example.notification.domain.model.ChatConversation;
 import com.example.notification.domain.model.ChatMessage;
@@ -28,10 +31,13 @@ import java.util.stream.Collectors;
 @FieldDefaults(makeFinal = true,level = AccessLevel.PRIVATE)
 public class ChatRoomRepositoryAdapter implements ChatRoomRepositoryPort {
 
+    private static final int MESSAGE_SCROLL_SIZE = 20;
+
     private final ChatConversationJpa conversationJpa;
     private final ChatMessageJpa messageJpa;
     private final ChatConversationMapper chatConversationMapper;
     private final ChatMessgerMapper chatMessgerMapper;
+    private final ChatMessageCursorCodec chatMessageCursorCodec;
 
     // Upsert bảo vệ unique key khi nhiều request cùng mở một room.
     @Override
@@ -128,9 +134,23 @@ public class ChatRoomRepositoryAdapter implements ChatRoomRepositoryPort {
     }
 
     @Override
-    public List<ChatMessage> findMessagesByConversationIdNewestFirst(Long conversationId) {
-        return chatMessgerMapper.toDomains(
-                messageJpa.findByChatConversationsEntity_IdOrderByCreatedAtDescIdDesc(conversationId));
+    public ScrollResponse<ChatMessage> findMessagesByConversationIdNewestFirst(Long conversationId, String cursor) {
+        PageRequest limit = PageRequest.of(0, MESSAGE_SCROLL_SIZE + 1);
+        List<ChatMessageEntity> messages;
+        if (cursor == null) {
+            messages = messageJpa.findByChatConversationsEntity_IdOrderByCreatedAtDescIdDesc(conversationId, limit);
+        } else {
+            ChatMessageCursor position = chatMessageCursorCodec.decode(cursor, conversationId);
+            messages = messageJpa.findMessagesBeforeCursor(conversationId, position.createdAt(), position.messageId(), limit);
+        }
+        boolean hasNext = messages.size() > MESSAGE_SCROLL_SIZE;
+        List<ChatMessageEntity> visibleMessages = messages.stream().limit(MESSAGE_SCROLL_SIZE).toList();
+        String nextCursor = null;
+        if (hasNext) {
+            ChatMessageEntity lastMessage = visibleMessages.getLast();
+            nextCursor = chatMessageCursorCodec.encode(conversationId, lastMessage.getCreatedAt(), lastMessage.getId());
+        }
+        return new ScrollResponse<>(chatMessgerMapper.toDomains(visibleMessages), nextCursor, hasNext);
     }
 
     // Dirty checking cần transaction đang giữ khóa room để lưu trạng thái đọc nhất quán.

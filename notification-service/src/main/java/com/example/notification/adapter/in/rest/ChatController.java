@@ -2,6 +2,7 @@ package com.example.notification.adapter.in.rest;
 
 import com.example.common.response.PageQuery;
 import com.example.common.response.PageResponse;
+import com.example.common.response.ScrollResponse;
 import com.example.notification.application.dto.response.ChatConversationResponse;
 import com.example.notification.application.dto.response.ChatMessageResponse;
 import com.example.notification.application.dto.response.ReadMessgerRepone;
@@ -21,8 +22,6 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("api/chat")
 @RequiredArgsConstructor
@@ -34,9 +33,10 @@ public class ChatController {
     ReadChatConversationUseCase readChatConversationUseCase;
 
     @GetMapping("chat_conversations/{conversationId}/messages")
-    public ResponseEntity<List<ChatMessageResponse>> getConversationMessagesNewestFirst(
-            @PathVariable("conversationId") @Positive Long conversationId) {
-        return ResponseEntity.ok(getChatConversationMessagesUseCase.getConversationMessagesNewestFirst(conversationId));
+    public ResponseEntity<ScrollResponse<ChatMessageResponse>> getConversationMessagesNewestFirst(
+            @PathVariable("conversationId") @Positive Long conversationId,
+            @RequestParam(required = false) String cursor) {
+        return ResponseEntity.ok(getChatConversationMessagesUseCase.getConversationMessagesNewestFirst(conversationId, cursor));
     }
 
     @GetMapping("chat_conversations/user")
