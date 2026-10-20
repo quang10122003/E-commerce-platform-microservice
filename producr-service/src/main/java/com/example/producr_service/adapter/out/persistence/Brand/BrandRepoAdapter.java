@@ -29,6 +29,14 @@ public class BrandRepoAdapter implements BrandRepositoryPort {
     }
 
     @Override
+    public List<Brand> findAllById(List<Long> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return brandJpa.findAllById(ids).stream().map(brandMapper::toDomain).toList();
+    }
+
+    @Override
     public List<Brand> getAllBrands() {
         return brandJpa.findAll().stream().map(brandMapper::toDomain).toList();
     }

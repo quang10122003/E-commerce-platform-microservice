@@ -125,7 +125,10 @@ public class ProductConfig {
         ProductVariantRepoPort productVariantRepoPort,
         ProductUpdateService productUpdateService,
         Clock clock,
-        ShopInfoClientPort shopInfoClientPort
+        ShopInfoClientPort shopInfoClientPort,
+        BrandRepositoryPort brandRepositoryPort,
+        FlashSaleItemRepositoryPort flashSaleItemRepositoryPort,
+        VariantSaleResolver variantSaleResolver
     ) {
         return new ProductService(
                 productImageRollbackPort,
@@ -140,7 +143,10 @@ public class ProductConfig {
                 productVariantRepoPort,
                 productUpdateService,
                 clock,
-                shopInfoClientPort
+                shopInfoClientPort,
+                brandRepositoryPort,
+                flashSaleItemRepositoryPort,
+                variantSaleResolver
         );
     }
 

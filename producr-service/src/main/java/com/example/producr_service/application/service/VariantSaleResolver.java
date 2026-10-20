@@ -18,6 +18,7 @@ public class VariantSaleResolver {
         this.clock = clock;
     }
 
+    // lọc ưu đãi đang hiệu lực trước; tồn kho hoặc quota hết thì sale không còn áp dụng.
     public VariantSaleResponse.Sale resolve(BigDecimal price, int stockQuantity, List<FlashSaleOfferView> offers) {
         // Không chọn ngẫu nhiên ưu đãi khi dữ liệu vi phạm quy tắc lịch sale không chồng nhau.
         if (offers.size() > 1) {

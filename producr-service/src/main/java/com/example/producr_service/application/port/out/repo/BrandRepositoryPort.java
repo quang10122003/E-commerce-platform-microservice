@@ -10,5 +10,7 @@ public interface BrandRepositoryPort {
 
     Optional<Brand> findById(Long id);
 
+    List<Brand> findAllById(List<Long> ids);
+
     List<Brand> getAllBrands();
 }

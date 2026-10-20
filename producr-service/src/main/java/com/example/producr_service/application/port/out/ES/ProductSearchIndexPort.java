@@ -1,7 +1,7 @@
 package com.example.producr_service.application.port.out.ES;
 
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
-import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
+import com.example.producr_service.application.dto.response.ProductCatalogSearchResult;
 import com.example.producr_service.domain.model.Product;
 
 public interface ProductSearchIndexPort {
@@ -9,5 +9,5 @@ public interface ProductSearchIndexPort {
 
     void deleteById(Long productId);
 
-    ProductCatalogSearchResponse search(ProductScrollFilter filter);
+    ProductCatalogSearchResult search(ProductScrollFilter filter);
 }

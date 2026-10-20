@@ -1,7 +1,7 @@
 package com.example.producr_service.adapter.out.persistence.Product;
 
 import com.example.producr_service.adapter.entity.ProductEntity;
-import com.example.producr_service.application.dto.response.ProductSummaryResponse;
+import com.example.producr_service.adapter.out.persistence.projection.ProductSummaryProjection;
 import com.example.producr_service.domain.model.ProductStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -16,8 +16,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
-    @Query("select new com.example.producr_service.application.dto.response.ProductSummaryResponse(p.id, p.name, p.imageUrl) from ProductEntity p where p.id in :productIds")
-    List<ProductSummaryResponse> findProductSummariesByIds(@Param("productIds") List<Long> productIds);
+    @Query("select p.id as id, p.name as name, p.imageUrl as imageUrl from ProductEntity p where p.id in :productIds")
+    List<ProductSummaryProjection> findProductSummariesByIds(@Param("productIds") List<Long> productIds);
     @Query("select p.userId from ProductEntity p where p.id = :productId")
     Optional<Long> findOwnerIdById(@Param("productId") Long productId);
 

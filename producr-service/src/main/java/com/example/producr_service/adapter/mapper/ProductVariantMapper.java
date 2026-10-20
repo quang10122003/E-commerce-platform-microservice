@@ -5,6 +5,8 @@ import com.example.producr_service.adapter.entity.ProductVariantEntity;
 import com.example.producr_service.adapter.entity.VariantImageEntity;
 import com.example.producr_service.application.dto.response.CartInfoRepone;
 import com.example.producr_service.application.dto.response.VariantCartView;
+import com.example.producr_service.application.dto.response.VariantPriceView;
+import com.example.producr_service.adapter.out.persistence.projection.VariantPriceProjection;
 import com.example.producr_service.domain.model.AttributeValue;
 import com.example.producr_service.domain.model.Money;
 import com.example.producr_service.domain.model.ProductVariant;
@@ -16,6 +18,11 @@ import java.util.List;
 
 @Component
 public class ProductVariantMapper {
+
+    public VariantPriceView toPriceView(VariantPriceProjection projection) {
+        return new VariantPriceView(projection.getVariantId(), projection.getPrice(),
+                projection.getStockQuantity(), projection.getProductStatus());
+    }
 
     // Chuyển phân loại persistence cùng thuộc tính và ảnh sang domain model.
     public ProductVariant toDomain(ProductVariantEntity entity) {

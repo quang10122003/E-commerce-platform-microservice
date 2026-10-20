@@ -3,6 +3,11 @@ package com.example.producr_service.application.service;
 import com.example.common.exception.BusinessException;
 import com.example.common.response.PageResponse;
 import com.example.producr_service.application.constant.Constant;
+import com.example.producr_service.application.dto.response.ProductCatalogSearchResult;
+import com.example.producr_service.application.dto.response.ProductSaleOfferView;
+import com.example.producr_service.application.dto.response.ProductSearchResponse;
+import com.example.producr_service.application.dto.response.ProductBrandOption;
+import com.example.producr_service.application.dto.response.VariantSaleResponse;
 import com.example.producr_service.application.dto.command.CreateProductCommand;
 import com.example.producr_service.application.dto.command.UpdateProductCommand;
 import com.example.producr_service.application.dto.command.VariantImageUploadCommand;
@@ -27,9 +32,12 @@ import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
+import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
+import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.application.port.out.storage.ProductImageRollbackPort;
 import com.example.producr_service.application.port.out.storage.StoredFile;
+import com.example.producr_service.domain.model.Brand;
 import com.example.producr_service.domain.model.Product;
 import com.example.producr_service.domain.model.ProductVariant;
 import lombok.AccessLevel;
@@ -39,9 +47,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 // Triển khai các use case nghiệp vụ thuộc phạm vi product.
 @RequiredArgsConstructor
@@ -62,6 +72,9 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     ProductUpdateService productUpdateService;
     Clock clock;
     ShopInfoClientPort shopInfoClientPort;
+    BrandRepositoryPort brandRepositoryPort;
+    FlashSaleItemRepositoryPort flashSaleItemRepositoryPort;
+    VariantSaleResolver variantSaleResolver;
 
     @Override
     @Transactional(readOnly = true)
@@ -179,7 +192,50 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
             productHelper.validateSearchKeyword(filter.keyword());
         }
         productHelper.validatePriceRange(filter.minPrice(), filter.maxPrice());
-        return productSearchIndexPort.search(filter);
+        ProductCatalogSearchResult result = productSearchIndexPort.search(filter);
+        List<Long> productIds = result.items().stream().map(ProductSearchResponse::id).distinct().toList();
+        Map<Long, BigDecimal> discounts = findCatalogDiscounts(productIds, LocalDateTime.now(clock));
+        List<ProductSearchResponse> items = result.items().stream()
+                .map(item -> item.withMaxDiscountPercent(discounts.get(item.id())))
+                .toList();
+        Map<Long, ProductBrandOption> brandsById = brandRepositoryPort.findAllById(result.brandIds()).stream()
+                .collect(Collectors.toMap(Brand::getId,
+                        brand -> new ProductBrandOption(brand.getId(), brand.getName())));
+        List<ProductBrandOption> brands = result.brandIds().stream()
+                .map(brandsById::get)
+                .filter(Objects::nonNull)
+                .toList();
+        return new ProductCatalogSearchResponse(
+                items,
+                result.nextCursor(),
+                result.hasNext(),
+                brands
+        );
+    }
+
+//    lấy phần trắm sale cao nhất của các variant trong product
+    private Map<Long, BigDecimal> findCatalogDiscounts(List<Long> productIds, LocalDateTime now) {
+        if (productIds.isEmpty()) {
+            return Map.of();
+        }
+        // lấy các sale của các variant
+        Map<Long, List<ProductSaleOfferView>> offersByVariant = flashSaleItemRepositoryPort
+                .findOngoingOffersByProductIds(productIds, now).stream()
+                .collect(Collectors.groupingBy(ProductSaleOfferView::variantId));
+        Map<Long, BigDecimal> discounts = new HashMap<>();
+
+        for (List<ProductSaleOfferView> offers : offersByVariant.values()) {
+            ProductSaleOfferView variant = offers.getFirst();
+            // Dùng chung quy tắc với trang chi tiết để không quảng bá sale hết quota hoặc tồn kho.
+            VariantSaleResponse.Sale sale = variantSaleResolver.resolve(
+                    variant.price(), variant.stockQuantity(),
+                    offers.stream().map(ProductSaleOfferView::toOffer).toList());
+            if (sale != null) {
+                // lưu sale % cao nhất của 1 prodcut
+                discounts.merge(variant.productId(), sale.discountPercent(), BigDecimal::max);
+            }
+        }
+        return discounts;
     }
 
     // Lấy danh sách sản phẩm có phân trang cho shop.

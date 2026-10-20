@@ -1,6 +1,7 @@
 package com.example.producr_service.adapter.out.persistence.FlashSaleItem;
 
 import com.example.producr_service.adapter.mapper.FlashSaleItemMapper;
+import com.example.producr_service.application.dto.response.ProductSaleOfferView;
 import com.example.producr_service.adapter.mapper.ProductVariantMapper;
 import com.example.producr_service.adapter.out.persistence.ProductVariant.ProductVariantJpa;
 import com.example.producr_service.application.dto.response.FlashSaleVariantSnapshot;
@@ -29,9 +30,20 @@ public class FlashSaleItemRepoAdapter implements FlashSaleItemRepositoryPort {
      ProductVariantMapper productVariantMapper;
 
     @Override
+    public List<ProductSaleOfferView> findOngoingOffersByProductIds(List<Long> productIds, LocalDateTime now) {
+        if (productIds.isEmpty()) {
+            return List.of();
+        }
+        return flashSaleItemJpa.findOngoingOffersByProductIds(productIds, now, ProductStatus.ACTIVE,
+                FlashSaleItemStatus.REGISTERED, FlashSaleCampaignStatus.PUBLISHED).stream()
+                .map(flashSaleItemMapper::toProductSaleOffer).toList();
+    }
+
+    @Override
     public List<FlashSaleOfferView> findOngoingOffers(Long productId, Long variantId, LocalDateTime now) {
         return flashSaleItemJpa.findOngoingOffers(productId, variantId, now, ProductStatus.ACTIVE,
-                FlashSaleItemStatus.REGISTERED, FlashSaleCampaignStatus.PUBLISHED);
+                FlashSaleItemStatus.REGISTERED, FlashSaleCampaignStatus.PUBLISHED).stream()
+                .map(flashSaleItemMapper::toOfferView).toList();
     }
 
     @Override
@@ -40,7 +52,8 @@ public class FlashSaleItemRepoAdapter implements FlashSaleItemRepositoryPort {
             return List.of();
         }
         return flashSaleItemJpa.findOngoingOffersByVariantIds(variantIds, now, ProductStatus.ACTIVE,
-                FlashSaleItemStatus.REGISTERED, FlashSaleCampaignStatus.PUBLISHED);
+                FlashSaleItemStatus.REGISTERED, FlashSaleCampaignStatus.PUBLISHED).stream()
+                .map(flashSaleItemMapper::toOfferView).toList();
     }
 
     @Override

@@ -3,6 +3,8 @@ import com.example.producr_service.adapter.DTO.documentElasticsearch.ProductSear
 import com.example.producr_service.adapter.entity.*;
 import com.example.common.response.PageResponse;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
+import com.example.producr_service.application.dto.response.ProductSummaryResponse;
+import com.example.producr_service.adapter.out.persistence.projection.ProductSummaryProjection;
 import com.example.producr_service.application.port.out.storage.StorageBucket;
 import com.example.producr_service.domain.model.*;
 import lombok.AccessLevel;
@@ -26,6 +28,10 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ProductMapper {
     Clock clock;
+
+    public ProductSummaryResponse toSummary(ProductSummaryProjection projection) {
+        return new ProductSummaryResponse(projection.getId(), projection.getName(), projection.getImageUrl());
+    }
 
     // Trả ID, SKU và ảnh cần cho form chỉnh sửa nhưng không lộ đường dẫn storage.
     // Tìm vị trí từng giá trị đã chọn để frontend gửi lại đúng tổ hợp phân loại.
@@ -274,7 +280,8 @@ public class ProductMapper {
                 document.getStatus(),
                 document.getImageUrl(),
                 document.getMaxPrice(),
-                document.getTotalSold()
+                document.getTotalSold(),
+                null
         );
     }
 }

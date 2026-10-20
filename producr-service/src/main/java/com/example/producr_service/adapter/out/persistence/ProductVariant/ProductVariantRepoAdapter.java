@@ -27,7 +27,8 @@ public class ProductVariantRepoAdapter implements ProductVariantRepoPort {
     // Đọc projection giá và tồn kho, không dựng aggregate hoặc tải collection.
     @Override
     public Optional<VariantPriceView> findPriceView(Long productId, Long variantId) {
-        return productVariantJpa.findPriceView(productId, variantId);
+        return productVariantJpa.findPriceView(productId, variantId)
+                .map(productVariantMapper::toPriceView);
     }
 
     // Kiểm tra SKU đã tồn tại trước khi tạo phân loại mới.

@@ -5,6 +5,10 @@ import com.example.common.untill.JsonUtils;
 import com.example.producr_service.adapter.entity.*;
 import com.example.producr_service.application.dto.response.FlashSaleVariantSnapshot;
 import com.example.producr_service.application.dto.response.UserFlashSaleItemView;
+import com.example.producr_service.application.dto.response.ProductSaleOfferView;
+import com.example.producr_service.application.dto.response.FlashSaleOfferView;
+import com.example.producr_service.adapter.out.persistence.projection.ProductSaleOfferProjection;
+import com.example.producr_service.adapter.out.persistence.projection.FlashSaleOfferProjection;
 import com.example.producr_service.domain.model.FlashSaleItem;
 import com.example.producr_service.domain.model.ProductStatus;
 import lombok.AccessLevel;
@@ -19,6 +23,17 @@ import java.util.Comparator;
 public class FlashSaleItemMapper {
      JsonUtils jsonUtils;
      ProductVariantMapper productVariantMapper;
+
+    public ProductSaleOfferView toProductSaleOffer(ProductSaleOfferProjection projection) {
+        return new ProductSaleOfferView(projection.getProductId(), projection.getVariantId(),
+                projection.getPrice(), projection.getStockQuantity(), projection.getDiscountPercent(),
+                projection.getRegisteredQuantity(), projection.getSoldQuantity(), projection.getEndsAt());
+    }
+
+    public FlashSaleOfferView toOfferView(FlashSaleOfferProjection projection) {
+        return new FlashSaleOfferView(projection.getVariantId(), projection.getDiscountPercent(),
+                projection.getRegisteredQuantity(), projection.getSoldQuantity(), projection.getEndsAt());
+    }
 
     public FlashSaleVariantSnapshot toSnapshot(ProductVariantEntity variant) {
         ProductEntity product = variant.getProduct();

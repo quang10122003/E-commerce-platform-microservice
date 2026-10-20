@@ -16,5 +16,13 @@ public record ProductSearchResponse(Long id,
                                     ProductStatus status,
                                     String imageUrl,
                                     BigDecimal maxPrice,
-                                    long totalSold) {
+                                    long totalSold,
+                                    BigDecimal maxDiscountPercent) {
+
+
+    public ProductSearchResponse withMaxDiscountPercent(BigDecimal discountPercent) {
+        return new ProductSearchResponse(id, name, location, UserId, description,
+                categoryId, categoryName, brandId, brandName, status, imageUrl,
+                maxPrice, totalSold, discountPercent);
+    }
 }

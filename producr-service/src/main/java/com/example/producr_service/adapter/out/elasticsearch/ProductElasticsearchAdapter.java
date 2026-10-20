@@ -13,11 +13,9 @@ import com.example.producr_service.adapter.mapper.ProductMapper;
 import com.example.producr_service.adapter.mapper.ProductSearchDocumentMapper;
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
 import com.example.producr_service.application.dto.request.ProductSortOption;
-import com.example.producr_service.application.dto.response.ProductBrandOption;
-import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
+import com.example.producr_service.application.dto.response.ProductCatalogSearchResult;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
-import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.domain.model.Product;
 import com.example.producr_service.domain.model.ProductStatus;
 import lombok.AccessLevel;
@@ -34,7 +32,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
-import java.util.Objects;
 
 import static com.example.common.untill.ValidationUtils.hasText;
 
@@ -53,7 +50,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
 
     ProductSearchCursorCodec productSearchCursorCodec;
 
-    BrandRepositoryPort brandRepositoryPort;
     ProductMapper productMapper;
 
     @Override
@@ -70,7 +66,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
     }
 
     @Override
-    public ProductCatalogSearchResponse search(ProductScrollFilter filter) {
+    public ProductCatalogSearchResult search(ProductScrollFilter filter) {
         // Lấy dư một item để xác định còn batch kế tiếp hay không.
         Pageable pageable = PageRequest.of(
                 0,
@@ -142,7 +138,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                 }))
                 ;
 
-        // Bộ lọc brand chỉ áp dụng cho hit để aggregation vẫn chứa đủ brand khớp tìm kiếm.
+        // Bộ lọc brand chỉ áp dụng cho hit để không thu hẹp danh sách brand gợi ý.
         if (!filter.brandIds().isEmpty()) {
             queryBuilder.withFilter(terms -> terms.terms(termsQuery -> termsQuery
                     .field(ProductSearchDocumentFields.BRAND_ID)
@@ -170,7 +166,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                 .order(SortOrder.Desc)
         ));
 
-        // Gom brandId trên toàn bộ tập product khớp để không phụ thuộc vào kích thước page.
+        // Lấy tối đa 50 brand có nhiều product khớp nhất, không phụ thuộc trang product hiện tại.
         queryBuilder.withAggregation(
                 BRANDS_AGGREGATION,
                 Aggregation.of(aggregation -> aggregation.terms(terms -> terms
@@ -182,7 +178,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
         NativeQuery query = queryBuilder
                 .withPageable(pageable)
                 .build();
-
+        // gửi data tiếp theo khi có cursor
         if (hasText(filter.cursor())) {
             query.setSearchAfter(productSearchCursorCodec.decode(
                     filter.cursor(),
@@ -196,7 +192,9 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
         );
 
         List<SearchHit<ProductSearchDocument>> hits = searchHits.getSearchHits();
+        // backend luôn lấy dư 1 sản phẩm so với size fe gửi để check xem còn data để lấy k
         boolean hasNext = hits.size() > filter.size();
+        // chỉ trả data = đúng size của filter
         List<SearchHit<ProductSearchDocument>> visibleHits = hits.stream()
                 .limit(filter.size())
                 .toList();
@@ -213,15 +211,15 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                 )
                 : null;
 
-        return new ProductCatalogSearchResponse(
+        return new ProductCatalogSearchResult(
                 items,
                 nextCursor,
                 hasNext,
-                extractBrands(searchHits)
+                extractBrandIds(searchHits)
         );
     }
 
-    private List<ProductBrandOption> extractBrands(SearchHits<ProductSearchDocument> searchHits) {
+    private List<Long> extractBrandIds(SearchHits<ProductSearchDocument> searchHits) {
         if (!searchHits.hasAggregations()) {
             return List.of();
         }
@@ -234,10 +232,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
         }
 
         return aggregation.aggregation().getAggregate().lterms().buckets().array().stream()
-                .map(bucket -> brandRepositoryPort.findById(bucket.key())
-                        .map(brand -> new ProductBrandOption(brand.getId(), brand.getName()))
-                        .orElse(null))
-                .filter(Objects::nonNull)
+                .map(bucket -> bucket.key())
                 .toList();
     }
 

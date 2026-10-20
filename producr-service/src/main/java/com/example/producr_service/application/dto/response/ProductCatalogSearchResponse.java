@@ -2,7 +2,7 @@ package com.example.producr_service.application.dto.response;
 
 import java.util.List;
 
-// Danh sách brand thuộc toàn bộ tập khớp tìm kiếm, không chỉ trang product hiện tại.
+// Trả tối đa 50 brand có nhiều product khớp nhất, không chỉ tính trang product hiện tại.
 public record ProductCatalogSearchResponse(
         List<ProductSearchResponse> items,
         String nextCursor,

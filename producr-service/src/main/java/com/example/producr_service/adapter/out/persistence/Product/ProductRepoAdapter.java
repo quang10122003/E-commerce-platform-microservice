@@ -38,7 +38,8 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     // Lấy metadata theo lô cho cả sản phẩm đang bán và đã ngừng bán.
     @Override
     public List<ProductSummaryResponse> findProductSummariesByIds(List<Long> productIds) {
-        return productIds.isEmpty() ? List.of() : productJpa.findProductSummariesByIds(productIds);
+        return productIds.isEmpty() ? List.of() : productJpa.findProductSummariesByIds(productIds).stream()
+                .map(productMapper::toSummary).toList();
     }
 
     // Đọc ID chủ sản phẩm bằng projection, không tải dữ liệu liên quan.
