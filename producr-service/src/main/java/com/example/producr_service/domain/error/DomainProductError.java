@@ -3,6 +3,7 @@ package  com.example.producr_service.domain.error;
 import com.example.common.error.ErrorCode;
 
 public enum DomainProductError implements ErrorCode {
+    PRODUCT_VARIANT_PRICE_INVALID("PRODUCT_VARIANT_PRICE_INVALID", "Giá phân loại phải từ 1.000 đồng trở lên", 400),
     FLASH_SALE_ITEM_NOT_FOUND("FLASH_SALE_ITEM_NOT_FOUND", "Không tìm thấy đăng ký thuộc Shop trong chương trình", 404),
     FLASH_SALE_ITEM_ACCESS_DENIED("FLASH_SALE_ITEM_ACCESS_DENIED", "Bạn không có quyền thay đổi đăng ký Flash Sale của Shop khác", 403),
     FLASH_SALE_ITEM_DISABLED("FLASH_SALE_ITEM_DISABLED", "Đăng ký Flash Sale đã bị vô hiệu hóa, không thể chỉnh sửa", 409),

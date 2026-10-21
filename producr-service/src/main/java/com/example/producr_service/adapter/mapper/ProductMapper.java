@@ -236,7 +236,7 @@ public class ProductMapper {
         }
 
         for (ProductVariantEntity variantEntity : productEntity.getVariants()) {
-            ProductVariant variant = new ProductVariant(
+            ProductVariant variant = ProductVariant.reconstitute(
                     variantEntity.getId(), variantEntity.getSku(),
                     Money.of(variantEntity.getPrice()), variantEntity.getStockQuantity()
             );

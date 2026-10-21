@@ -40,7 +40,7 @@ public class ProductVariantMapper {
             return null;
         }
 
-        ProductVariant variant = new ProductVariant(
+        ProductVariant variant = ProductVariant.reconstitute(
                 entity.getId(), entity.getSku(), Money.of(entity.getPrice()),
                 entity.getStockQuantity());
 

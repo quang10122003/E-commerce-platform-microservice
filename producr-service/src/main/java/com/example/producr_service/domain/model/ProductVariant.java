@@ -4,6 +4,7 @@ import com.example.common.exception.BusinessException;
 import com.example.producr_service.domain.error.DomainProductError;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -13,6 +14,8 @@ import java.util.Set;
 
 
 public class ProductVariant {
+
+    public static final long MINIMUM_PRICE = 1_000L;
 
     @Getter
     private final Long id;
@@ -26,6 +29,12 @@ public class ProductVariant {
     private final List<VariantImage> images = new ArrayList<>();
 
     public ProductVariant(Long id, String sku, Money price, int stockQuantity) {
+        this(id, sku, stockQuantity);
+        validatePrice(price);
+        this.price = price;
+    }
+
+    private ProductVariant(Long id, String sku, int stockQuantity) {
         if (sku == null || sku.isBlank()) {
             throw new BusinessException(DomainProductError.SKU_REQUIRED);
         }
@@ -34,8 +43,14 @@ public class ProductVariant {
         }
         this.id = id;
         this.sku = sku;
-        this.price = price;
         this.stockQuantity = stockQuantity;
+    }
+
+    // Khôi phục trạng thái đã lưu, không áp lại điều kiện tạo mới hoặc thay đổi giá.
+    public static ProductVariant reconstitute(Long id, String sku, Money price, int stockQuantity) {
+        ProductVariant variant = new ProductVariant(id, sku, stockQuantity);
+        variant.price = Objects.requireNonNull(price, "Giá phân loại không được null");
+        return variant;
     }
 
     public Set<AttributeValue> getAttributeValues() {
@@ -87,7 +102,15 @@ public class ProductVariant {
     }
 
     public void changePrice(Money newPrice) {
+        validatePrice(newPrice);
         this.price = newPrice;
+    }
+
+    //  check giá sản phẩm phải > 1000
+    private static void validatePrice(Money price) {
+        if (price == null || price.getAmount().compareTo(BigDecimal.valueOf(MINIMUM_PRICE)) < 0) {
+            throw new BusinessException(DomainProductError.PRODUCT_VARIANT_PRICE_INVALID);
+        }
     }
 
     public VariantImage getPrimaryImage() {

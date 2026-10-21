@@ -1,9 +1,11 @@
 package com.example.producr_service.adapter.DTO.request;
 
+import com.example.producr_service.domain.model.ProductVariant;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,7 +41,9 @@ public class UpdateProductRequest {
     public static class Variant {
         private Long id;
         private String sku;
-        @NotNull @PositiveOrZero private BigDecimal price;
+        @NotNull
+        @Min(value = ProductVariant.MINIMUM_PRICE, message = "Giá phân loại phải từ 1.000 đồng trở lên")
+        private BigDecimal price;
         @NotNull @PositiveOrZero private Integer stockQuantity;
         @NotNull @Valid private List<@NotNull Selection> attributeSelections;
         @NotNull @Valid private List<@NotNull Image> images;
