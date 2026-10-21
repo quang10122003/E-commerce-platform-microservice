@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -69,7 +70,14 @@ public class UserEntity implements UserDetails {
     boolean isShopLock;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+    // Chỉ xóa liên kết khi một đầu bị xóa, không cascade REMOVE sang role dùng chung.
+    @JoinTable(name = "user_role",
+            joinColumns = @JoinColumn(name = "user_id", nullable = false),
+            inverseJoinColumns = @JoinColumn(name = "role_id", nullable = false),
+            foreignKey = @ForeignKey(name = "fk_user_roles_user",
+                    foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"),
+            inverseForeignKey = @ForeignKey(name = "fk_user_roles_role",
+                    foreignKeyDefinition = "FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE"))
     Set<RoleEntity> roles;
 
     @Column(name = "is_locked")

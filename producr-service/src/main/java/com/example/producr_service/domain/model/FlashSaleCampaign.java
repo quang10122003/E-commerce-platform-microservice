@@ -3,7 +3,6 @@ package com.example.producr_service.domain.model;
 import java.math.BigDecimal;
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.domain.error.DomainProductError;
-import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -11,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Getter
 public class FlashSaleCampaign {
     private final  Long id;
     private  String name;
@@ -26,6 +24,46 @@ public class FlashSaleCampaign {
     private  LocalDateTime updatedAt;
     // Aggregate phải chứa đủ đăng ký; dữ liệu đọc thiếu items dùng DTO riêng để không lưu nhầm.
     private final List<FlashSaleItem> items = new ArrayList<>();
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public LocalDateTime getRegistrationDeadline() {
+        return registrationDeadline;
+    }
+
+    public LocalDateTime getStartsAt() {
+        return startsAt;
+    }
+
+    public LocalDateTime getEndsAt() {
+        return endsAt;
+    }
+
+    public FlashSaleCampaignStatus getStatus() {
+        return status;
+    }
+
+    public Long getCreatedBy() {
+        return createdBy;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
 
     // Không cho sửa collection trực tiếp để không bỏ qua ràng buộc nghiệp vụ của aggregate.
     public List<FlashSaleItem> getItems() {
@@ -73,10 +111,27 @@ public class FlashSaleCampaign {
     // Shop chỉ được xóa đăng ký khi còn DRAFT và chưa hết hạn, không can thiệp sale đã công bố.
     public void removeItem(Long itemId, Long shopId, LocalDateTime now) {
         validateRegistration(now);
-        FlashSaleItem item = items.stream()
-                .filter(value -> itemId != null && itemId.equals(value.id()) && value.shopId().equals(shopId))
-                .findFirst().orElseThrow(() -> new BusinessException(DomainProductError.FLASH_SALE_ITEM_NOT_FOUND));
+        FlashSaleItem item = getOwnedItem(itemId, shopId);
         items.remove(item);
+        updatedAt = now;
+    }
+
+    public FlashSaleItem getOwnedItem(Long itemId, Long shopId) {
+        FlashSaleItem item = items.stream()
+                .filter(value -> itemId != null && itemId.equals(value.id()))
+                .findFirst().orElseThrow(() -> new BusinessException(DomainProductError.FLASH_SALE_ITEM_NOT_FOUND));
+        if (!item.shopId().equals(shopId)) {
+            throw new BusinessException(DomainProductError.FLASH_SALE_ITEM_ACCESS_DENIED);
+        }
+        return item;
+    }
+
+    public void updateItemRegistration(Long itemId, Long shopId, FlashSaleItem.RegistrationVariant variant,
+            BigDecimal discountPercent, int registeredQuantity, LocalDateTime now) {
+        validateRegistration(now);
+        FlashSaleItem item = getOwnedItem(itemId, shopId);
+        FlashSaleItem updatedItem = item.updateRegistration(variant, discountPercent, registeredQuantity, now);
+        items.set(items.indexOf(item), updatedItem);
         updatedAt = now;
     }
 

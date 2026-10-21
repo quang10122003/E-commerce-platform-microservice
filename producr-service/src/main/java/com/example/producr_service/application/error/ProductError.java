@@ -9,6 +9,9 @@ public enum ProductError implements ErrorCode  {
     FLASH_SALE_CAMPAIGN_NOT_FOUND(
             "FLASH_SALE_CAMPAIGN_NOT_FOUND", "Không tìm thấy chương trình Flash Sale", 404
     ),
+    FLASH_SALE_CAMPAIGN_NOT_DRAFT(
+            "FLASH_SALE_CAMPAIGN_NOT_DRAFT", "Chỉ được xem đăng ký của chương trình Flash Sale ở trạng thái nháp", 409
+    ),
     INVALID_FLASH_SALE_CAMPAIGN_ID(
             "INVALID_FLASH_SALE_CAMPAIGN_ID", "ID chương trình Flash Sale khong hop le ", 400
     ),

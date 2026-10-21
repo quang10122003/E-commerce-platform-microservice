@@ -20,6 +20,8 @@ import com.example.producr_service.application.port.in.GetShopFlashSaleProductsU
 import com.example.producr_service.application.dto.response.ShopFlashSaleProductResponse;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import com.example.producr_service.application.port.in.RegisterFlashSaleItemUseCase;
@@ -27,11 +29,19 @@ import com.example.producr_service.application.port.in.PreviewFlashSalePriceUseC
 import com.example.producr_service.application.dto.request.RegisterFlashSaleItemRequest;
 import com.example.producr_service.application.dto.request.PreviewFlashSalePriceRequest;
 import com.example.producr_service.application.dto.response.FlashSalePriceResponse;
+import com.example.producr_service.application.dto.response.ShopFlashSaleItemResponse;
+import com.example.producr_service.application.port.in.GetShopFlashSaleItemsUseCase;
+import com.example.producr_service.application.port.in.RemoveShopFlashSaleItemUseCase;
+import com.example.producr_service.application.port.in.UpdateShopFlashSaleItemUseCase;
+import com.example.producr_service.adapter.DTO.request.UpdateShopFlashSaleItemHttpRequest;
+import jakarta.validation.constraints.Positive;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/shop/flash-sales")
 @RequiredArgsConstructor
 @Slf4j
+@PreAuthorize("hasAuthority('ROLE_SHOP')")
 public class ShopFlashSaleController {
     private final GetShopFlashSaleCampaignsUseCase getShopFlashSaleCampaignsUseCase;
     private final RegisterFlashSaleItemUseCase registerFlashSaleItemUseCase;
@@ -39,6 +49,32 @@ public class ShopFlashSaleController {
     private final GetShopFlashSaleProductsUseCase getShopFlashSaleProductsUseCase;
 
     private final GetShopFlashSaleCampaignDetailUseCase getShopFlashSaleCampaignDetailUseCase;
+    private final GetShopFlashSaleItemsUseCase getShopFlashSaleItemsUseCase;
+    private final RemoveShopFlashSaleItemUseCase removeShopFlashSaleItemUseCase;
+    private final UpdateShopFlashSaleItemUseCase updateShopFlashSaleItemUseCase;
+
+    @GetMapping("/drafts/{campaignId}/items")
+    public ResponseEntity<List<ShopFlashSaleItemResponse>> getItems(
+            @PathVariable @Positive Long campaignId,
+            @RequestParam(required = false) String keyword) {
+        return ResponseEntity.ok(getShopFlashSaleItemsUseCase.getShopItems(campaignId, keyword));
+    }
+
+    @DeleteMapping("/drafts/{campaignId}/items/{itemId}")
+    public ResponseEntity<Void> removeItem(@PathVariable @Positive Long campaignId,
+            @PathVariable @Positive Long itemId) {
+        removeShopFlashSaleItemUseCase.removeItem(campaignId, itemId);
+        log.info("Xóa đăng ký Flash Sale thành công: campaignId={}, itemId={}", campaignId, itemId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/drafts/{campaignId}/items/{itemId}")
+    public ResponseEntity<Void> updateItem(@PathVariable @Positive Long campaignId,
+            @PathVariable @Positive Long itemId, @Valid @RequestBody UpdateShopFlashSaleItemHttpRequest request) {
+        updateShopFlashSaleItemUseCase.updateItem(campaignId, itemId, request.toApplicationRequest());
+        log.info("Cập nhật đăng ký Flash Sale thành công: campaignId={}, itemId={}", campaignId, itemId);
+        return ResponseEntity.noContent().build();
+    }
 
     @GetMapping("/{campaignId}")
     public ResponseEntity<ShopFlashSaleCampaignDetailResponse> getCampaignDetail(@PathVariable Long campaignId) {
@@ -59,6 +95,7 @@ public class ShopFlashSaleController {
         return ResponseEntity.noContent().build();
     }
 
+    // lấy giá preview gía sale của sản phẩm
     @PostMapping("/variants/{variantId}/preview-price")
     public ResponseEntity<FlashSalePriceResponse> previewPrice(@PathVariable Long variantId,
             @Valid @RequestBody PreviewFlashSalePriceRequest request) {

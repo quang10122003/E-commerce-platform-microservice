@@ -42,6 +42,26 @@ public record FlashSaleItem(Long id, Long campaignId, Long variantId, Long shopI
                 FlashSaleItemStatus.REGISTERED, now, now);
     }
 
+    public FlashSaleItem updateRegistration(RegistrationVariant variant, BigDecimal newDiscountPercent,
+            int newRegisteredQuantity, LocalDateTime now) {
+        if (status == FlashSaleItemStatus.DISABLED) {
+            throw new BusinessException(DomainProductError.FLASH_SALE_ITEM_DISABLED);
+        }
+        if (variant == null || variantId == null || !variantId.equals(variant.variantId())
+                || !shopId.equals(variant.shopId())) {
+            throw new BusinessException(DomainProductError.FLASH_SALE_ITEM_INVALID);
+        }
+        FlashSaleRules.validateRegistrationStock(variant.stockQuantity(), newRegisteredQuantity);
+        BigDecimal effectiveDiscountPercent = discountPercent;
+        if (newDiscountPercent != null && newDiscountPercent.compareTo(discountPercent) != 0) {
+            // Chỉ kiểm tra % mới qua công thức đăng ký; giá sale không được lưu vào item.
+            FlashSaleRules.calculateSalePrice(variant.price(), newDiscountPercent);
+            effectiveDiscountPercent = newDiscountPercent;
+        }
+        return new FlashSaleItem(id, campaignId, variantId, shopId, productName, attributes,
+                effectiveDiscountPercent, newRegisteredQuantity, soldQuantity, status, createdAt, now);
+    }
+
     // Admin vô hiệu hóa vẫn phải giữ snapshot và số lượng đã mua để bảo toàn lịch sử.
     public FlashSaleItem disable(LocalDateTime now) {
         if (status == FlashSaleItemStatus.DISABLED) {

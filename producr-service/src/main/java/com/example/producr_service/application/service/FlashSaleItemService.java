@@ -1,6 +1,8 @@
 package com.example.producr_service.application.service;
 
 import com.example.producr_service.domain.model.FlashSaleCampaign;
+import com.example.producr_service.domain.model.FlashSaleItem;
+import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.application.dto.request.*;
 import com.example.producr_service.application.dto.response.*;
@@ -14,6 +16,10 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lombok.AccessLevel;
@@ -23,13 +29,53 @@ import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, PreviewFlashSalePriceUseCase,GetUserFlashSaleItemsUseCase, GetVariantSaleUseCase {
+public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, PreviewFlashSalePriceUseCase,GetUserFlashSaleItemsUseCase, GetVariantSaleUseCase, GetShopFlashSaleItemsUseCase, RemoveShopFlashSaleItemUseCase, UpdateShopFlashSaleItemUseCase {
      CurrentUserPort currentUser;
      FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort;
      FlashSaleItemRepositoryPort flashSaleItemRepositoryPort;
      Clock clock;
      ProductVariantRepoPort productVariantRepoPort;
      VariantSaleResolver variantSaleResolver;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ShopFlashSaleItemResponse> getShopItems(Long campaignId, String keyword) {
+        Long shopId = currentUser.getUserInfo().userId();
+        FlashSaleCampaignView campaign = flashSaleCampaignRepositoryPort.findViewById(campaignId)
+                .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
+        if (campaign.status() != FlashSaleCampaignStatus.DRAFT) {
+            throw new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_DRAFT);
+        }
+        List<FlashSaleItem> items = flashSaleItemRepositoryPort.findShopItems(campaignId, shopId);
+        List<Long> variantIds = items.stream().map(FlashSaleItem::variantId)
+                .filter(Objects::nonNull).distinct().toList();
+        Map<Long, FlashSaleVariantSnapshot> variantsById = flashSaleItemRepositoryPort.findVariants(variantIds)
+                .stream().collect(Collectors.toMap(FlashSaleVariantSnapshot::variantId, Function.identity()));
+        String searchKeyword = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
+        return items.stream().map(item -> toShopItemResponse(item, variantsById))
+                .filter(item -> item.productName().toLowerCase(Locale.ROOT).contains(searchKeyword)).toList();
+    }
+
+    private ShopFlashSaleItemResponse toShopItemResponse(FlashSaleItem item,
+            Map<Long, FlashSaleVariantSnapshot> variantsById) {
+        if (item.variantId() == null) {
+            return new ShopFlashSaleItemResponse(item.id(), item.variantId(), item.productName(),
+                    item.attributes().stream()
+                            .map(attribute -> new ShopFlashSaleItemResponse.VariantOption(attribute.name(), attribute.value()))
+                            .toList(),
+                    item.registeredQuantity(), null, item.status(), item.discountPercent(), null, true);
+        }
+        FlashSaleVariantSnapshot variant = variantsById.get(item.variantId());
+        if (variant == null) {
+            throw new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND);
+        }
+        return new ShopFlashSaleItemResponse(item.id(), item.variantId(), variant.productName(),
+                variant.attributes().stream()
+                        .map(attribute -> new ShopFlashSaleItemResponse.VariantOption(attribute.name(), attribute.value()))
+                        .toList(),
+                item.registeredQuantity(), variant.stockQuantity(), item.status(), item.discountPercent(),
+                FlashSaleRules.calculateSalePrice(variant.price(), item.discountPercent()), false);
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -59,6 +105,36 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
         LocalDateTime now = LocalDateTime.now(clock);
         campaign.addItem(variant.toRegistrationVariant(),
                 request.discountPercent(), request.registeredQuantity(), now);
+        flashSaleCampaignRepositoryPort.save(campaign);
+    }
+
+    @Override
+    @Transactional
+    public void removeItem(Long campaignId, Long itemId) {
+        Long shopId = currentUser.getUserInfo().userId();
+        FlashSaleCampaign campaign = flashSaleCampaignRepositoryPort.findByIdForUpdate(campaignId)
+                .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
+        campaign.removeItem(itemId, shopId, LocalDateTime.now(clock));
+        flashSaleCampaignRepositoryPort.save(campaign);
+    }
+
+    @Override
+    @Transactional
+    public void updateItem(Long campaignId, Long itemId, UpdateShopFlashSaleItemRequest request) {
+        Long shopId = currentUser.getUserInfo().userId();
+
+        FlashSaleCampaign campaign = flashSaleCampaignRepositoryPort.findByIdForUpdate(campaignId)
+                .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
+
+        FlashSaleItem item = campaign.getOwnedItem(itemId, shopId);
+
+        if (item.variantId() == null) {
+            throw new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND);
+        }
+        FlashSaleVariantSnapshot variant = ownedVariant(item.variantId(), shopId);
+
+        campaign.updateItemRegistration(itemId, shopId, variant.toRegistrationVariant(), request.discountPercent(),
+                request.registeredQuantity(), LocalDateTime.now(clock));
         flashSaleCampaignRepositoryPort.save(campaign);
     }
 

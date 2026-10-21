@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -24,11 +26,13 @@ public class FlashSaleItemEntity {
     // Xóa đăng ký không được cascade ngược sang chương trình sở hữu.
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "flash_sale_campaigns_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.RESTRICT)
     private FlashSaleCampaignEntity campaign;
 
     // Liên kết có thể null khi variant bị xóa; snapshot vẫn được giữ.
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_variants_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "product_variants_id", nullable = true)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private ProductVariantEntity variant;
 
     @Column(name = "shop_id", nullable = false)

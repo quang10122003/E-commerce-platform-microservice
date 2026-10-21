@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -35,13 +37,15 @@ public class ProductEntity {
     private Long userId;
 
     // FK categories_id - NOT NULL, ON DELETE RESTRICT o DB
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "categories_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.RESTRICT)
     private CategoryEntity category;
 
     // FK brands_id - NULL duoc phep, ON DELETE SET NULL o DB
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brands_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "brands_id", nullable = true)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private BrandEntity brand;
 
     @Column(name = "name", nullable = false)

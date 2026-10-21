@@ -1,6 +1,8 @@
 package com.example.notification.adapter.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Generated;
@@ -18,8 +20,9 @@ public class ChatMessageEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "conversation_id",nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private ChatConversationsEntity chatConversationsEntity;
 
     @Column(name = "sender_id", nullable = false)

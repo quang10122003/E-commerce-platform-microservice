@@ -3,6 +3,7 @@ package com.example.producr_service.infrastructure.config;
 import com.example.producr_service.application.port.in.CreateFlashSaleCampaignUseCase;
 import com.example.producr_service.application.port.in.GetFlashSaleCampaignsUseCase;
 import com.example.producr_service.application.port.in.GetUserFlashSaleItemsUseCase;
+import com.example.producr_service.application.port.in.GetShopFlashSaleItemsUseCase;
 import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRepositoryPort;
 import com.example.producr_service.application.service.FlashSaleCampaignService;
 import com.example.producr_service.application.port.in.CancelFlashSaleCampaignUseCase;
@@ -16,6 +17,8 @@ import org.springframework.context.annotation.Configuration;
 import com.example.producr_service.application.service.FlashSaleItemService;
 import com.example.producr_service.application.service.VariantSaleResolver;
 import com.example.producr_service.application.port.in.RegisterFlashSaleItemUseCase;
+import com.example.producr_service.application.port.in.RemoveShopFlashSaleItemUseCase;
+import com.example.producr_service.application.port.in.UpdateShopFlashSaleItemUseCase;
 import com.example.producr_service.application.port.in.PreviewFlashSalePriceUseCase;
 import com.example.producr_service.application.port.in.GetVariantSaleUseCase;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
@@ -33,6 +36,11 @@ import java.util.List;
 
 @Configuration
 public class FlashSaleConfig {
+
+    @Bean
+    GetShopFlashSaleItemsUseCase getShopFlashSaleItemsUseCase(FlashSaleItemService flashSaleItemService) {
+        return flashSaleItemService;
+    }
 
     @Bean
     VariantSaleResolver variantSaleResolver(Clock clock) {
@@ -55,6 +63,16 @@ public class FlashSaleConfig {
     @Bean
     RegisterFlashSaleItemUseCase registerFlashSaleItemUseCase(
             FlashSaleItemService flashSaleItemService) {
+        return flashSaleItemService;
+    }
+
+    @Bean
+    RemoveShopFlashSaleItemUseCase removeShopFlashSaleItemUseCase(FlashSaleItemService flashSaleItemService) {
+        return flashSaleItemService;
+    }
+
+    @Bean
+    UpdateShopFlashSaleItemUseCase updateShopFlashSaleItemUseCase(FlashSaleItemService flashSaleItemService) {
         return flashSaleItemService;
     }
 

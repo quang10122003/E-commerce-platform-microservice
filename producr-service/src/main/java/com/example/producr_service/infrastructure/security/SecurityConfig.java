@@ -6,12 +6,14 @@ import com.example.common.security.JwtAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -46,7 +48,6 @@ public class SecurityConfig {
                         // Phải cho phép /error để Spring giữ mã lỗi gốc, tránh biến lỗi xử lý thành lỗi xác thực.
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers("/api/shop/flash-sales", "/api/shop/flash-sales/**").hasAuthority("ROLE_SHOP")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(errors -> errors

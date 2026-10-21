@@ -4,9 +4,11 @@ import com.example.common.error.ErrorCode;
 
 public enum DomainProductError implements ErrorCode {
     FLASH_SALE_ITEM_NOT_FOUND("FLASH_SALE_ITEM_NOT_FOUND", "Không tìm thấy đăng ký thuộc Shop trong chương trình", 404),
+    FLASH_SALE_ITEM_ACCESS_DENIED("FLASH_SALE_ITEM_ACCESS_DENIED", "Bạn không có quyền thay đổi đăng ký Flash Sale của Shop khác", 403),
+    FLASH_SALE_ITEM_DISABLED("FLASH_SALE_ITEM_DISABLED", "Đăng ký Flash Sale đã bị vô hiệu hóa, không thể chỉnh sửa", 409),
     FLASH_SALE_ITEM_ALREADY_EXISTS("FLASH_SALE_ITEM_ALREADY_EXISTS", "Variant đã có đăng ký trong chương trình", 409),
     FLASH_SALE_ITEM_INVALID("FLASH_SALE_ITEM_INVALID", "Thông tin đăng ký Flash Sale không hợp lệ", 400),
-    FLASH_SALE_PRICE_INVALID("FLASH_SALE_PRICE_INVALID", "Giá gốc và phần trăm giảm phải hợp lệ; giá sale ít nhất 1 đồng", 400),
+    FLASH_SALE_PRICE_INVALID("FLASH_SALE_PRICE_INVALID", "Giá gốc phải dương; phần trăm giảm phải lớn hơn 0, nhỏ hơn 100 và tối đa 2 chữ số thập phân", 400),
     FLASH_SALE_REGISTRATION_STOCK_INVALID("FLASH_SALE_REGISTRATION_STOCK_INVALID", "Số lượng đăng ký phải dương và tồn kho phải ít nhất gấp đôi số lượng đăng ký", 400),
     FLASH_SALE_REGISTRATION_CLOSED("FLASH_SALE_REGISTRATION_CLOSED", "Chương trình không còn cho phép đăng ký", 409),
     CATEGORY_NAME_REQUIRED(

@@ -17,6 +17,8 @@ import java.util.Optional;
 
 public interface FlashSaleItemJpa extends JpaRepository<FlashSaleItemEntity, Long> {
 
+    List<FlashSaleItemEntity> findByCampaign_IdAndShopIdOrderByIdAsc(Long campaignId, Long shopId);
+
     @Query("""
             select p.id as productId, v.id as variantId, v.price as price, v.stockQuantity as stockQuantity,
                 i.discountPercent as discountPercent, i.registeredQuantity as registeredQuantity,

@@ -2,6 +2,8 @@ package com.example.producr_service.adapter.entity;
 
 import com.example.producr_service.application.port.out.storage.StorageBucket;
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -23,8 +25,9 @@ public class VariantImageEntity {
     private Long id;
 
     // FK product_variants_id - ON DELETE CASCADE o DB
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_variants_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private ProductVariantEntity variant;
 
     @Column(name = "image_url", nullable = false)

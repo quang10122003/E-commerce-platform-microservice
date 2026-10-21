@@ -1,6 +1,8 @@
 package com.example.producr_service.adapter.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -28,8 +30,9 @@ public class AttributeEntity {
     private Long id;
 
     // Database xóa thuộc tính qua ON DELETE CASCADE, không dựa vào cascade của JPA.
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "products_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private ProductEntity product;
 
     @Column(name = "name", nullable = false)

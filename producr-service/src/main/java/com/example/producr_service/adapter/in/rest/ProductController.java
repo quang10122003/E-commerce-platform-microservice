@@ -36,6 +36,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -86,6 +87,7 @@ public class ProductController {
 
     //  api tạo sản phẩm của shop
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('ROLE_SHOP')")
     public ResponseEntity<ProductResponse> createProduct(
             @RequestPart("request") @Valid CreateProductRequest request,
             @RequestPart("productImage") MultipartFile productImage,
@@ -110,6 +112,7 @@ public class ProductController {
 
     // Lấy đủ thuộc tính, phân loại và ảnh để người bán mở form chỉnh sửa.
     @GetMapping("/shop/{productId}")
+    @PreAuthorize("hasAuthority('ROLE_SHOP')")
     public ResponseEntity<ShopProductDetailResponse> getShopProductDetail(
             @PathVariable Long productId) {
         return ResponseEntity.ok(getShopProductDetailUseCase.getShopProductDetail(productId));
@@ -117,6 +120,7 @@ public class ProductController {
 
     // Nhận dữ liệu form cùng ảnh mới để cập nhật sản phẩm trong một lần lưu.
     @PutMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('ROLE_SHOP')")
     public ResponseEntity<ShopProductDetailResponse> updateProduct(
             @PathVariable Long productId,
             @RequestPart("request") @Valid UpdateProductRequest request,
@@ -166,6 +170,7 @@ public class ProductController {
 
     // api lấy danh sach sản phẩm  và các biến thể liên của shop có phân trang
     @GetMapping("shop")
+    @PreAuthorize("hasAuthority('ROLE_SHOP')")
     ResponseEntity<PageResponse<SellerProductItemResponse>> getSellerProductsUseCase(@RequestParam(required = false) Long categoryId, @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size, @RequestParam int page,@RequestParam(required = false) SellerProductFilter.Status status,@RequestParam(required = false) String keyword){
         SellerProductFilter sellerProductFilter = new SellerProductFilter(
                 PageQuery.builder().page(page).size(size).build(), categoryId, status, keyword);
@@ -174,6 +179,7 @@ public class ProductController {
 
     // Xóa sản phẩm của shop và ghi tác vụ dọn ảnh, chỉ mục vào outbox.
     @DeleteMapping("/{productId}")
+    @PreAuthorize("hasAuthority('ROLE_SHOP')")
     public ResponseEntity<Void> deleteProduct(@PathVariable("productId") Long productId) {
         log.info("Nhận yêu cầu xóa sản phẩm productId={}", productId);
         deleteProductUseCase.deleteProduct(productId);
@@ -182,6 +188,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{productId}/variants/{variantId}")
+    @PreAuthorize("hasAuthority('ROLE_SHOP')")
     public  ResponseEntity<Void> deleteProductvariant(@PathVariable("productId") Long productId,@PathVariable("variantId") Long variantsId){
         log.info("Nhận yêu cầu xóa phân loại productId={}, variantId={}", productId, variantsId);
         deleteProductvariantUseCase.deleteProductvariant(productId, variantsId);

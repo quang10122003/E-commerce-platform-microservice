@@ -1,6 +1,8 @@
 package com.example.order_service.cart.adapter.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +26,7 @@ public class CartItemEntity {
     // @ManyToOne mặc định là EAGER nên phải ghi LAZY
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cart_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private CartEntity cart;
 
     @Column(name = "product_variant_id", nullable = false)

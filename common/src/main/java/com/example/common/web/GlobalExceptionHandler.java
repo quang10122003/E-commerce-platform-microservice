@@ -2,9 +2,11 @@ package com.example.common.web;
 
 import com.example.common.error.ApiErrorDto;
 import com.example.common.error.ErrorCode;
+import com.example.common.error.AuthorizationError;
 import com.example.common.exception.BusinessException;
 import com.example.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -22,6 +24,14 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
+        AuthorizationError error = AuthorizationError.ACCESS_DENIED;
+        log.warn("Request bị từ chối do không đủ quyền: error_code={}", error.getCode());
+        return ResponseEntity.status(error.getHttpStatusCode())
+                .body(ApiResponse.error(error.getMessage(), new ApiErrorDto(error.getCode(), error.getMessage())));
+    }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex) {

@@ -20,6 +20,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -40,6 +41,7 @@ public class ChatController {
     }
 
     @GetMapping("chat_conversations/user")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public ResponseEntity<PageResponse<ChatConversationSummaryResponse<ShopInfo>>> listCurrentCustomerConversations(
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size) {
@@ -47,6 +49,7 @@ public class ChatController {
     }
 
     @GetMapping("chat_conversations/shop")
+    @PreAuthorize("hasAuthority('ROLE_SHOP')")
     public ResponseEntity<PageResponse<ChatConversationSummaryResponse<CustomerInfo>>> listCurrentShopConversations(
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size) {
@@ -54,10 +57,12 @@ public class ChatController {
     }
 
     @PostMapping("chat_conversations/{productId}")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public ResponseEntity<ChatConversationResponse> getOrCreateConversationByProductId(
             @PathVariable("productId") Long productId) {
         return ResponseEntity.ok(createChatConversationsUseCase.getOrCreateConversationByProductId(productId));
     }
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @PutMapping("conversations/{conversationId}/read")
     public ResponseEntity<ReadMessgerRepone> readConversationMessages(
             @PathVariable("conversationId") @Positive Long conversationId) {

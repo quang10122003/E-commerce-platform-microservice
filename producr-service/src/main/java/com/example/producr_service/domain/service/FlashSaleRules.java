@@ -12,7 +12,8 @@ public final class FlashSaleRules {
     public static BigDecimal calculateSalePrice(BigDecimal originalPrice, BigDecimal discountPercent) {
         if (originalPrice == null || originalPrice.signum() <= 0
                 || discountPercent == null || discountPercent.signum() <= 0
-                || discountPercent.compareTo(BigDecimal.valueOf(100)) >= 0) {
+                || discountPercent.compareTo(BigDecimal.valueOf(100)) >= 0
+                || discountPercent.scale() > 2) {
             throw new BusinessException(DomainProductError.FLASH_SALE_PRICE_INVALID);
         }
         BigDecimal priceSale = originalPrice.multiply(BigDecimal.valueOf(100).subtract(discountPercent))

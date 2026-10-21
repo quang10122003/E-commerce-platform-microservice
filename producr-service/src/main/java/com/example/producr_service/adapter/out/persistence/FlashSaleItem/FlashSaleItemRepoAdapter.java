@@ -7,6 +7,7 @@ import com.example.producr_service.adapter.out.persistence.ProductVariant.Produc
 import com.example.producr_service.application.dto.response.FlashSaleVariantSnapshot;
 import com.example.producr_service.application.dto.response.UserFlashSaleItemView;
 import com.example.producr_service.application.dto.response.FlashSaleOfferView;
+import com.example.producr_service.domain.model.FlashSaleItem;
 import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 import com.example.producr_service.domain.model.FlashSaleItemStatus;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,6 +30,20 @@ public class FlashSaleItemRepoAdapter implements FlashSaleItemRepositoryPort {
      FlashSaleItemMapper flashSaleItemMapper;
      FlashSaleItemJpa flashSaleItemJpa;
      ProductVariantMapper productVariantMapper;
+
+    @Override
+    public List<FlashSaleItem> findShopItems(Long campaignId, Long shopId) {
+        return flashSaleItemJpa.findByCampaign_IdAndShopIdOrderByIdAsc(campaignId, shopId)
+                .stream().map(flashSaleItemMapper::toDomain).toList();
+    }
+
+    @Override
+    public List<FlashSaleVariantSnapshot> findVariants(Collection<Long> variantIds) {
+        if (variantIds.isEmpty()) {
+            return List.of();
+        }
+        return productVariantJpa.findAllById(variantIds).stream().map(flashSaleItemMapper::toSnapshot).toList();
+    }
 
     @Override
     public List<ProductSaleOfferView> findOngoingOffersByProductIds(List<Long> productIds, LocalDateTime now) {

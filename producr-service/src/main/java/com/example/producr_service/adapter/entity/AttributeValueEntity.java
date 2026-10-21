@@ -1,5 +1,7 @@
 package com.example.producr_service.adapter.entity;
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,8 +20,9 @@ public class AttributeValueEntity {
     private Long id;
 
     // Database xóa giá trị thuộc tính qua ON DELETE CASCADE khi thuộc tính cha bị xóa.
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "attributes_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private AttributeEntity attribute;
 
     @Column(name = "value", nullable = false)
