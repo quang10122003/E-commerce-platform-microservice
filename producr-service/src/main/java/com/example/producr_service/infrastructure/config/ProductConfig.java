@@ -27,6 +27,7 @@ import com.example.producr_service.application.service.ProductInternalService;
 import com.example.producr_service.application.service.ProductService;
 import com.example.producr_service.application.service.ProductUpdateService;
 import com.example.producr_service.application.service.ShopProductPageAssembler;
+import com.example.producr_service.application.service.ShopOverviewService;
 import com.example.producr_service.application.service.VariantSaleResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,6 +36,14 @@ import java.time.Clock;
 
 @Configuration
 public class ProductConfig {
+    @Bean
+    ShopOverviewService shopOverviewService(
+            ShopInfoClientPort shopInfoClientPort, ProductRepositoryPort productRepositoryPort, Clock clock,
+            ProductService productService) {
+        return new ShopOverviewService(
+                shopInfoClientPort, productRepositoryPort, clock, productService);
+    }
+
     @Bean
     GetProductPriceRangeUseCase getProductPriceRangeUseCase(ProductService productService) {
         return productService;

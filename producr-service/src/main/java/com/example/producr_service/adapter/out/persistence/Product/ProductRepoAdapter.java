@@ -35,6 +35,11 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     BrandJpa brandJpa;
     ProductMapper productMapper;
 
+    @Override
+    public long countActiveByUserId(Long userId) {
+        return productJpa.countByUserIdAndStatus(userId, ProductStatus.ACTIVE);
+    }
+
     // Lấy metadata theo lô cho cả sản phẩm đang bán và đã ngừng bán.
     @Override
     public List<ProductSummaryResponse> findProductSummariesByIds(List<Long> productIds) {

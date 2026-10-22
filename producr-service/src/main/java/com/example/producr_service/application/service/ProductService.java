@@ -15,6 +15,7 @@ import com.example.producr_service.application.dto.outbox.*;
 import com.example.producr_service.application.dto.request.CreateProductData;
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
 import com.example.producr_service.application.dto.request.SellerProductFilter;
+import com.example.producr_service.application.dto.request.ShopProductFilter;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
 import com.example.producr_service.application.dto.response.ProductPriceRangeResponse;
 import com.example.producr_service.application.dto.response.ProductResponse;
@@ -193,11 +194,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
         }
         productHelper.validatePriceRange(filter.minPrice(), filter.maxPrice());
         ProductCatalogSearchResult result = productSearchIndexPort.search(filter);
-        List<Long> productIds = result.items().stream().map(ProductSearchResponse::id).distinct().toList();
-        Map<Long, BigDecimal> discounts = findCatalogDiscounts(productIds, LocalDateTime.now(clock));
-        List<ProductSearchResponse> items = result.items().stream()
-                .map(item -> item.withMaxDiscountPercent(discounts.get(item.id())))
-                .toList();
+        List<ProductSearchResponse> items = applyCatalogDiscounts(result.items());
         Map<Long, ProductBrandOption> brandsById = brandRepositoryPort.findAllById(result.brandIds()).stream()
                 .collect(Collectors.toMap(Brand::getId,
                         brand -> new ProductBrandOption(brand.getId(), brand.getName())));
@@ -211,6 +208,18 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                 result.hasNext(),
                 brands
         );
+    }
+
+    public PageResponse<ProductSearchResponse> getShopProducts(Long shopId, ShopProductFilter filter) {
+        PageResponse<ProductSearchResponse> result = productSearchIndexPort.searchShopProducts(shopId, filter);
+        return new PageResponse<>(applyCatalogDiscounts(result.items()), result.page(), result.pageSize(),
+                result.totalItems(), result.totalPages());
+    }
+
+    private List<ProductSearchResponse> applyCatalogDiscounts(List<ProductSearchResponse> items) {
+        List<Long> productIds = items.stream().map(ProductSearchResponse::id).distinct().toList();
+        Map<Long, BigDecimal> discounts = findCatalogDiscounts(productIds, LocalDateTime.now(clock));
+        return items.stream().map(item -> item.withMaxDiscountPercent(discounts.get(item.id()))).toList();
     }
 
 //    lấy phần trắm sale cao nhất của các variant trong product

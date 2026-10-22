@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
 import com.example.producr_service.adapter.DTO.documentElasticsearch.ProductSearchDocument;
 import com.example.producr_service.adapter.DTO.documentElasticsearch.ProductSearchDocumentFields;
@@ -13,6 +14,8 @@ import com.example.producr_service.adapter.mapper.ProductMapper;
 import com.example.producr_service.adapter.mapper.ProductSearchDocumentMapper;
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
 import com.example.producr_service.application.dto.request.ProductSortOption;
+import com.example.producr_service.application.dto.request.ShopProductFilter;
+import com.example.common.response.PageResponse;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResult;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
@@ -74,34 +77,8 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
         );
 
         NativeQueryBuilder queryBuilder = NativeQuery.builder()
-                .withQuery(boolQueryBuilder -> boolQueryBuilder.bool(bool -> {
-                    if (hasText(filter.keyword())) {
-                        String keyword = filter.keyword().trim();
-                        bool.must(multiMatch -> multiMatch.multiMatch(multiMatchQuery -> multiMatchQuery
-                                .query(keyword)
-                                .type(TextQueryType.BoolPrefix)
-                                .operator(Operator.And)
-                                .fields(
-                                        ProductSearchDocumentFields.NAME + "^5",
-                                        ProductSearchDocumentFields.BRAND_NAME + "^2",
-                                        ProductSearchDocumentFields.CATEGORY_NAME
-                                )
-                        ));
-
-                        bool.should(matchPhrase -> matchPhrase.matchPhrase(matchPhraseQuery -> matchPhraseQuery
-                                .field(ProductSearchDocumentFields.NAME)
-                                .query(keyword)
-                                .boost(8.0f)
-                        ));
-                    }
-
-                    if (filter.categoryId() != null) {
-                        bool.filter(term -> term.term(termQuery -> termQuery
-                                .field(ProductSearchDocumentFields.CATEGORY_ID)
-                                .value(filter.categoryId())
-                        ));
-                    }
-
+                .withQuery(boolQueryBuilder -> {
+                    BoolQuery.Builder bool = buildProductQuery(filter.keyword(), filter.categoryId());
                     if (filter.minPrice() != null) {
                         bool.filter(range -> range.range(rangeQuery -> rangeQuery
                                 .number(numberRange -> numberRange
@@ -120,11 +97,6 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                         ));
                     }
 
-                    bool.filter(term -> term.term(termQuery -> termQuery
-                            .field(ProductSearchDocumentFields.STATUS + ".keyword")
-                            .value(ProductStatus.ACTIVE.name())
-                    ));
-
                     if (!filter.locations().isEmpty()) {
                         bool.filter(terms -> terms.terms(termsQuery -> termsQuery
                                 .field(ProductSearchDocumentFields.LOCATION)
@@ -134,9 +106,8 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                         ));
                     }
 
-                    return bool;
-                }))
-                ;
+                    return boolQueryBuilder.bool(bool.build());
+                });
 
         // Bộ lọc brand chỉ áp dụng cho hit để không thu hẹp danh sách brand gợi ý.
         if (!filter.brandIds().isEmpty()) {
@@ -148,23 +119,8 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
             ));
         }
 
-        if (filter.sortOption() == ProductSortOption.MOST_SOLD) {
-            queryBuilder.withSort(sort -> sort.field(field -> field
-                    .field(ProductSearchDocumentFields.TOTAL_SOLD)
-                    .order(SortOrder.Desc)
-            ));
-        } else {
-            queryBuilder.withSort(sort -> sort.field(field -> field
-                    .field("_score")
-                    .order(SortOrder.Desc)
-            ));
-        }
-
-        // Dùng productId làm khóa phụ ổn định cho cursor ở mọi chế độ sort.
-        queryBuilder.withSort(sort -> sort.field(field -> field
-                .field(ProductSearchDocumentFields.PRODUCT_ID)
-                .order(SortOrder.Desc)
-        ));
+        applySort(queryBuilder, filter.sortOption() == ProductSortOption.MOST_SOLD
+                ? ProductSearchDocumentFields.TOTAL_SOLD : "_score");
 
         // Lấy tối đa 50 brand có nhiều product khớp nhất, không phụ thuộc trang product hiện tại.
         queryBuilder.withAggregation(
@@ -217,6 +173,55 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                 hasNext,
                 extractBrandIds(searchHits)
         );
+    }
+
+    @Override
+    public PageResponse<ProductSearchResponse> searchShopProducts(Long shopId, ShopProductFilter filter) {
+        BoolQuery.Builder bool = buildProductQuery(filter.keyword(), filter.categoryId());
+        bool.filter(term -> term.term(value -> value.field(ProductSearchDocumentFields.USER_ID).value(shopId)));
+        NativeQueryBuilder queryBuilder = NativeQuery.builder()
+                .withQuery(query -> query.bool(bool.build()))
+                .withTrackTotalHits(true)
+                .withPageable(PageRequest.of(filter.pageQuery().pageIndex(), filter.pageQuery().size()));
+        String sortField = switch (filter.sortOption()) {
+            case RELEVANCE -> "_score";
+            case NEWEST -> ProductSearchDocumentFields.CREATED_AT;
+            case MOST_SOLD -> ProductSearchDocumentFields.TOTAL_SOLD;
+        };
+        applySort(queryBuilder, sortField);
+        SearchHits<ProductSearchDocument> hits = elasticsearchOperations.search(
+                queryBuilder.build(), ProductSearchDocument.class);
+        List<ProductSearchResponse> items = hits.getSearchHits().stream()
+                .map(SearchHit::getContent).map(productMapper::toResponse).toList();
+        long totalItems = hits.getTotalHits();
+        int totalPages = (int) Math.ceil((double) totalItems / filter.pageQuery().size());
+        return new PageResponse<>(items, filter.pageQuery().page(), filter.pageQuery().size(), totalItems, totalPages);
+    }
+
+    private BoolQuery.Builder buildProductQuery(String keyword, Long categoryId) {
+        BoolQuery.Builder bool = new BoolQuery.Builder();
+        if (hasText(keyword)) {
+            String normalizedKeyword = keyword.trim();
+            bool.must(query -> query.multiMatch(match -> match.query(normalizedKeyword)
+                    .type(TextQueryType.BoolPrefix).operator(Operator.And)
+                    .fields(ProductSearchDocumentFields.NAME + "^5",
+                            ProductSearchDocumentFields.BRAND_NAME + "^2", ProductSearchDocumentFields.CATEGORY_NAME)));
+            bool.should(query -> query.matchPhrase(match -> match.field(ProductSearchDocumentFields.NAME)
+                    .query(normalizedKeyword).boost(8.0f)));
+        }
+        if (categoryId != null) {
+            bool.filter(query -> query.term(term -> term.field(ProductSearchDocumentFields.CATEGORY_ID).value(categoryId)));
+        }
+        bool.filter(query -> query.term(term -> term.field(ProductSearchDocumentFields.STATUS + ".keyword")
+                .value(ProductStatus.ACTIVE.name())));
+        return bool;
+    }
+
+    private void applySort(NativeQueryBuilder queryBuilder, String sortField) {
+        queryBuilder.withSort(sort -> sort.field(field -> field.field(sortField).order(SortOrder.Desc)));
+        // Dùng productId làm khóa phụ ổn định cho cursor và phân trang ở mọi chế độ sort.
+        queryBuilder.withSort(sort -> sort.field(field -> field
+                .field(ProductSearchDocumentFields.PRODUCT_ID).order(SortOrder.Desc)));
     }
 
     private List<Long> extractBrandIds(SearchHits<ProductSearchDocument> searchHits) {

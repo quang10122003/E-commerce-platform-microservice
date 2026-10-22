@@ -30,21 +30,25 @@ public class InternalUserController {
     private final InternalGetUserInfoUseCase internalGetUserInfoUseCase;
     private final GetPublicShopInfoUseCase getPublicShopInfoUseCase;
 
+    // Cần xác thực, không yêu cầu role; chỉ trả ID, tên theo lô để không lộ thông tin liên hệ khi hiển thị chat.
     @PostMapping("user-info")
     List<UserDisplayInfoResponse> getUserDisplayInfosByIds(
             @RequestBody @Size(max = 50) List<@NotNull @Positive Long> userIds) {
         return internalGetUserInfoUseCase.getUserDisplayInfosByIds(userIds);
     }
 
+    // Public, không cần đăng nhập; tách API một shop để trả đủ hồ sơ công khai và báo 404 khi không tồn tại.
     @GetMapping("/shops/{shopId}/info")
     public PublicShopInfoResponse getPublicShopInfo(@PathVariable("shopId") @Positive Long shopId) {
         return getPublicShopInfoUseCase.getPublicShopInfo(shopId);
     }
+    // Cần xác thực, không yêu cầu role; lấy user từ token thay vì nhận ID để tránh truy vấn nhầm tài khoản.
     @GetMapping("getInfoUser")
     UserInternaInfoRespone getInfoUser(@RequestHeader("Authorization") String authorizationHeader){
         return internalGetUserInfoUseCase.getInfoUserInternal(authorizationHeader);
     }
 
+    // Cần xác thực, không yêu cầu role; giữ API theo lô để lấy tên, logo của nhiều shop mà tránh N+1 lời gọi.
     @PostMapping("shop-info")
     List<ShopInfoResponse> getShopInfos(@RequestBody List<Long> userIds) {
         return internalGetUserInfoUseCase.getShopInfos(userIds);

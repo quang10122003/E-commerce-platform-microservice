@@ -17,7 +17,9 @@ public interface UserRepoJpa extends JpaRepository<UserEntity, Long> {
     @Query("select u.id as userId, u.fullName as fullName from UserEntity u where u.id in :userIds")
     List<UserDisplayInfoProjection> findUserDisplayInfosByIds(@Param("userIds") Collection<Long> userIds);
     @Query("""
-            select u.id as shopId, u.shopName as shopName, u.shopAddress as shopAddress
+            select u.id as shopId, u.shopName as shopName, u.shopAddress as shopAddress,
+                   u.shopLogoUrl as shopLogoUrl, u.shopDescription as shopDescription,
+                   u.shopCreatedAt as shopCreatedAt
             from UserEntity u join u.roles r
             where u.id = :shopId and r.name = :shopRole
             """)

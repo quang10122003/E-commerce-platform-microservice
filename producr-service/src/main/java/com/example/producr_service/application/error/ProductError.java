@@ -3,6 +3,10 @@ package com.example.producr_service.application.error;
 import com.example.common.error.ErrorCode;
 
 public enum ProductError implements ErrorCode  {
+    PRODUCT_SEARCH_PAGE_LIMIT_EXCEEDED("PRODUCT_SEARCH_PAGE_LIMIT_EXCEEDED",
+            "Trang tìm kiếm vượt giới hạn 10000 sản phẩm", 400),
+    SHOP_NOT_FOUND("SHOP_NOT_FOUND", "Không tìm thấy shop", 404),
+    SHOP_INFO_UNAVAILABLE("SHOP_INFO_UNAVAILABLE", "Tạm thời không thể lấy thông tin shop", 503),
     PRODUCT_ACCESS_DENIED("PRODUCT_ACCESS_DENIED", "Bạn không có quyền truy cập sản phẩm này", 403),
     FLASH_SALE_ITEM_ALREADY_EXISTS("FLASH_SALE_ITEM_ALREADY_EXISTS", "Variant đã có đăng ký trong chương trình", 409),
     FLASH_SALE_PRODUCT_INACTIVE("FLASH_SALE_PRODUCT_INACTIVE", "Sản phẩm đã bị khóa, không thể đăng ký sale", 409),

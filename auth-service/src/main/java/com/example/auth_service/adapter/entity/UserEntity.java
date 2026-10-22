@@ -66,6 +66,9 @@ public class UserEntity implements UserDetails {
     @Column(name = "shop_address", columnDefinition = "TEXT")
     String shopAddress;
 
+    @Column(name = "shop_created_at", columnDefinition = "TIMESTAMP")
+    Instant shopCreatedAt;
+
     @Column(name = "is_shop_lock", nullable = false)
     boolean isShopLock;
 

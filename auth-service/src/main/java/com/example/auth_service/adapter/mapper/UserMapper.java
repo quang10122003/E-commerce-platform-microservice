@@ -2,6 +2,7 @@ package com.example.auth_service.adapter.mapper;
 
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import com.example.auth_service.adapter.entity.UserEntity;
 import com.example.auth_service.domain.model.User;
@@ -17,6 +18,8 @@ public interface UserMapper {
 
     User toDomain(UserEntity entity);
 
+    @Mapping(target = "isShopLock", source = "shopLock")
+    @Mapping(target = "isLocked", source = "locked")
     UserEntity toEntity(User user);
 
     UserDisplayInfoResponse toUserDisplayInfo(UserDisplayInfoProjection projection);

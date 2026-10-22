@@ -42,7 +42,8 @@ public class AuthServiceInternal implements InternalGetUserInfoUseCase, GetPubli
     public PublicShopInfoResponse getPublicShopInfo(Long shopId) {
         ShopAddressView shop = userRepositoryPort.findShopAddressById(shopId)
                 .orElseThrow(() -> new BusinessException(AuthError.SHOP_NOT_FOUND));
-        return new PublicShopInfoResponse(shop.shopId(), shop.shopName(), shop.shopAddress());
+        return new PublicShopInfoResponse(shop.shopId(), shop.shopName(), shop.shopAddress(),
+                shop.shopLogoUrl(), shop.shopDescription(), shop.shopCreatedAt());
     }
 
     @Override

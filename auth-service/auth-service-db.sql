@@ -14,6 +14,7 @@ create table users(
 	shop_description text null,
 	shop_phone varchar(32) null,
 	shop_address text null,
+	shop_created_at TIMESTAMP NULL DEFAULT NULL,
 	is_shop_lock boolean not null default false,
 	is_locked boolean not null default false,
 	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

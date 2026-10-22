@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductRepositoryPort {
+    long countActiveByUserId(Long userId);
+
     List<ProductSummaryResponse> findProductSummariesByIds(List<Long> productIds);
     // Đọc toàn bộ lựa chọn sản phẩm thuộc Shop, gồm cả sản phẩm bị khóa.
     List<Product> findAllByUserId(Long userId);

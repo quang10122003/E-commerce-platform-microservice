@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
+    long countByUserIdAndStatus(Long userId, ProductStatus status);
+
     @Query("select p.id as id, p.name as name, p.imageUrl as imageUrl from ProductEntity p where p.id in :productIds")
     List<ProductSummaryProjection> findProductSummariesByIds(@Param("productIds") List<Long> productIds);
     @Query("select p.userId from ProductEntity p where p.id = :productId")

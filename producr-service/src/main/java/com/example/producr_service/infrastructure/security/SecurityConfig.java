@@ -22,6 +22,8 @@ public class SecurityConfig {
             "/actuator/health",
             "/actuator/info",
             "/api/products",
+            "/api/products/shops/{shopId}/overview",
+            "/api/products/shops/{shopId}/products",
             "/api/products/{productId:-?[0-9]+}",
             "/api/products/{productId:-?[0-9]+}/price-range",
             "/api/products/{productId:-?[0-9]+}/variants/{variantId:-?[0-9]+}/sale",
