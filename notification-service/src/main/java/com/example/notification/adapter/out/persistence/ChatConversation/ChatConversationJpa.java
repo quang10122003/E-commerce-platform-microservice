@@ -14,6 +14,11 @@ import java.util.Optional;
 
 public interface ChatConversationJpa extends JpaRepository<ChatConversationsEntity, Long> {
 
+    // Khóa ngoại ON DELETE CASCADE xóa cả tin nhắn mà không cần tải từng room.
+    @Modifying
+    @Query("delete from ChatConversationsEntity conversation where conversation.productId = :productId")
+    int deleteConversationsByProductId(@Param("productId") Long productId);
+
     @Query("""
             select conversation from ChatConversationsEntity conversation
             where conversation.customerId = :customerId

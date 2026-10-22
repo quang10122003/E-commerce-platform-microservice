@@ -15,6 +15,8 @@ public interface ChatRoomRepositoryPort {
 
     ChatConversation save(ChatConversation chatConversation);
 
+    int deleteConversationsByProductId(Long productId);
+
     Optional<ChatConversation> findById(Long conversationId);
 
     // Khóa room để các thao tác gửi đồng thời cập nhật metadata tuần tự.

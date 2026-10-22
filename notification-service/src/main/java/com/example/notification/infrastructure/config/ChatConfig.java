@@ -8,6 +8,11 @@ import com.example.notification.application.port.out.repo.ChatRoomRepositoryPort
 import com.example.notification.application.service.ChatApplicationService;
 import com.example.notification.application.service.ChatConversationQueryService;
 import com.example.notification.application.service.ChatMessageApplicationService;
+import com.example.notification.application.port.in.ProcessProductEventUseCase;
+import com.example.notification.application.port.out.objectMapper.ObjectMapperPort;
+import com.example.notification.application.registry.KafkaEventHandlerRegistry;
+import com.example.notification.application.service.ProductEventApplicationService;
+import com.example.notification.application.strategy.event.ProductDeleteEventHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,6 +20,17 @@ import java.time.Clock;
 
 @Configuration
 public class ChatConfig {
+    @Bean
+    ProcessProductEventUseCase processProductEventUseCase(KafkaEventHandlerRegistry eventHandlerRegistry) {
+        return new ProductEventApplicationService(eventHandlerRegistry);
+    }
+
+    @Bean
+    ProductDeleteEventHandler productDeleteEventHandler(
+            ChatApplicationService chatApplicationService, ObjectMapperPort objectMapperPort) {
+        return new ProductDeleteEventHandler(chatApplicationService, objectMapperPort);
+    }
+
     @Bean
     ChatConversationQueryService listChatConversationsUseCase(
             CurrentUserPort currentUserPort, ChatRoomRepositoryPort chatRoomRepositoryPort,

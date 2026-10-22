@@ -12,16 +12,28 @@ import com.example.notification.domain.model.ChatConversation;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 
 @RequiredArgsConstructor
+@Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class ChatApplicationService implements CreateChatConversationsUseCase, CheckChatConversationAccessUseCase {
 
     ProductClientPort productClientPort;
     CurrentUserPort currentUserPort;
     ChatRoomRepositoryPort chatRoomRepositoryPort;
+
+    @Transactional
+    public void deleteConversationsByProductId(Long productId) {
+        if (productId == null || productId <= 0) {
+            throw new BusinessException(ChatError.CHAT_ROOM_INVALID);
+        }
+        int deletedConversations = chatRoomRepositoryPort.deleteConversationsByProductId(productId);
+        log.info("Dọn room của product đã xóa: product_id={}, deleted_conversations={}",
+                productId, deletedConversations);
+    }
 
     @Override
     @Transactional

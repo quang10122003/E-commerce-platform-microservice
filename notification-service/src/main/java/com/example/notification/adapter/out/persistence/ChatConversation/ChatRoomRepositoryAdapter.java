@@ -39,6 +39,11 @@ public class ChatRoomRepositoryAdapter implements ChatRoomRepositoryPort {
     private final ChatMessgerMapper chatMessgerMapper;
     private final ChatMessageCursorCodec chatMessageCursorCodec;
 
+    @Override
+    public int deleteConversationsByProductId(Long productId) {
+        return conversationJpa.deleteConversationsByProductId(productId);
+    }
+
     // Upsert bảo vệ unique key khi nhiều request cùng mở một room.
     @Override
     public ChatConversation save(ChatConversation conversation) {
