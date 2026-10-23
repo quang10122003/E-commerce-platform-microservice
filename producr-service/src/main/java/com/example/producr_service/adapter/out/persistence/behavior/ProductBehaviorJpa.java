@@ -11,6 +11,15 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface ProductBehaviorJpa extends JpaRepository<UserProductBehaviorEntity, Long> {
+    @Modifying
+    @Query(value = """
+            DELETE FROM user_product_behavior
+            WHERE created_at <= :cutoff
+            ORDER BY created_at, id
+            LIMIT :batchSize
+            """, nativeQuery = true)
+    int deleteExpiredBefore(@Param("cutoff") LocalDateTime cutoff, @Param("batchSize") int batchSize);
+
     @Query("""
             select max(b.createdAt) from UserProductBehaviorEntity b
             where b.userId = :userId and b.product.id = :productId and b.eventType = :eventType

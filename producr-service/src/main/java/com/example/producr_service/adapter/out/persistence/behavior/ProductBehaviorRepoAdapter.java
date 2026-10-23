@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 @Repository
@@ -20,6 +22,13 @@ public class ProductBehaviorRepoAdapter implements ProductBehaviorRepositoryPort
     private final ProductJpa productJpa;
     private final ProductBehaviorMapper productBehaviorMapper;
     private final Clock clock;
+
+    @Override
+    public int deleteExpiredBefore(Instant cutoff, int batchSize) {
+        // DB lưu microsecond nên làm tròn xuống để không xóa hành vi trước hạn.
+        LocalDateTime localCutoff = LocalDateTime.ofInstant(cutoff.truncatedTo(ChronoUnit.MICROS), clock.getZone());
+        return productBehaviorJpa.deleteExpiredBefore(localCutoff, batchSize);
+    }
 
     @Override
     public Optional<Instant> findLatestProductViewAt(Long userId, Long productId) {

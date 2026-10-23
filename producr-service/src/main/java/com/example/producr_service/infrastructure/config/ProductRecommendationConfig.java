@@ -7,6 +7,10 @@ import com.example.producr_service.application.port.out.repo.ProductRepositoryPo
 import com.example.producr_service.application.port.out.repo.ProductViewStateRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.application.service.ProductRecommendationService;
+import com.example.producr_service.application.port.in.CleanupExpiredProductBehaviorsUseCase;
+import com.example.producr_service.application.service.ProductBehaviorCleanupBatchService;
+import com.example.producr_service.application.service.ProductBehaviorCleanupService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,6 +18,18 @@ import java.time.Clock;
 
 @Configuration
 public class ProductRecommendationConfig {
+    @Bean
+    ProductBehaviorCleanupBatchService productBehaviorCleanupBatchService(ProductBehaviorRepositoryPort repository) {
+        return new ProductBehaviorCleanupBatchService(repository);
+    }
+
+    @Bean
+    CleanupExpiredProductBehaviorsUseCase cleanupExpiredProductBehaviorsUseCase(
+            ProductBehaviorCleanupBatchService batchService, Clock clock,
+            @Value("${app.recommendation.behavior-cleanup.batch-size}") int batchSize) {
+        return new ProductBehaviorCleanupService(batchService, clock, batchSize);
+    }
+
     @Bean
     ProductRecommendationService productRecommendationService(
             CurrentUserPort currentUserPort,

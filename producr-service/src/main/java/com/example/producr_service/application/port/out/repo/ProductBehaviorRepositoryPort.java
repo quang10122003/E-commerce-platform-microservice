@@ -9,4 +9,6 @@ public interface ProductBehaviorRepositoryPort {
     Optional<Instant> findLatestProductViewAt(Long userId, Long productId);
 
     boolean saveIfAbsent(UserProductBehavior behavior);
+
+    int deleteExpiredBefore(Instant cutoff, int batchSize);
 }
