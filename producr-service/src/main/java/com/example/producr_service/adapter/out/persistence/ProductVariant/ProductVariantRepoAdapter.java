@@ -24,6 +24,11 @@ public class ProductVariantRepoAdapter implements ProductVariantRepoPort {
     private final ProductVariantJpa productVariantJpa;
     private final ProductVariantMapper productVariantMapper;
 
+    @Override
+    public Optional<Long> findProductIdByVariantId(Long variantId) {
+        return productVariantJpa.findProductIdByVariantId(variantId);
+    }
+
     // Đọc projection giá và tồn kho, không dựng aggregate hoặc tải collection.
     @Override
     public Optional<VariantPriceView> findPriceView(Long productId, Long variantId) {

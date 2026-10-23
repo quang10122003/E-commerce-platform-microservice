@@ -13,6 +13,15 @@ import org.springframework.stereotype.Component;
 public class JacksonAdapter implements MapJsonToObjPort {
     ObjectMapper objectMapper;
     @Override
+    public <T> T readValue(String payload, Class<T> payloadType) {
+        try {
+            return objectMapper.readValue(payload, payloadType);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException exception) {
+            throw new IllegalArgumentException("Không thể đọc JSON thành " + payloadType.getSimpleName(), exception);
+        }
+    }
+
+    @Override
     public <T> T readValue(Object payload, Class<T> payloadType) {
         try {
             return objectMapper.convertValue(payload, payloadType);

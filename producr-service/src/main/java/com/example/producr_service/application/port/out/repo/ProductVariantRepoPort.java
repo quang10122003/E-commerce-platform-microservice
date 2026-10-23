@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface ProductVariantRepoPort {
+    Optional<Long> findProductIdByVariantId(Long variantId);
+
     // Đọc giá và tồn kho theo cả product ID và variant ID, không khóa hoặc tải ảnh.
     Optional<VariantPriceView> findPriceView(Long productId, Long variantId);
 

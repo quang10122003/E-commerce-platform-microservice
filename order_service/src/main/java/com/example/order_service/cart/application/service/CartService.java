@@ -1,5 +1,9 @@
 package com.example.order_service.cart.application.service;
 
+import com.example.order_service.cart.application.Constant.Constant;
+import com.example.order_service.cart.application.dto.outbox.CartItemAddedOutboxPayload;
+import com.example.order_service.cart.application.dto.outbox.OutboxEventDto;
+import com.example.order_service.cart.application.port.out.outbox.OutboxPort;
 import com.example.order_service.cart.application.dto.repone.CartInfoRepone;
 import com.example.order_service.cart.application.dto.repone.CartRepone;
 import com.example.order_service.cart.application.dto.event.ProductDeleteEvent;
@@ -36,6 +40,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
     CartRepoPort cartRepoPort;
     ProductClientPort productClientPort;
     Clock clock;
+    OutboxPort outboxPort;
 
     @Override
     @Transactional(readOnly = true)
@@ -132,7 +137,15 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
         } else {
             cart.addItem(productVariantId, quantity, now);
         }
-        cartRepoPort.save(cart);
+        Cart savedCart = cartRepoPort.save(cart);
+        UUID eventId = UUID.randomUUID();
+        LocalDateTime eventTime = LocalDateTime.now(clock);
+        CartItemAddedOutboxPayload payload = new CartItemAddedOutboxPayload(eventId,
+                CartItemAddedOutboxPayload.EVENT_TYPE, userId, productVariantId,
+                quantity == null ? 1 : quantity, eventTime.atZone(clock.getZone()).toOffsetDateTime());
+        // Ghi cùng transaction để không phát hành vi của thao tác thêm giỏ đã rollback.
+        outboxPort.save(new OutboxEventDto(eventId, Constant.CART, savedCart.getId().toString(),
+                CartItemAddedOutboxPayload.EVENT_TYPE, payload, eventTime));
         log.info("Đã thêm sản phẩm vào giỏ: user_id={}, product_variant_id={}, added_quantity={}",
                 userId, productVariantId, quantity == null ? 1 : quantity);
     }

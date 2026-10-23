@@ -9,6 +9,7 @@ CREATE DATABASE IF NOT EXISTS product_service_db
     COLLATE utf8mb4_unicode_ci;
 
 USE product_service_db;
+
 -- Danh mục sản phẩm - phẳng, không phân cấp
 CREATE TABLE categories (
     id                      INT AUTO_INCREMENT PRIMARY KEY,
@@ -61,6 +62,41 @@ CREATE TABLE products (
     FOREIGN KEY (brands_id) REFERENCES brands(id) ON DELETE SET NULL
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+
+-- Lưu hành vi riêng để dọn sau 30 ngày mà không ảnh hưởng lịch sử giao dịch.
+CREATE TABLE user_product_behavior (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    event_id VARCHAR(36) NOT NULL COMMENT 'Giữ nguyên khi retry để chống xử lý trùng sự kiện',
+    user_id BIGINT NOT NULL COMMENT 'Lấy từ nguồn xác thực hoặc sự kiện backend đáng tin cậy',
+    product_id INT NOT NULL COMMENT 'ID sản phẩm gốc, không phải biến thể',
+    event_type ENUM('PRODUCT_VIEW', 'ADD_TO_CART', 'PURCHASE') NOT NULL,
+    created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
+        COMMENT 'Thời điểm hành vi, phải truyền thời điểm gốc khi xử lý sự kiện bất đồng bộ',
+    PRIMARY KEY (id),
+    CONSTRAINT uk_user_product_behavior_event UNIQUE (event_id),
+    -- Xóa sản phẩm phải dọn hành vi liên quan mà không bị lịch sử chặn lại.
+    CONSTRAINT fk_user_product_behavior_product
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    INDEX idx_user_product_behavior_product (product_id),
+    INDEX idx_user_product_behavior_user_created (user_id, created_at),
+    -- Index hỗ trợ tra lượt xem; chống lặp đồng thời cần cơ chế nguyên tử riêng.
+    INDEX idx_user_product_behavior_recent_view (user_id, product_id, event_type, created_at),
+    INDEX idx_user_product_behavior_created (created_at)
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Tách trạng thái chống lặp khỏi lịch sử để vẫn lưu được nhiều lượt xem hợp lệ.
+CREATE TABLE user_product_view_state (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    product_id INT NOT NULL,
+    next_allowed_at TIMESTAMP(6) NOT NULL COMMENT 'Chỉ nhận lượt xem mới khi thời điểm xử lý đạt mốc này',
+    PRIMARY KEY (id),
+    CONSTRAINT uk_user_product_view_state_user_product UNIQUE (user_id, product_id),
+    CONSTRAINT fk_user_product_view_state_product
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    INDEX idx_user_product_view_state_product (product_id),
+    INDEX idx_user_product_view_state_next_allowed (next_allowed_at)
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Loại thuộc tính của 1 sản phẩm (VD: "Màu sắc", "Size")
 -- Sản phẩm không phân loại thì không có dòng nào ở đây

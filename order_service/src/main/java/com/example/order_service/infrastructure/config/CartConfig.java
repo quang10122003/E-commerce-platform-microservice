@@ -9,6 +9,7 @@ import com.example.order_service.cart.application.port.out.client.CurrentUserPor
 import com.example.order_service.cart.application.port.out.client.ProductClientPort;
 import com.example.order_service.cart.application.port.out.repo.CartRepoPort;
 import com.example.order_service.cart.application.service.CartService;
+import com.example.order_service.cart.application.port.out.outbox.OutboxPort;
 import com.example.order_service.cart.application.port.in.ProcessProductEventUseCase;
 import com.example.order_service.cart.application.port.out.objettMapper.ObjectMapperPort;
 import com.example.order_service.cart.application.registry.KafkaEventHandlerRegistry;
@@ -20,23 +21,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Clock;
-import java.time.ZoneId;
 import java.util.List;
 
 @Configuration
 public class CartConfig {
     @Bean
-    Clock clock() {
-        return Clock.system(ZoneId.of("Asia/Ho_Chi_Minh"));
-    }
-
-    @Bean
     CartService cartService(
             CurrentUserPort currentUserPort,
             CartRepoPort cartRepoPort,
             ProductClientPort productClientPort,
-            Clock clock) {
-        return new CartService(currentUserPort, cartRepoPort, productClientPort, clock);
+            Clock clock, OutboxPort outboxPort) {
+        return new CartService(currentUserPort, cartRepoPort, productClientPort, clock, outboxPort);
     }
 
     @Bean

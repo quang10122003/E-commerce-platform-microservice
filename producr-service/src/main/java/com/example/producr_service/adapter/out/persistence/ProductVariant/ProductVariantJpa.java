@@ -17,6 +17,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface ProductVariantJpa
         extends JpaRepository<ProductVariantEntity, Long> {
+    @Query("select p.id from ProductVariantEntity v join v.product p where v.id = :variantId")
+    Optional<Long> findProductIdByVariantId(@Param("variantId") Long variantId);
+
 
     @Query("""
             select v.id as variantId, v.price as price,

@@ -1,0 +1,59 @@
+package com.example.order_service.infrastructure.config;
+
+import com.example.order_service.cart.application.Constant.Constant;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.config.TopicBuilder;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.KafkaAdmin;
+import org.springframework.kafka.core.ProducerFactory;
+
+@Configuration
+public class KafkaProducerConfig {
+
+    // Module dùng spring-kafka trực tiếp nên cần KafkaAdmin để đăng ký các bean NewTopic.
+    @Bean
+    KafkaAdmin kafkaAdmin(@Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
+        return new KafkaAdmin(Map.of(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers));
+    }
+
+    @Bean
+    ProducerFactory<String, String> producerFactory(
+            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
+            @Value("${spring.kafka.producer.acks:all}") String acks,
+            @Value("${spring.kafka.producer.properties.enable.idempotence:true}") boolean enableIdempotence,
+            @Value("${spring.kafka.producer.properties.delivery.timeout.ms:120000}") int deliveryTimeoutMs,
+            @Value("${spring.kafka.producer.properties.linger.ms:5}") int lingerMs) {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        properties.put(ProducerConfig.ACKS_CONFIG, acks);
+        properties.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, enableIdempotence);
+        properties.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, deliveryTimeoutMs);
+        properties.put(ProducerConfig.LINGER_MS_CONFIG, lingerMs);
+        return new DefaultKafkaProducerFactory<>(properties);
+    }
+
+    @Bean
+    KafkaTemplate<String, String> kafkaTemplate(ProducerFactory<String, String> producerFactory) {
+        return new KafkaTemplate<>(producerFactory);
+    }
+
+    @Bean
+    NewTopic orderEventsTopic() {
+        return TopicBuilder.name(Constant.ORDER_EVENTS_TOPIC)
+                .partitions(Constant.ORDER_EVENTS_PARTITIONS)
+                .replicas(Constant.ORDER_EVENTS_REPLICAS)
+                .build();
+    }
+}

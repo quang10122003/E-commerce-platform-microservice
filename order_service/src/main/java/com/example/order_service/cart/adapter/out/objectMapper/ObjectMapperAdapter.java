@@ -16,4 +16,9 @@ public class ObjectMapperAdapter implements ObjectMapperPort {
     public <T> T readValue(String value, Class<T> payloadType) {
         return objectMapper.readValue(value,payloadType);
     }
+
+    @Override
+    public String writeValue(Object value) {
+        return objectMapper.writeValueAsString(value);
+    }
 }
