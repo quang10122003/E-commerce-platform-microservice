@@ -16,6 +16,18 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/error",
+            // Handshake chưa mang STOMP header; vé bắt buộc tại CONNECT, API cấp vé vẫn dùng JWT.
+            "/ws-notifications",
+            "/ws-notifications/**"
+    };
+
+    private static final String[] PUBLIC_GET_ENDPOINTS = {
+            "/actuator/health",
+            "/actuator/info"
+    };
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter,
                                           ApiAuthenticationEntryPoint authenticationEntryPoint,
@@ -23,10 +35,8 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/info").permitAll()
-                        // Handshake chưa mang STOMP header; vé bắt buộc tại CONNECT, API cấp vé vẫn dùng JWT.
-                        .requestMatchers("/ws-notifications", "/ws-notifications/**").permitAll()
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint(authenticationEntryPoint)

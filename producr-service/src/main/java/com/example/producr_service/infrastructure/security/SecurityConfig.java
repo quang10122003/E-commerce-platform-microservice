@@ -19,6 +19,11 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
 
     private static final String[] PUBLIC_ENDPOINTS = {
+            // Phải cho phép /error để Spring giữ mã lỗi gốc, tránh biến lỗi xử lý thành lỗi xác thực.
+            "/error"
+    };
+
+    private static final String[] PUBLIC_GET_ENDPOINTS = {
             "/actuator/health",
             "/actuator/info",
             "/api/products",
@@ -47,9 +52,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Phải cho phép /error để Spring giữ mã lỗi gốc, tránh biến lỗi xử lý thành lỗi xác thực.
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(errors -> errors

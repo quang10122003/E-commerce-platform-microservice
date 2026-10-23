@@ -29,15 +29,18 @@ public class SecurityConfig {
 
     JwtAuthFilter jwtAuthFilter;
 
-    static String[] PUBLIC_ENDPOINTS = {
-        "/api/auth/register",
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/api/auth/register",
             "/api/auth/login",
             "/api/auth/refresh_token",
             "/api/auth/logout",
             "/actuator/health",
             "/actuator/info",
-            "/error",
+            "/error"
+    };
 
+    private static final String[] PUBLIC_GET_ENDPOINTS = {
+            "/api/internal/shops/{shopId}/info"
     };
 
     @Bean
@@ -50,7 +53,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/internal/shops/{shopId}/info").permitAll()
+                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(errors -> errors

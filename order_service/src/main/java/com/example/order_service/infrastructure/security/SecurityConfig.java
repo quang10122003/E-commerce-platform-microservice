@@ -15,7 +15,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private static final String[] PUBLIC_ENDPOINTS = {};
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/error"
+    };
 
     private final JwtAuthFilter jwtAuthFilter;
 
@@ -31,13 +33,9 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/error").permitAll();
-                    if (PUBLIC_ENDPOINTS.length > 0) {
-                        auth.requestMatchers(PUBLIC_ENDPOINTS).permitAll();
-                    }
-                    auth.anyRequest().authenticated();
-                })
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .anyRequest().authenticated())
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
