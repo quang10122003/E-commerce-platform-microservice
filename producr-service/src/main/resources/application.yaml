@@ -3,6 +3,12 @@ spring:
     name: producr-service
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${PRODUCT_KAFKA_CONSUMER_GROUP:product-service}
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -46,6 +52,13 @@ eureka:
     lease-expiration-duration-in-seconds: 30
 
 app:
+  kafka:
+    consumer:
+      retry-interval-ms: ${PRODUCT_KAFKA_RETRY_INTERVAL_MS:60000}
+      retry-increment-ms: ${PRODUCT_KAFKA_RETRY_INCREMENT_MS:300000}
+      max-retries: ${PRODUCT_KAFKA_MAX_RETRIES:3}
+      dlt-partitions: ${PRODUCT_KAFKA_DLT_PARTITIONS:3}
+      dlt-replicas: ${PRODUCT_KAFKA_DLT_REPLICAS:1}
   jwt:
     public-key: ${JWT_PUBLIC_KEY}
   outbox:

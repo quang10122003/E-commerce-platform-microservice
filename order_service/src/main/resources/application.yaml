@@ -7,10 +7,18 @@
     name: order-service
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        delivery.timeout.ms: 120000
+        linger.ms: 5
     consumer:
       group-id: order-service
       auto-offset-reset: earliest
-      enable-auto-commit: true
+      enable-auto-commit: false
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   datasource:
@@ -38,5 +46,14 @@ eureka:
     lease-expiration-duration-in-seconds: 30
 
 app:
+  kafka:
+    consumer:
+      retry-interval-ms: ${ORDER_KAFKA_RETRY_INTERVAL_MS:60000}
+      retry-increment-ms: ${ORDER_KAFKA_RETRY_INCREMENT_MS:300000}
+      max-retries: ${ORDER_KAFKA_MAX_RETRIES:3}
+      dlt-partitions: ${ORDER_KAFKA_DLT_PARTITIONS:3}
+      dlt-replicas: ${ORDER_KAFKA_DLT_REPLICAS:1}
+  outbox:
+    fixed-delay-ms: ${ORDER_OUTBOX_FIXED_DELAY_MS:5000}
   jwt:
     public-key: ${JWT_PUBLIC_KEY}

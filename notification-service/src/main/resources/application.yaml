@@ -24,10 +24,19 @@ spring:
       timeout: 2s
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        delivery.timeout.ms: 120000
+        # Chờ tối đa 5 mili giây để gom thêm message cùng partition.
+        linger.ms: 5
     consumer:
       group-id: notification-service
       auto-offset-reset: earliest
-      enable-auto-commit: true
+      enable-auto-commit: false
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       
@@ -45,6 +54,13 @@ eureka:
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
 app:
+  kafka:
+    consumer:
+      retry-interval-ms: ${NOTIFICATION_KAFKA_RETRY_INTERVAL_MS:60000}
+      retry-increment-ms: ${NOTIFICATION_KAFKA_RETRY_INCREMENT_MS:300000}
+      max-retries: ${NOTIFICATION_KAFKA_MAX_RETRIES:3}
+      dlt-partitions: ${NOTIFICATION_KAFKA_DLT_PARTITIONS:3}
+      dlt-replicas: ${NOTIFICATION_KAFKA_DLT_REPLICAS:1}
   websocket:
     ticket-ttl-seconds: 30
     allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS:http://localhost:3000}
