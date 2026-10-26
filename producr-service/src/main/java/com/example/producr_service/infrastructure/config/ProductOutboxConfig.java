@@ -9,8 +9,11 @@ import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.registry.OutboxEventHandlerRegistry;
 import com.example.producr_service.application.service.StoredFileCleaner;
 import com.example.producr_service.application.service.ProductOutboxStatusService;
+import com.example.producr_service.application.service.ProductEmbeddingService;
+import com.example.producr_service.application.service.ProductService;
 import com.example.producr_service.application.strategy.outbox.OutboxEventHandler;
 import com.example.producr_service.application.strategy.outbox.ProductCreatedOutboxHandler;
+import com.example.producr_service.application.strategy.outbox.ProductEmbeddingSyncOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.ProductUpdatedOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.ProductImagesDeleteOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.ProductvariantImagesDeleteOutboxHandler;
@@ -22,6 +25,12 @@ import java.util.List;
 
 @Configuration
 public class ProductOutboxConfig {
+    @Bean
+    OutboxEventHandler productEmbeddingSyncOutboxHandler(
+            MapJsonToObjPort mapJsonToObjPort, ProductEmbeddingService productEmbeddingService) {
+        return new ProductEmbeddingSyncOutboxHandler(mapJsonToObjPort, productEmbeddingService);
+    }
+
 
     // Cung cấp service quản lý transaction khi job cập nhật trạng thái outbox.
     @Bean
@@ -92,10 +101,9 @@ public class ProductOutboxConfig {
     @Bean
     OutboxEventHandler productDeletedOutboxHandler(
             MapJsonToObjPort mapJsonToObjPort,
-            ProductSearchIndexPort productSearchIndexPort,
-            ProductEventPublisherPort productEventPublisherPort
+            ProductService productService
     ) {
-        return new ProductDeletedOutboxHandler(mapJsonToObjPort, productSearchIndexPort,productEventPublisherPort);
+        return new ProductDeletedOutboxHandler(mapJsonToObjPort, productService);
     }
 
     // Gom các strategy outbox để định tuyến theo eventType.

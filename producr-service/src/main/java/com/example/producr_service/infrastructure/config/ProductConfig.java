@@ -12,6 +12,8 @@ import com.example.producr_service.application.port.in.UpdateProductUseCase;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
+import com.example.producr_service.application.port.out.embedding.ProductEmbeddingRepositoryPort;
+import com.example.producr_service.application.port.out.kafka.ProductEventPublisherPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
@@ -137,7 +139,9 @@ public class ProductConfig {
         ShopInfoClientPort shopInfoClientPort,
         BrandRepositoryPort brandRepositoryPort,
         FlashSaleItemRepositoryPort flashSaleItemRepositoryPort,
-        VariantSaleResolver variantSaleResolver
+        VariantSaleResolver variantSaleResolver,
+        ProductEmbeddingRepositoryPort productEmbeddingRepositoryPort,
+        ProductEventPublisherPort productEventPublisherPort
     ) {
         return new ProductService(
                 productImageRollbackPort,
@@ -155,7 +159,9 @@ public class ProductConfig {
                 shopInfoClientPort,
                 brandRepositoryPort,
                 flashSaleItemRepositoryPort,
-                variantSaleResolver
+                variantSaleResolver,
+                productEmbeddingRepositoryPort,
+                productEventPublisherPort
         );
     }
 

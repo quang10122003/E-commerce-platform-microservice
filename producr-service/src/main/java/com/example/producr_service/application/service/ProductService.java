@@ -31,6 +31,8 @@ import com.example.producr_service.application.port.in.GetShopFlashSaleProductsU
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
+import com.example.producr_service.application.port.out.embedding.ProductEmbeddingRepositoryPort;
+import com.example.producr_service.application.port.out.kafka.ProductEventPublisherPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
@@ -76,6 +78,15 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     BrandRepositoryPort brandRepositoryPort;
     FlashSaleItemRepositoryPort flashSaleItemRepositoryPort;
     VariantSaleResolver variantSaleResolver;
+    ProductEmbeddingRepositoryPort productEmbeddingRepositoryPort;
+    ProductEventPublisherPort productEventPublisherPort;
+
+    // Chỉ xóa chỉ mục sau commit để rollback không làm mất kết quả tìm kiếm của sản phẩm còn tồn tại.
+    public void cleanupDeletedProduct(Long productId, OutboxEventDto event) {
+        productSearchIndexPort.deleteById(productId);
+        productEmbeddingRepositoryPort.deleteById(productId);
+        productEventPublisherPort.publish(event);
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -159,6 +170,9 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
 
             // lưu outbox
             saveProductCreatedOutboxEvent(product,userInternaInfoRespone);
+            outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
+                    String.valueOf(product.getId()), ProductEmbeddingSyncOutboxPayload.EVENT_TYPE,
+                    new ProductEmbeddingSyncOutboxPayload(product.getId()), LocalDateTime.now(clock)));
 
             log.info("Tạo sản phẩm thành công productId={}, variantCount={}",
                     product.getId(), product.getVariants().size());

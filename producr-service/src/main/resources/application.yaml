@@ -52,6 +52,13 @@ eureka:
     lease-expiration-duration-in-seconds: 30
 
 app:
+  embedding:
+    gemini:
+      base-url: https://generativelanguage.googleapis.com/v1beta
+      model: gemini-embedding-2
+      api-key: ${GEMINI_API_KEY}
+      connect-timeout: 5s
+      read-timeout: 30s
   recommendation:
     behavior-cleanup:
       cron: "${PRODUCT_BEHAVIOR_CLEANUP_CRON:0 0 2 * * *}"

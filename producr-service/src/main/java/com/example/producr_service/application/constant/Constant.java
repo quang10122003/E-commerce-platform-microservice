@@ -15,8 +15,12 @@ public final class Constant {
     public static final int MAX_SKU_LENGTH = 50;
     public static final int MAX_SKU_RETRY = 10;
     public static final int SKU_RANDOM_SUFFIX_LENGTH = 4;
-    // Tên index tìm kiếm sản phẩm trên Elasticsearch.
+    // Tên index trên Elasticsearch.
     public static final String SEARCH_INDEX = "product_search";
+    public static final String PRODUCT_EMBEDDING_INDEX = "product_embedding";
+
+    // Kích thước chiều vector.
+    public static final int PRODUCT_EMBEDDING_DIMENSIONS = 768;
     // Tên bucket lưu ảnh danh mục trên storage.
     public static final String CATEGORY_BUCKET = "category";
     // Tên bucket lưu ảnh bìa sản phẩm.

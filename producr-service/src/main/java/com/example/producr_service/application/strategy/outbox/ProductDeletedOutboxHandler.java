@@ -2,9 +2,8 @@ package com.example.producr_service.application.strategy.outbox;
 
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.dto.outbox.ProductDeletedOutboxPayload;
-import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
-import com.example.producr_service.application.port.out.kafka.ProductEventPublisherPort;
+import com.example.producr_service.application.service.ProductService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -13,21 +12,18 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class ProductDeletedOutboxHandler implements OutboxEventHandler {
     MapJsonToObjPort mapJsonToObjPort;
-    ProductSearchIndexPort productSearchIndexPort;
-    ProductEventPublisherPort productEventPublisherPort;
+    ProductService productService;
 
     @Override
     public String eventType() {
         return ProductDeletedOutboxPayload.EVENT_TYPE;
     }
 
-    // Chỉ xóa chỉ mục sau commit để rollback không làm mất kết quả tìm kiếm của sản phẩm còn tồn tại.
     @Override
     public void handle(OutboxEventDto event) {
         ProductDeletedOutboxPayload payload = mapJsonToObjPort.readValue(
                 event.payload(), ProductDeletedOutboxPayload.class
         );
-        productSearchIndexPort.deleteById(payload.productId());
-        productEventPublisherPort.publish(event);
+        productService.cleanupDeletedProduct(payload.productId(), event);
     }
 }

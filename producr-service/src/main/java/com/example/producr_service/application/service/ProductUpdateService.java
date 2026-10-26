@@ -7,6 +7,7 @@ import com.example.producr_service.application.constant.Constant;
 import com.example.producr_service.application.dto.command.UpdateProductCommand;
 import com.example.producr_service.application.dto.command.VariantImageUploadCommand;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
+import com.example.producr_service.application.dto.outbox.ProductEmbeddingSyncOutboxPayload;
 import com.example.producr_service.application.dto.outbox.ProductImagesDeleteOutboxPayload;
 import com.example.producr_service.application.dto.outbox.ProductUpdatedOutboxPayload;
 import com.example.producr_service.application.dto.request.UpdateProductData;
@@ -114,6 +115,9 @@ public class ProductUpdateService {
                 String.valueOf(productId), ProductUpdatedOutboxPayload.EVENT_TYPE,
                 new ProductUpdatedOutboxPayload(productId,
                         productHelper.extractProvinceNameFromAddress(user.shopAddress())), LocalDateTime.now(clock)));
+        outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
+                String.valueOf(saved.getId()), ProductEmbeddingSyncOutboxPayload.EVENT_TYPE,
+                new ProductEmbeddingSyncOutboxPayload(saved.getId()), LocalDateTime.now(clock)));
         return shopProductDetailMapper.toShopProductDetailResponse(saved);
     }
 
