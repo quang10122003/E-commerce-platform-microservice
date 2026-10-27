@@ -32,13 +32,13 @@ public class ProductEmbeddingElasticsearchAdapter
 
     // lấy các sản phẩm có vector giống vector user nhất dựa vào  chỉ số Cosine bằng thuật toán Cosine Similarity.
     @Override
-    public List<Long> findSimilarProductIds(List<Float> userVector, int limit) {
-        if (userVector.isEmpty()) {
+    public List<Long> findSimilarProductIds(List<Float> vectorSrc, int limit) {
+        if (vectorSrc.isEmpty()) {
             return List.of();
         }
-        if (limit <= 0 || userVector.size() != Constant.PRODUCT_EMBEDDING_DIMENSIONS
-                || userVector.stream().anyMatch(value -> value == null || !Float.isFinite(value))
-                || userVector.stream().noneMatch(value -> value != 0)) {
+        if (limit <= 0 || vectorSrc.size() != Constant.PRODUCT_EMBEDDING_DIMENSIONS
+                || vectorSrc.stream().anyMatch(value -> value == null || !Float.isFinite(value))
+                || vectorSrc.stream().noneMatch(value -> value != 0)) {
             throw new IllegalArgumentException("Vector hoặc giới hạn ứng viên không hợp lệ");
         }
         SearchRequest request = SearchRequest.of(builder -> builder
@@ -49,7 +49,7 @@ public class ProductEmbeddingElasticsearchAdapter
                         .script(script -> script
                                 .source(source -> source.scriptString(
                                         "cosineSimilarity(params.userVector, 'vector') + 1.0"))
-                                .params("userVector", JsonData.of(userVector)))))
+                                .params("userVector", JsonData.of(vectorSrc)))))
                 .source(source -> source.filter(filter -> filter.includes("productId"))));
         try {
             SearchResponse<ProductEmbeddingDocument> response = elasticsearchClient.search(

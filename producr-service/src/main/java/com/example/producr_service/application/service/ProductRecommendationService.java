@@ -12,6 +12,7 @@ import com.example.producr_service.application.constant.Constant;
 import com.example.producr_service.application.constant.ProductCacheKeys;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
 import com.example.producr_service.application.port.in.GetRecommendedProductsUseCase;
+import com.example.producr_service.application.port.in.GetSimilarProductsUseCase;
 import com.example.producr_service.application.port.out.cache.CachePort;
 import com.example.producr_service.application.port.out.embedding.ProductEmbeddingRepositoryPort;
 import com.example.producr_service.application.dto.event.CartItemAddedEvent;
@@ -43,7 +44,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Slf4j
-public class ProductRecommendationService implements RecordProductViewUseCase, GetRecommendedProductsUseCase {
+public class ProductRecommendationService implements RecordProductViewUseCase, GetRecommendedProductsUseCase, GetSimilarProductsUseCase {
     private final CurrentUserPort currentUserPort;
     private final ProductRepositoryPort productRepositoryPort;
     private final ProductBehaviorRepositoryPort productBehaviorRepositoryPort;
@@ -124,13 +125,13 @@ public class ProductRecommendationService implements RecordProductViewUseCase, G
     }
 
     // tạo repone
-    private List<ProductSearchResponse> loadPageItems(List<Long> pageIds) {
-        if (pageIds.isEmpty()) {
+    private List<ProductSearchResponse> loadPageItems(List<Long> productIds) {
+        if (productIds.isEmpty()) {
             return List.of();
         }
-        Map<Long, ProductSearchResponse> productsById = productService.getAvailableSearchItemsByIds(pageIds).stream()
+        Map<Long, ProductSearchResponse> productsById = productService.getAvailableSearchItemsByIds(productIds).stream()
                 .collect(Collectors.toMap(ProductSearchResponse::id, Function.identity()));
-        return pageIds.stream().map(productsById::get).filter(Objects::nonNull).toList();
+        return productIds.stream().map(productsById::get).filter(Objects::nonNull).toList();
     }
 
     // lấy danh sách id của sản phẩm recommnt từ cache or tạo nếu hết cache
@@ -222,8 +223,46 @@ public class ProductRecommendationService implements RecordProductViewUseCase, G
                 .filter(id -> !purchasedIds.contains(id)).toList();
     }
 
+    // filter bỏ các sản phẩm đã mua trong số ngày
     private Set<Long> findPurchasedProductIdsInLastSevenDaysDemo(Long userId, Instant now) {
         // TODO: Thay bằng dữ liệu đơn hoàn thành khi triển khai chức năng mua hàng.
         return Set.of();
+    }
+
+    // hàm lấy các sản phẩm tưong tự sản phẩm đnag chọn
+    @Override
+    public List<ProductSearchResponse> getSimilarProducts(Long productId, int size) {
+        if (!productRepositoryPort.existsById(productId)) {
+            throw new BusinessException(ProductError.PRODUCT_NOT_FOUND);
+        }
+        ProductEmbeddingData sourceEmbedding = productEmbeddingRepositoryPort
+                .findAllByProductIds(List.of(productId))
+                .get(productId);
+
+        if (sourceEmbedding == null || sourceEmbedding.vector().isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> candidateIds = productEmbeddingRepositoryPort
+                .findSimilarProductIds(
+                        sourceEmbedding.vector(),
+                        Constant.RECOMMENDATION_VECTOR_CANDIDATE_LIMIT)
+                .stream()
+                .filter(id -> !id.equals(productId))
+                .distinct()
+                .toList();
+
+        if (candidateIds.isEmpty()) {
+            return List.of();
+        }
+
+        // chỉ lấy sản phẩm active
+        Set<Long> availableIds = productRepositoryPort
+                .findAvailableProductIds(candidateIds);
+        List<Long> selectedIds = candidateIds.stream()
+                .filter(availableIds::contains)
+                .limit(size)
+                .toList();
+        return loadPageItems(selectedIds);
     }
 }

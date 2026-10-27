@@ -28,6 +28,7 @@ public class SecurityConfig {
             "/actuator/info",
             "/api/products",
             "/api/products/recommendations/top-selling",
+            "/api/products/recommendations/similar/{productId:-?[0-9]+}",
             "/api/products/shops/{shopId}/overview",
             "/api/products/shops/{shopId}/products",
             "/api/products/{productId:-?[0-9]+}",

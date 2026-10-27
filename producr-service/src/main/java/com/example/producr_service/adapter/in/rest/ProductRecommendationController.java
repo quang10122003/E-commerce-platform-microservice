@@ -4,6 +4,7 @@ import com.example.common.response.PageResponse;
 import com.example.common.response.PageQuery;
 import com.example.producr_service.application.dto.request.RecordProductViewRequest;
 import com.example.producr_service.application.port.in.GetRecommendedProductsUseCase;
+import com.example.producr_service.application.port.in.GetSimilarProductsUseCase;
 import com.example.producr_service.application.port.in.RecordProductViewUseCase;
 import com.example.producr_service.application.port.in.GetTopSellingProductsUseCase;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
@@ -25,6 +26,14 @@ public class ProductRecommendationController {
     private final RecordProductViewUseCase recordProductViewUseCase;
     private final GetTopSellingProductsUseCase getTopSellingProductsUseCase;
     private final GetRecommendedProductsUseCase getRecommendedProductsUseCase;
+    private final GetSimilarProductsUseCase getSimilarProductsUseCase;
+
+    @GetMapping("/similar/{productId}")
+    public ResponseEntity<List<ProductSearchResponse>> getSimilarProducts(
+            @PathVariable("productId") @Positive Long productId,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size) {
+        return ResponseEntity.ok(getSimilarProductsUseCase.getSimilarProducts(productId, size));
+    }
 
     @GetMapping("/top-selling")
     public ResponseEntity<List<ProductSearchResponse>> getTopSellingProducts() {

@@ -2,6 +2,7 @@ package com.example.producr_service.infrastructure.config;
 
 import com.example.producr_service.application.port.in.RecordProductViewUseCase;
 import com.example.producr_service.application.port.in.GetRecommendedProductsUseCase;
+import com.example.producr_service.application.port.in.GetSimilarProductsUseCase;
 import com.example.producr_service.application.port.out.cache.CachePort;
 import com.example.producr_service.application.port.out.embedding.ProductEmbeddingRepositoryPort;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
@@ -23,6 +24,12 @@ import java.time.Clock;
 
 @Configuration
 public class ProductRecommendationConfig {
+    @Bean
+    GetSimilarProductsUseCase getSimilarProductsUseCase(
+            ProductRecommendationService productRecommendationService) {
+        return productRecommendationService;
+    }
+
     @Bean
     UserPreferenceCalculator userPreferenceCalculator() {
         return new UserPreferenceCalculator();

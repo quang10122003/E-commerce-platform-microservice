@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductEmbeddingRepositoryPort {
-    List<Long> findSimilarProductIds(List<Float> userVector, int limit);
+    List<Long> findSimilarProductIds(List<Float> vectorSrc, int limit);
 
     Optional<String> findContentHashByProductId(Long productId);
 
