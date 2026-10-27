@@ -39,18 +39,6 @@ public class ShopInfoClientAdapter implements ShopInfoClientPort {
     }
 
     @Override
-    public Optional<String> findPublicShopAddress(Long shopId) {
-        try {
-            PublicShopInfoResponse shop = authUserFeignClient.getPublicShopInfo(shopId);
-            return shop == null ? Optional.empty()
-                    : Optional.ofNullable(shop.location());
-        } catch (FeignException exception) {
-            log.warn("Không đọc được địa chỉ shop: shopId={}, httpStatus={}", shopId, exception.status());
-            return Optional.empty();
-        }
-    }
-
-    @Override
     public List<ShopInfoResponse> getShopInfos(List<Long> shopIds) {
         return authUserFeignClient.getShopInfos(shopIds);
     }

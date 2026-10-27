@@ -1,15 +1,29 @@
 package com.example.producr_service.application.port.out.repo;
 
 import com.example.common.response.PageResponse;
+import com.example.producr_service.application.dto.embedding.ProductPreferenceData;
 import com.example.producr_service.application.dto.request.SellerProductFilter;
 import com.example.producr_service.application.dto.response.ProductSummaryResponse;
+import com.example.producr_service.application.dto.response.ProductSearchResponse;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.domain.model.Product;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ProductRepositoryPort {
+    List<Long> findCategoryCandidateIds(Collection<Long> categoryIds, int limit);
+
+    List<Long> findBrandCandidateIds(Collection<Long> brandIds, int limit);
+
+    Set<Long> findAvailableProductIds(Collection<Long> productIds);
+
+    List<ProductSearchResponse> findAvailableSearchItemsByIds(Collection<Long> productIds);
+
+    List<ProductSearchResponse> findTopSellingProducts(int limit);
+
     long countActiveByUserId(Long userId);
 
     List<ProductSummaryResponse> findProductSummariesByIds(List<Long> productIds);
@@ -37,4 +51,7 @@ public interface ProductRepositoryPort {
     // Lấy thông tin ảnh bìa của sản phẩm trước khi xóa.
     StoredFile findCoverFile(Long productId);
 
+    // lấy thông tin cần thiết của 1 sản phâm cho ProductPreferenceData
+    List<ProductPreferenceData> findPreferenceDataByIds(
+            Collection<Long> productIds);
 }

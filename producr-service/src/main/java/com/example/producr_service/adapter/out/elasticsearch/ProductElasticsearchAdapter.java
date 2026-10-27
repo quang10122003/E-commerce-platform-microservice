@@ -56,9 +56,9 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
     ProductMapper productMapper;
 
     @Override
-    public void index(Product product, String location) {
+    public void index(Product product) {
         ProductSearchDocument document =
-                productSearchDocumentMapper.toDocument(product, location);
+                productSearchDocumentMapper.toDocument(product);
 
         productSearchRepository.save(document);
     }

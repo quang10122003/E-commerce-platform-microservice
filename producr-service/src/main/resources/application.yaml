@@ -1,6 +1,12 @@
 spring:
   application:
     name: producr-service
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2s
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
@@ -60,6 +66,8 @@ app:
       connect-timeout: 5s
       read-timeout: 30s
   recommendation:
+    top-selling:
+      cache-ttl: 1h
     behavior-cleanup:
       cron: "${PRODUCT_BEHAVIOR_CLEANUP_CRON:0 0 2 * * *}"
       batch-size: ${PRODUCT_BEHAVIOR_CLEANUP_BATCH_SIZE:1000}

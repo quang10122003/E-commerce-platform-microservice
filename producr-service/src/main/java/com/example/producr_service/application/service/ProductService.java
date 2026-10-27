@@ -1,8 +1,10 @@
 package com.example.producr_service.application.service;
 
 import com.example.common.exception.BusinessException;
+import com.example.common.exception.CacheAccessException;
 import com.example.common.response.PageResponse;
 import com.example.producr_service.application.constant.Constant;
+import com.example.producr_service.application.constant.ProductCacheKeys;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResult;
 import com.example.producr_service.application.dto.response.ProductSaleOfferView;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
@@ -29,8 +31,8 @@ import com.example.producr_service.application.mapper.UserProductDetailMapper;
 import com.example.producr_service.application.port.in.*;
 import com.example.producr_service.application.port.in.GetShopFlashSaleProductsUseCase;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
+import com.example.producr_service.application.port.out.cache.CachePort;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
-import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
 import com.example.producr_service.application.port.out.embedding.ProductEmbeddingRepositoryPort;
 import com.example.producr_service.application.port.out.kafka.ProductEventPublisherPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
@@ -50,6 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -60,7 +63,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase, GetShopFlashSaleProductsUseCase, GetUserProductDetailUseCase, GetProductPriceRangeUseCase {
+public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase, GetShopFlashSaleProductsUseCase, GetUserProductDetailUseCase, GetProductPriceRangeUseCase, GetTopSellingProductsUseCase {
     ProductImageRollbackPort productImageRollbackPort;
     ProductImageUploadService productImageUploadService;
     ProductCreationService productCreationService;
@@ -74,12 +77,55 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     ProductVariantRepoPort productVariantRepoPort;
     ProductUpdateService productUpdateService;
     Clock clock;
-    ShopInfoClientPort shopInfoClientPort;
     BrandRepositoryPort brandRepositoryPort;
     FlashSaleItemRepositoryPort flashSaleItemRepositoryPort;
     VariantSaleResolver variantSaleResolver;
     ProductEmbeddingRepositoryPort productEmbeddingRepositoryPort;
     ProductEventPublisherPort productEventPublisherPort;
+    CachePort cachePort;
+    Duration topSellingProductsCacheTtl;
+
+    @Override
+    public List<ProductSearchResponse> getTopSellingProducts() {
+        try {
+            Optional<List<ProductSearchResponse>> cached = cachePort.getList(
+                    ProductCacheKeys.TOP_SELLING_PRODUCTS, ProductSearchResponse.class);
+            if (cached.isPresent()) {
+                return cached.get();
+            }
+        } catch (CacheAccessException exception) {
+            // Cache không phải nguồn dữ liệu gốc nên Redis lỗi vẫn cho phép đọc MySQL.
+            log.warn("Không thể đọc cache sản phẩm bán chạy, đọc lại từ database");
+            if (exception.isInvalidData()) {
+                try {
+                    cachePort.delete(ProductCacheKeys.TOP_SELLING_PRODUCTS);
+                } catch (CacheAccessException cacheException) {
+                    log.warn("Không thể xóa cache sản phẩm bán chạy sai định dạng");
+                }
+            }
+        }
+        List<ProductSearchResponse> products = productRepositoryPort
+                .findTopSellingProducts(Constant.TOP_SELLING_PRODUCTS_LIMIT);
+        try {
+            cachePort.setIfAbsent(ProductCacheKeys.TOP_SELLING_PRODUCTS, products, topSellingProductsCacheTtl);
+        } catch (CacheAccessException exception) {
+            log.warn("Không thể lưu cache sản phẩm bán chạy, vẫn trả kết quả từ database");
+        }
+        return products;
+    }
+
+    // Đọc lại sản phẩm sau commit để chỉ mục không dùng dữ liệu cũ từ event.
+    @Transactional(readOnly = true)
+    public void syncSearchIndex(Long productId) {
+        // Event đồng bộ đã hết hiệu lực nếu sản phẩm bị xóa trước khi worker xử lý.
+        productRepositoryPort.findById(productId).ifPresent(productSearchIndexPort::index);
+    }
+
+    @Transactional(readOnly = true)
+    public void syncAfterVariantDeletion(Long productId, OutboxEventDto event) {
+        syncSearchIndex(productId);
+        productEventPublisherPort.publish(event);
+    }
 
     // Chỉ xóa chỉ mục sau commit để rollback không làm mất kết quả tìm kiếm của sản phẩm còn tồn tại.
     public void cleanupDeletedProduct(Long productId, OutboxEventDto event) {
@@ -103,9 +149,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     public UserProductDetailResponse getUserProductDetail(Long productId) {
         Product product = productRepositoryPort.findById(productId)
                 .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
-        String shopAddress = shopInfoClientPort.findPublicShopAddress(product.getUserId()).orElse(null);
-        String location = productHelper.extractProvinceNameFromAddress(shopAddress);
-        return UserProductDetailMapper.toResponse(product, location);
+        return UserProductDetailMapper.toResponse(product);
     }
 
     // Chỉ đọc sản phẩm của Shop đang đăng nhập, không nhận shopId từ client.
@@ -169,7 +213,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
             Product product = productCreationService.createProduct(userInternaInfoRespone, request);
 
             // lưu outbox
-            saveProductCreatedOutboxEvent(product,userInternaInfoRespone);
+            saveProductCreatedOutboxEvent(product);
             outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
                     String.valueOf(product.getId()), ProductEmbeddingSyncOutboxPayload.EVENT_TYPE,
                     new ProductEmbeddingSyncOutboxPayload(product.getId()), LocalDateTime.now(clock)));
@@ -184,12 +228,8 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     }
 
     // Tạo event outbox tối đẩy lên db
-    private void saveProductCreatedOutboxEvent(Product product, UserInternaInfoRespone userInternaInfoRespone ) {
-
-        // lấy tên tỉnh của shop tạo sản phẩm
-        String shopAddress = userInternaInfoRespone.shopAddress();
-        String locationProduct =  productHelper.extractProvinceNameFromAddress(shopAddress);
-        ProductCreatedOutboxPayload payload = new ProductCreatedOutboxPayload(product.getId(),locationProduct);
+    private void saveProductCreatedOutboxEvent(Product product) {
+        ProductCreatedOutboxPayload payload = new ProductCreatedOutboxPayload(product.getId());
         outboxPort.save(new OutboxEventDto(
                 UUID.randomUUID(),
                 Constant.PRODUCT,
@@ -228,6 +268,11 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
         PageResponse<ProductSearchResponse> result = productSearchIndexPort.searchShopProducts(shopId, filter);
         return new PageResponse<>(applyCatalogDiscounts(result.items()), result.page(), result.pageSize(),
                 result.totalItems(), result.totalPages());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductSearchResponse> getAvailableSearchItemsByIds(Collection<Long> productIds) {
+        return applyCatalogDiscounts(productRepositoryPort.findAvailableSearchItemsByIds(productIds));
     }
 
     private List<ProductSearchResponse> applyCatalogDiscounts(List<ProductSearchResponse> items) {
@@ -372,7 +417,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
 
             // Lưu tác vụ dọn ảnh cùng transaction xóa phân loại.
             saveProductvariantDeletionOutboxEvents(
-                    variantId, filesToDelete, userInternaInfoRespone.shopAddress(), productId);
+                    variantId, filesToDelete, productId);
             productVariantRepoPort.deleteById(variantId);
             log.info("Xóa phân loại thành công productId={}, variantId={}", productId, variantId);
         } catch (RuntimeException exception) {
@@ -382,14 +427,14 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     }
 
     // Lưu tác vụ dọn ảnh và event xóa variant với metadata khớp payload tương ứng.
-    private void saveProductvariantDeletionOutboxEvents(Long variantId, List<StoredFile> filesToDelete, String shopAddress, Long productId) {
+    private void saveProductvariantDeletionOutboxEvents(Long variantId, List<StoredFile> filesToDelete, Long productId) {
         String aggregateId = String.valueOf(variantId);
         UUID eventId = UUID.randomUUID();
         LocalDateTime now = LocalDateTime.now(clock);
         ProductvariantImagesDeleteOutboxPayload productvariantImagesDeleteOutboxPayload = new ProductvariantImagesDeleteOutboxPayload(filesToDelete);
         ProductvariantDeleteOutboxPayload productvariantDeleteOutboxPayload = new ProductvariantDeleteOutboxPayload(
                 eventId, ProductvariantDeleteOutboxPayload.EVENT_TYPE,
-                productId, variantId, productHelper.extractProvinceNameFromAddress(shopAddress), now
+                productId, variantId, now
         );
         outboxPort.save(new OutboxEventDto(
                 UUID.randomUUID(),

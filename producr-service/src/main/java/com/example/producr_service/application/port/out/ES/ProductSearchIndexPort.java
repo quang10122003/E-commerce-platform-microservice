@@ -8,7 +8,7 @@ import com.example.producr_service.application.dto.response.ProductCatalogSearch
 import com.example.producr_service.domain.model.Product;
 
 public interface ProductSearchIndexPort {
-    void index(Product product, String location);
+    void index(Product product);
 
     void deleteById(Long productId);
 

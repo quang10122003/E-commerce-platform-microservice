@@ -57,6 +57,9 @@ public class ProductEntity {
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
+    @Column(name = "location_snapshot", length = 255)
+    private String locationSnapshot;
+
     @Column(name = "object_path", nullable = false, length = 500)
     private String objectPath;
 

@@ -2,9 +2,6 @@ package com.example.producr_service.infrastructure.config;
 
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.port.in.ProcessProductOutboxUseCase;
-import com.example.producr_service.application.port.out.kafka.ProductEventPublisherPort;
-import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
-import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.registry.OutboxEventHandlerRegistry;
 import com.example.producr_service.application.service.StoredFileCleaner;
@@ -44,26 +41,23 @@ public class ProductOutboxConfig {
     // Đăng ký strategy đồng bộ Product qua các port của application.
     @Bean
     OutboxEventHandler productCreatedOutboxHandler(
-            ProductRepositoryPort productRepositoryPort,
-            ProductSearchIndexPort productSearchIndexPort,
-            MapJsonToObjPort mapJsonToObjPort
+            MapJsonToObjPort mapJsonToObjPort,
+            ProductService productService
     ) {
         return new ProductCreatedOutboxHandler(
-                productRepositoryPort,
-                productSearchIndexPort,
-                mapJsonToObjPort
+                mapJsonToObjPort,
+                productService
         );
     }
 
     // Đăng ký handler đọc lại sản phẩm đã lưu để cập nhật chỉ mục tìm kiếm.
     @Bean
     OutboxEventHandler productUpdatedOutboxHandler(
-            ProductRepositoryPort productRepositoryPort,
-            ProductSearchIndexPort productSearchIndexPort,
-            MapJsonToObjPort mapJsonToObjPort
+            MapJsonToObjPort mapJsonToObjPort,
+            ProductService productService
     ) {
         return new ProductUpdatedOutboxHandler(
-                productRepositoryPort, productSearchIndexPort, mapJsonToObjPort);
+                mapJsonToObjPort, productService);
     }
 
     // Đăng ký handler dọn ảnh sản phẩm sau khi event xóa được xử lý.
@@ -88,12 +82,10 @@ public class ProductOutboxConfig {
     @Bean
     OutboxEventHandler productvariantDeleteOutboxHandler(
             MapJsonToObjPort mapJsonToObjPort,
-            ProductSearchIndexPort productSearchIndexPort,
-            ProductRepositoryPort productRepositoryPort,
-            ProductEventPublisherPort productEventPublisherPort
+            ProductService productService
     ) {
         return new ProductvariantDeleteOutboxHandler(
-                mapJsonToObjPort, productSearchIndexPort, productRepositoryPort, productEventPublisherPort
+                mapJsonToObjPort, productService
         );
     }
 

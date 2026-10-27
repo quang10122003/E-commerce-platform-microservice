@@ -5,7 +5,6 @@ import com.example.producr_service.domain.model.ProductAttribute;
 import com.example.producr_service.domain.model.ProductVariant;
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.domain.error.DomainProductError;
-import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -22,7 +21,6 @@ import java.util.Set;
  * moi thay doi doi voi attribute/variant deu di qua Product,
  * khong duoc sua truc tiep tu ben ngoai.
  */
-@Getter
 public class Product {
 
     private final Long id;
@@ -36,6 +34,7 @@ public class Product {
     private String name;
     private String description;
     private String imageUrl;
+    private final String locationSnapshot;
     // Lưu đường dẫn ảnh bìa trên storage.
     private String objectPath;
     private ProductStatus status;
@@ -75,6 +74,14 @@ public class Product {
                    Long brandId, String brandName, String name,
                    String description, String imageUrl, LocalDateTime createdAt,
                    long totalSold, String objectPath) {
+        this(id, userId, categoryId, categoryName, brandId, brandName, name,
+                description, imageUrl, createdAt, totalSold, objectPath, null);
+    }
+
+    public Product(Long id, Long userId, Long categoryId, String categoryName,
+                   Long brandId, String brandName, String name,
+                   String description, String imageUrl, LocalDateTime createdAt,
+                   long totalSold, String objectPath, String locationSnapshot) {
         if (userId == null) {
             throw new BusinessException(DomainProductError.PRODUCT_USER_REQUIRED);
         }
@@ -108,11 +115,68 @@ public class Product {
         this.name = name;
         this.description = description;
         this.imageUrl = imageUrl;
+        this.locationSnapshot = locationSnapshot;
         this.objectPath = objectPath;
         this.createdAt = createdAt;
         this.totalSold = totalSold;
         // Product mới được tạo mặc định ở trạng thái hoạt động.
         this.status = ProductStatus.ACTIVE;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public Long getBrandId() {
+        return brandId;
+    }
+
+    public String getBrandName() {
+        return brandName;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public String getLocationSnapshot() {
+        return locationSnapshot;
+    }
+
+    public String getObjectPath() {
+        return objectPath;
+    }
+
+    public ProductStatus getStatus() {
+        return status;
+    }
+
+    public long getTotalSold() {
+        return totalSold;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
     public List<ProductAttribute> getAttributes() {
@@ -221,7 +285,6 @@ public class Product {
     }
 
     /** Value object nho gon cho khoang gia thap nhat - cao nhat cua 1 san pham. */
-    @Getter
     public static class PriceRange {
         private final Money min;
         private final Money max;
@@ -229,6 +292,14 @@ public class Product {
         public PriceRange(Money min, Money max) {
             this.min = min;
             this.max = max;
+        }
+
+        public Money getMin() {
+            return min;
+        }
+
+        public Money getMax() {
+            return max;
         }
 
         public boolean isSinglePrice() {

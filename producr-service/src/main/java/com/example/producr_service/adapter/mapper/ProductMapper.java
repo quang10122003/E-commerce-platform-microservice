@@ -2,9 +2,12 @@ package com.example.producr_service.adapter.mapper;
 import com.example.producr_service.adapter.DTO.documentElasticsearch.ProductSearchDocument;
 import com.example.producr_service.adapter.entity.*;
 import com.example.common.response.PageResponse;
+import com.example.producr_service.adapter.out.persistence.projection.ProductPreferenceProjection;
+import com.example.producr_service.application.dto.embedding.ProductPreferenceData;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
 import com.example.producr_service.application.dto.response.ProductSummaryResponse;
 import com.example.producr_service.adapter.out.persistence.projection.ProductSummaryProjection;
+import com.example.producr_service.adapter.out.persistence.projection.TopSellingProductProjection;
 import com.example.producr_service.application.port.out.storage.StorageBucket;
 import com.example.producr_service.domain.model.*;
 import lombok.AccessLevel;
@@ -29,6 +32,13 @@ import java.util.Set;
 public class ProductMapper {
     Clock clock;
 
+    public ProductSearchResponse toSearchResponse(TopSellingProductProjection projection) {
+        return new ProductSearchResponse(projection.getId(), projection.getName(), projection.getLocationSnapshot(), projection.getUserId(),
+                projection.getDescription(), projection.getCategoryId(), projection.getCategoryName(),
+                projection.getBrandId(), projection.getBrandName(), projection.getStatus(), projection.getImageUrl(),
+                projection.getMaxPrice(), projection.getTotalSold(), null);
+    }
+
     public ProductSummaryResponse toSummary(ProductSummaryProjection projection) {
         return new ProductSummaryResponse(projection.getId(), projection.getName(), projection.getImageUrl());
     }
@@ -43,6 +53,7 @@ public class ProductMapper {
         entity.setName(product.getName());
         entity.setDescription(product.getDescription());
         entity.setImageUrl(product.getImageUrl());
+        entity.setLocationSnapshot(product.getLocationSnapshot());
         entity.setObjectPath(product.getObjectPath());
         entity.setUpdatedAt(LocalDateTime.now(clock));
 
@@ -132,6 +143,7 @@ public class ProductMapper {
                 .name(product.getName())
                 .description(product.getDescription())
                 .imageUrl(product.getImageUrl())
+                .locationSnapshot(product.getLocationSnapshot())
                 .objectPath(product.getObjectPath())
                 .storageBucket(StorageBucket.PRODUCT_IMAGES)
                 .totalSold(product.getTotalSold())
@@ -212,7 +224,7 @@ public class ProductMapper {
                 productEntity.getBrand() != null ? productEntity.getBrand().getName() : null,
                 productEntity.getName(), productEntity.getDescription(), productEntity.getImageUrl(),
                 productEntity.getCreatedAt(), productEntity.getTotalSold(),
-                productEntity.getObjectPath()
+                productEntity.getObjectPath(), productEntity.getLocationSnapshot()
         );
         // Đồng bộ trạng thái đã lưu từ persistence về domain aggregate.
         if (productEntity.getStatus() == ProductStatus.INACTIVE) {
@@ -283,5 +295,15 @@ public class ProductMapper {
                 document.getTotalSold(),
                 null
         );
+
+    }
+    public ProductPreferenceData toPreferenceData(
+            ProductPreferenceProjection projection) {
+
+        return new ProductPreferenceData(
+                projection.getProductId(),
+                projection.getCategoryId(),
+                projection.getBrandId(),
+                projection.getPrice());
     }
 }

@@ -42,12 +42,15 @@ public class ProductCreationService {
                         .orElseThrow(() -> new BusinessException(ProductError.BRAND_NOT_FOUND));
 
         validateUploadedImageMetadata(request.getImageUrl(), request.getObjectPath());
+        // lấy tên tỉnh của shop tạo sản phẩm
+        String locationSnapshot = productHelper.extractProvinceNameFromAddress(userInternaInfoRespone.shopAddress());
         Product product = new Product(
                 null, userInternaInfoRespone.userId(),
                 category.getId(), category.getName(),
                 brand == null ? null : brand.getId(), brand == null ? null : brand.getName(),
                 request.getName(), request.getDescription(), request.getImageUrl(),
-                null, 0L, request.getObjectPath()
+                null, 0L, request.getObjectPath(),
+                locationSnapshot
         );
 
         //list  TẤT CẢ các valuesOfThisAttribute lại, theo đúng thứ tự attribute

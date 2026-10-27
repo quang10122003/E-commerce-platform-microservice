@@ -91,7 +91,7 @@ public class ProductUpdateService {
                 request.name(), request.description(),
                 newCover == null ? current.getImageUrl() : newCover.publicUrl(),
                 current.getCreatedAt(), current.getTotalSold(),
-                newCover == null ? current.getObjectPath() : newCover.objectPath());
+                newCover == null ? current.getObjectPath() : newCover.objectPath(), current.getLocationSnapshot());
         // Constructor mặc định ACTIVE nên phải giữ trạng thái tạm ẩn của sản phẩm cũ.
         if (current.getStatus() == ProductStatus.INACTIVE) updated.deactivate();
 
@@ -113,8 +113,7 @@ public class ProductUpdateService {
         }
         outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
                 String.valueOf(productId), ProductUpdatedOutboxPayload.EVENT_TYPE,
-                new ProductUpdatedOutboxPayload(productId,
-                        productHelper.extractProvinceNameFromAddress(user.shopAddress())), LocalDateTime.now(clock)));
+                new ProductUpdatedOutboxPayload(productId), LocalDateTime.now(clock)));
         outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
                 String.valueOf(saved.getId()), ProductEmbeddingSyncOutboxPayload.EVENT_TYPE,
                 new ProductEmbeddingSyncOutboxPayload(saved.getId()), LocalDateTime.now(clock)));

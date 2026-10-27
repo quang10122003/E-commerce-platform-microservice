@@ -2,20 +2,15 @@ package com.example.producr_service.application.strategy.outbox;
 
 import com.example.producr_service.application.dto.outbox.ProductCreatedOutboxPayload;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
-import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
-import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
-import com.example.producr_service.domain.model.Product;
+import com.example.producr_service.application.service.ProductService;
 import lombok.RequiredArgsConstructor;
-
-import java.util.Optional;
 
 @RequiredArgsConstructor
 public class ProductCreatedOutboxHandler implements OutboxEventHandler {
 
-    private final ProductRepositoryPort productRepositoryPort;
-    private final ProductSearchIndexPort productSearchIndexPort;
     private final MapJsonToObjPort mapJsonToObjPort;
+    private final ProductService productService;
 
     @Override
     public String eventType() {
@@ -29,11 +24,6 @@ public class ProductCreatedOutboxHandler implements OutboxEventHandler {
                         event.payload(),
                         ProductCreatedOutboxPayload.class
                 );
-        Long productId = payload.productId();
-        String locationProduct = payload.location();
-
-        Optional<Product> product = productRepositoryPort.findById(productId);
-        // Event tạo đã hết hiệu lực nếu sản phẩm bị xóa trước khi worker xử lý.
-        product.ifPresent(value -> productSearchIndexPort.index(value, locationProduct));
+        productService.syncSearchIndex(payload.productId());
     }
 }

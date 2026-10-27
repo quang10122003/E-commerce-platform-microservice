@@ -1,5 +1,6 @@
 package com.example.producr_service.infrastructure.config;
 
+import com.example.producr_service.application.port.in.GetTopSellingProductsUseCase;
 import com.example.producr_service.application.port.in.CreateProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductUseCase;
 import com.example.producr_service.application.port.in.DeleteProductvariantUseCase;
@@ -12,6 +13,7 @@ import com.example.producr_service.application.port.in.UpdateProductUseCase;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
+import com.example.producr_service.application.port.out.cache.CachePort;
 import com.example.producr_service.application.port.out.embedding.ProductEmbeddingRepositoryPort;
 import com.example.producr_service.application.port.out.kafka.ProductEventPublisherPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
@@ -32,12 +34,19 @@ import com.example.producr_service.application.service.ShopProductPageAssembler;
 import com.example.producr_service.application.service.ShopOverviewService;
 import com.example.producr_service.application.service.VariantSaleResolver;
 import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Clock;
+import java.time.Duration;
 
 @Configuration
 public class ProductConfig {
+    @Bean
+    GetTopSellingProductsUseCase getTopSellingProductsUseCase(ProductService productService) {
+        return productService;
+    }
+
     @Bean
     ShopOverviewService shopOverviewService(
             ShopInfoClientPort shopInfoClientPort, ProductRepositoryPort productRepositoryPort, Clock clock,
@@ -136,12 +145,13 @@ public class ProductConfig {
         ProductVariantRepoPort productVariantRepoPort,
         ProductUpdateService productUpdateService,
         Clock clock,
-        ShopInfoClientPort shopInfoClientPort,
         BrandRepositoryPort brandRepositoryPort,
         FlashSaleItemRepositoryPort flashSaleItemRepositoryPort,
         VariantSaleResolver variantSaleResolver,
         ProductEmbeddingRepositoryPort productEmbeddingRepositoryPort,
-        ProductEventPublisherPort productEventPublisherPort
+        ProductEventPublisherPort productEventPublisherPort,
+        CachePort cachePort,
+        @Value("${app.recommendation.top-selling.cache-ttl}") Duration topSellingProductsCacheTtl
     ) {
         return new ProductService(
                 productImageRollbackPort,
@@ -156,12 +166,13 @@ public class ProductConfig {
                 productVariantRepoPort,
                 productUpdateService,
                 clock,
-                shopInfoClientPort,
                 brandRepositoryPort,
                 flashSaleItemRepositoryPort,
                 variantSaleResolver,
                 productEmbeddingRepositoryPort,
-                productEventPublisherPort
+                productEventPublisherPort,
+                cachePort,
+                topSellingProductsCacheTtl
         );
     }
 

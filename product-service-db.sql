@@ -50,6 +50,7 @@ CREATE TABLE products (
     name                    VARCHAR(255) NOT NULL,
     description             TEXT,
     image_url               VARCHAR(500) NOT NULL,  -- ảnh đại diện cho thẻ card, khác ảnh riêng ở variant_images
+    location_snapshot       VARCHAR(255) NULL DEFAULT NULL COMMENT 'Địa điểm shop chụp khi tạo sản phẩm; sản phẩm cũ có thể chưa có',
     object_path             VARCHAR(500) NOT NULL,
     storage_bucket          VARCHAR(50) NOT NULL,
     total_sold              BIGINT NOT NULL DEFAULT 0,

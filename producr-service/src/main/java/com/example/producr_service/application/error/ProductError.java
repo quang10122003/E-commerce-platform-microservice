@@ -3,6 +3,8 @@ package com.example.producr_service.application.error;
 import com.example.common.error.ErrorCode;
 
 public enum ProductError implements ErrorCode  {
+    RECOMMENDATION_CACHE_UNAVAILABLE("RECOMMENDATION_CACHE_UNAVAILABLE",
+            "Tạm thời không thể truy cập cache gợi ý", 503),
     PRODUCT_SEARCH_PAGE_LIMIT_EXCEEDED("PRODUCT_SEARCH_PAGE_LIMIT_EXCEEDED",
             "Trang tìm kiếm vượt giới hạn 10000 sản phẩm", 400),
     SHOP_NOT_FOUND("SHOP_NOT_FOUND", "Không tìm thấy shop", 404),

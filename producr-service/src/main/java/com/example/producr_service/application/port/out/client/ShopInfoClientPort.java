@@ -8,7 +8,5 @@ import java.util.Optional;
 public interface ShopInfoClientPort {
     Optional<ShopProfileResponse> findPublicShopInfo(Long shopId);
 
-    Optional<String> findPublicShopAddress(Long shopId);
-
     List<ShopInfoResponse> getShopInfos(List<Long> shopIds);
 }

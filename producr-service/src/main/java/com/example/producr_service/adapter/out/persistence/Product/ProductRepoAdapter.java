@@ -8,8 +8,10 @@ import com.example.producr_service.adapter.entity.ProductEntity;
 import com.example.producr_service.adapter.mapper.ProductMapper;
 import com.example.producr_service.adapter.out.persistence.Brand.BrandJpa;
 import com.example.producr_service.adapter.out.persistence.Category.CategoryJpa;
+import com.example.producr_service.application.dto.embedding.ProductPreferenceData;
 import com.example.producr_service.application.dto.request.SellerProductFilter;
 import com.example.producr_service.application.dto.response.ProductSummaryResponse;
+import com.example.producr_service.application.dto.response.ProductSearchResponse;
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.storage.StoredFile;
@@ -22,8 +24,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -34,6 +38,36 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     CategoryJpa categoryJpa;
     BrandJpa brandJpa;
     ProductMapper productMapper;
+
+    @Override
+    public List<Long> findCategoryCandidateIds(Collection<Long> categoryIds, int limit) {
+        return categoryIds.isEmpty() ? List.of() : productJpa.findCategoryCandidateIds(
+                categoryIds, ProductStatus.ACTIVE, PageRequest.of(0, limit));
+    }
+
+    @Override
+    public List<Long> findBrandCandidateIds(Collection<Long> brandIds, int limit) {
+        return brandIds.isEmpty() ? List.of() : productJpa.findBrandCandidateIds(
+                brandIds, ProductStatus.ACTIVE, PageRequest.of(0, limit));
+    }
+
+    @Override
+    public Set<Long> findAvailableProductIds(Collection<Long> productIds) {
+        return productIds.isEmpty() ? Set.of() : productJpa.findAvailableProductIds(productIds, ProductStatus.ACTIVE);
+    }
+
+    @Override
+    public List<ProductSearchResponse> findAvailableSearchItemsByIds(Collection<Long> productIds) {
+        return productIds.isEmpty() ? List.of() : productJpa
+                .findAvailableSearchItemsByIds(productIds, ProductStatus.ACTIVE).stream()
+                .map(productMapper::toSearchResponse).toList();
+    }
+
+    @Override
+    public List<ProductSearchResponse> findTopSellingProducts(int limit) {
+        return productJpa.findTopSellingProducts(ProductStatus.ACTIVE, PageRequest.of(0, limit)).stream()
+                .map(productMapper::toSearchResponse).toList();
+    }
 
     @Override
     public long countActiveByUserId(Long userId) {
@@ -146,6 +180,17 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
                 product.getObjectPath(),
                 product.getImageUrl()
         );
+    }
+
+    @Override
+    public List<ProductPreferenceData> findPreferenceDataByIds(Collection<Long> productIds) {
+        if(productIds.isEmpty()){
+            return List.of();
+        }
+        return productJpa.findPreferenceDataByIds(productIds)
+                .stream()
+                .map(productMapper::toPreferenceData)
+                .toList();
     }
 
 }

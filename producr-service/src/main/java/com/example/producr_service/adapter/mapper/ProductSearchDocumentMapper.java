@@ -11,8 +11,7 @@ import java.util.List;
 @Component
 public class ProductSearchDocumentMapper {
     public ProductSearchDocument toDocument(
-            Product product,
-            String location
+            Product product
     ) {
         Product.PriceRange priceRange = product.getPriceRange();
 
@@ -34,7 +33,7 @@ public class ProductSearchDocumentMapper {
                 .createdAt(product.getCreatedAt())
                 .attributes(toAttributeDocuments(product))
                 .variants(toVariantDocuments(product))
-                .location(location)
+                .location(product.getLocationSnapshot())
                 .build();
     }
 
