@@ -13,4 +13,21 @@ public class ProductEmbeddingDocumentMapper {
                 .contentHash(embedding.contentHash())
                 .build();
     }
+
+    public ProductEmbeddingData toData(
+            ProductEmbeddingDocument document) {
+
+        if (document.getProductId() == null
+                || document.getVector() == null
+                || document.getVector().isEmpty()) {
+
+            throw new IllegalStateException(
+                    "Document embedding thiếu productId hoặc vector");
+        }
+
+        return new ProductEmbeddingData(
+                document.getProductId(),
+                document.getVector(),
+                document.getContentHash());
+    }
 }

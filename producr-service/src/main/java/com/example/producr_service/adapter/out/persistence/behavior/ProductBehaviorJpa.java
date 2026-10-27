@@ -1,6 +1,7 @@
 package com.example.producr_service.adapter.out.persistence.behavior;
 
 import com.example.producr_service.adapter.entity.UserProductBehaviorEntity;
+import com.example.producr_service.adapter.out.persistence.projection.ProductBehaviorProjection;
 import com.example.producr_service.domain.model.BehaviorType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface ProductBehaviorJpa extends JpaRepository<UserProductBehaviorEntity, Long> {
@@ -44,4 +46,23 @@ public interface ProductBehaviorJpa extends JpaRepository<UserProductBehaviorEnt
     // Phải đọc ngay trên cùng connection của transaction; bản ghi trùng đặt giá trị này về 0.
     @Query(value = "SELECT LAST_INSERT_ID()", nativeQuery = true)
     Long lastInsertedId();
+
+
+    // lấy hành vi người dùng trong 30 ngày
+    @Query("""
+        select b.eventId as eventId,
+               b.userId as userId,
+               b.product.id as productId,
+               b.eventType as eventType,
+               b.createdAt as createdAt
+        from UserProductBehaviorEntity b
+        where b.userId = :userId
+          and b.createdAt > :cutoff
+          and b.createdAt <= :now
+        order by b.createdAt, b.id
+        """)
+    List<ProductBehaviorProjection> findRecentByUserId(
+            @Param("userId") Long userId,
+            @Param("cutoff") LocalDateTime cutoff,
+            @Param("now") LocalDateTime now);
 }

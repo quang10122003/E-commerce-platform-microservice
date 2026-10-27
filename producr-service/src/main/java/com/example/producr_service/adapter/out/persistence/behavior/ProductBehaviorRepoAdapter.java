@@ -12,7 +12,9 @@ import org.springframework.stereotype.Repository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -28,6 +30,18 @@ public class ProductBehaviorRepoAdapter implements ProductBehaviorRepositoryPort
         // DB lưu microsecond nên làm tròn xuống để không xóa hành vi trước hạn.
         LocalDateTime localCutoff = LocalDateTime.ofInstant(cutoff.truncatedTo(ChronoUnit.MICROS), clock.getZone());
         return productBehaviorJpa.deleteExpiredBefore(localCutoff, batchSize);
+    }
+
+    @Override
+    public List<UserProductBehavior> findRecentByUserId(Long userId, Instant now) {
+        ZoneId zone = clock.getZone();
+        LocalDateTime localNow = LocalDateTime.ofInstant(now, zone);
+        LocalDateTime cutoff = localNow.minus(UserProductBehavior.RETENTION);
+
+        return productBehaviorJpa.findRecentByUserId(userId, cutoff, localNow)
+                .stream()
+                .map(projection -> productBehaviorMapper.toDomain(projection, zone))
+                .toList();
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.example.producr_service.adapter.mapper;
 
 import com.example.producr_service.adapter.entity.ProductEntity;
 import com.example.producr_service.adapter.entity.UserProductBehaviorEntity;
+import com.example.producr_service.adapter.out.persistence.projection.ProductBehaviorProjection;
 import com.example.producr_service.domain.model.UserProductBehavior;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
@@ -23,5 +24,21 @@ public interface ProductBehaviorMapper {
 
     default LocalDateTime toLocalDateTime(Instant instant, @Context ZoneId zone) {
         return instant == null ? null : LocalDateTime.ofInstant(instant, zone);
+    }
+
+    default UserProductBehavior toDomain(
+            ProductBehaviorProjection projection,
+            ZoneId zone) {
+
+        Instant createdAt = projection.getCreatedAt()
+                .atZone(zone)
+                .toInstant();
+
+        return new UserProductBehavior(
+                projection.getEventId(),
+                projection.getUserId(),
+                projection.getProductId(),
+                projection.getEventType(),
+                createdAt);
     }
 }
