@@ -21,11 +21,14 @@ import com.example.auth_service.application.DTO.request.RegisterRquest;
 import com.example.auth_service.application.error.AuthError;
 import com.example.auth_service.application.constant.Constant;
 import com.example.auth_service.application.port.out.*;
+import com.example.auth_service.application.port.out.cache.CachePort;
 import com.example.auth_service.domain.model.OutboxEvent;
 import com.example.auth_service.domain.model.Role;
 import com.example.auth_service.domain.model.User;
 import com.example.auth_service.domain.until.RoleEnum;
 import com.example.common.exception.BusinessException;
+import com.example.common.exception.CacheAccessException;
+import com.example.common.security.AccessControlCacheKeys;
 import com.example.common.untill.ValidationUtils;
 
 import lombok.AccessLevel;
@@ -45,7 +48,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
     RoleRepositoryPort roleRepositoryPort;
     UserRepositoryPort userRepositoryPort;
     OutboxEventPort outboxEventPort;
-    AccessControlCachePort accessControlCachePort;
+    CachePort cachePort;
     Clock clock;
 
     @Transactional(readOnly = true)
@@ -112,7 +115,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
            throw  new BusinessException(AuthError.REFRESH_TOKEN_INVALID);
         }
         Duration ttlRefreshToken = tokenServicePort.getRefreshTokenTtl();
-        accessControlCachePort.blacklistToken(request.refreshToken(),ttlRefreshToken);
+        blacklistToken(request.refreshToken(), ttlRefreshToken);
 
         String accessToken = tokenServicePort.generateAccessToken(user);
         String refreshToken = tokenServicePort.generateRefreshToken(user);
@@ -179,10 +182,18 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
     }
 
     private void revokeAccessToken(String accessToken) {
-        accessControlCachePort.blacklistToken(accessToken, tokenServicePort.getAccessTokenTtl());
+        blacklistToken(accessToken, tokenServicePort.getAccessTokenTtl());
     }
     private void revokeRefreshToken(String refreshToken) {
-        accessControlCachePort.blacklistToken(refreshToken, tokenServicePort.getRefreshTokenTtl());
+        blacklistToken(refreshToken, tokenServicePort.getRefreshTokenTtl());
+    }
+
+    private void blacklistToken(String token, Duration ttl) {
+        try {
+            cachePort.set(AccessControlCacheKeys.blacklistJwt(token), "1", ttl);
+        } catch (CacheAccessException exception) {
+            log.error("Không thể ghi trạng thái thu hồi token vào cache");
+        }
     }
 
 

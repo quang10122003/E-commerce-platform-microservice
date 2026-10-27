@@ -1,6 +1,6 @@
 package com.example.notification.infrastructure.config;
 
-import com.example.notification.application.port.out.WsTicketStorePort;
+import com.example.notification.application.port.out.cache.CachePort;
 import com.example.notification.application.service.WsTicketApplicationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,13 +19,13 @@ public class WsTicketConfig {
     }
 
     @Bean
-    WsTicketApplicationService wsTicketApplicationService(WsTicketStorePort wsTicketStorePort,
+    WsTicketApplicationService wsTicketApplicationService(CachePort cachePort,
                                                         SecureRandom wsTicketSecureRandom, Clock clock,
                                                         @Value("${app.websocket.ticket-ttl-seconds:30}") long ticketTtlSeconds) {
         if (ticketTtlSeconds <= 0) {
             throw new IllegalArgumentException("TTL vé WebSocket phải lớn hơn 0");
         }
-        return new WsTicketApplicationService(wsTicketStorePort, wsTicketSecureRandom, clock,
+        return new WsTicketApplicationService(cachePort, wsTicketSecureRandom, clock,
                 Duration.ofSeconds(ticketTtlSeconds));
     }
 }

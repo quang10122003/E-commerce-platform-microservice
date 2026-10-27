@@ -8,6 +8,7 @@ import com.example.auth_service.application.port.in.RefreshTokenUseCase;
 import com.example.auth_service.application.port.in.RegisterUseCase;
 import com.example.auth_service.application.port.in.ProcessAuthOutboxUseCase;
 import com.example.auth_service.application.port.out.*;
+import com.example.auth_service.application.port.out.cache.CachePort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import com.example.auth_service.application.service.AuthApplicationService;
@@ -21,18 +22,12 @@ import com.example.auth_service.application.strategy.outbox.UserRegisteredOutbox
 
 import java.util.List;
 import java.time.Clock;
-import java.time.ZoneId;
 
 @Configuration
 public class AuthConfig {
     @Bean
     GetPublicShopInfoUseCase getPublicShopInfoUseCase(AuthServiceInternal authServiceInternal) {
         return authServiceInternal;
-    }
-
-    @Bean
-    Clock clock() {
-        return Clock.system(ZoneId.of("Asia/Ho_Chi_Minh"));
     }
 
     @Bean
@@ -58,8 +53,11 @@ public class AuthConfig {
     }
 
     @Bean
-    AuthApplicationService authApplicationService(AuthenticationManagerPort authenticationManagerPort, TokenServicePort tokenServicePort, RoleRepositoryPort roleRepositoryPort, UserRepositoryPort userRepositoryPort, OutboxEventPort outboxEventPort, AccessControlCachePort accessControlCachePort, Clock clock){
-        return new AuthApplicationService(authenticationManagerPort, tokenServicePort,roleRepositoryPort,userRepositoryPort, outboxEventPort,accessControlCachePort, clock);
+    AuthApplicationService authApplicationService(AuthenticationManagerPort authenticationManagerPort,
+            TokenServicePort tokenServicePort, RoleRepositoryPort roleRepositoryPort,
+            UserRepositoryPort userRepositoryPort, OutboxEventPort outboxEventPort, CachePort cachePort, Clock clock) {
+        return new AuthApplicationService(authenticationManagerPort, tokenServicePort, roleRepositoryPort,
+                userRepositoryPort, outboxEventPort, cachePort, clock);
     }
 
     @Bean

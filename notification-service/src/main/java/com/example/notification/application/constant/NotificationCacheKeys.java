@@ -1,4 +1,4 @@
-package com.example.notification.adapter.out.cache.key;
+package com.example.notification.application.constant;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
