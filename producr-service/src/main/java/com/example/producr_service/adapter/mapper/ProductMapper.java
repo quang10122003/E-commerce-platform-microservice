@@ -3,6 +3,8 @@ import com.example.producr_service.adapter.DTO.documentElasticsearch.ProductSear
 import com.example.producr_service.adapter.entity.*;
 import com.example.common.response.PageResponse;
 import com.example.producr_service.adapter.out.persistence.projection.ProductPreferenceProjection;
+import com.example.producr_service.adapter.out.persistence.projection.SellerProductOverviewProjection;
+import com.example.producr_service.application.dto.response.SellerProductOverviewResponse;
 import com.example.producr_service.application.dto.embedding.ProductPreferenceData;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
 import com.example.producr_service.application.dto.response.ProductSummaryResponse;
@@ -31,6 +33,23 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ProductMapper {
     Clock clock;
+
+    public SellerProductOverviewResponse toSellerProductOverview(List<SellerProductOverviewProjection> projections) {
+        long totalProducts = 0;
+        long activeProducts = 0;
+        long outOfStockProducts = 0;
+        long inactiveProducts = 0;
+        for (SellerProductOverviewProjection projection : projections) {
+            totalProducts += projection.getTotalProducts();
+            outOfStockProducts += projection.getTotalProducts() - projection.getInStockProducts();
+            if (projection.getStatus() == ProductStatus.ACTIVE) {
+                activeProducts += projection.getInStockProducts();
+            } else if (projection.getStatus() == ProductStatus.INACTIVE) {
+                inactiveProducts += projection.getInStockProducts();
+            }
+        }
+        return new SellerProductOverviewResponse(totalProducts, activeProducts, outOfStockProducts, inactiveProducts);
+    }
 
     public ProductSearchResponse toSearchResponse(TopSellingProductProjection projection) {
         return new ProductSearchResponse(projection.getId(), projection.getName(), projection.getLocationSnapshot(), projection.getUserId(),

@@ -12,6 +12,7 @@ import com.example.producr_service.application.dto.embedding.ProductPreferenceDa
 import com.example.producr_service.application.dto.request.SellerProductFilter;
 import com.example.producr_service.application.dto.response.ProductSummaryResponse;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
+import com.example.producr_service.application.dto.response.SellerProductOverviewResponse;
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.storage.StoredFile;
@@ -72,6 +73,11 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     @Override
     public long countActiveByUserId(Long userId) {
         return productJpa.countByUserIdAndStatus(userId, ProductStatus.ACTIVE);
+    }
+
+    @Override
+    public SellerProductOverviewResponse getSellerProductOverview(Long sellerUserId) {
+        return productMapper.toSellerProductOverview(productJpa.getSellerProductOverview(sellerUserId));
     }
 
     // Lấy metadata theo lô cho cả sản phẩm đang bán và đã ngừng bán.

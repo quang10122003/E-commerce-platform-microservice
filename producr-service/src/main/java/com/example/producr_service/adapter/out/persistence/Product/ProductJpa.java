@@ -3,6 +3,7 @@ package com.example.producr_service.adapter.out.persistence.Product;
 import com.example.producr_service.adapter.entity.ProductEntity;
 import com.example.producr_service.adapter.out.persistence.projection.ProductPreferenceProjection;
 import com.example.producr_service.adapter.out.persistence.projection.ProductSummaryProjection;
+import com.example.producr_service.adapter.out.persistence.projection.SellerProductOverviewProjection;
 import com.example.producr_service.adapter.out.persistence.projection.TopSellingProductProjection;
 import com.example.producr_service.domain.model.ProductStatus;
 import jakarta.persistence.LockModeType;
@@ -86,6 +87,17 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
             @Param("status") ProductStatus status, Pageable pageable);
 
     long countByUserIdAndStatus(Long userId, ProductStatus status);
+
+    @Query("""
+            SELECT p.status AS status,
+                   COUNT(DISTINCT p.id) AS totalProducts,
+                   COUNT(DISTINCT v.product.id) AS inStockProducts
+            FROM ProductEntity p
+            LEFT JOIN p.variants v ON v.stockQuantity > 0
+            WHERE p.userId = :sellerUserId
+            GROUP BY p.status
+            """)
+    List<SellerProductOverviewProjection> getSellerProductOverview(@Param("sellerUserId") Long sellerUserId);
 
     @Query("select p.id as id, p.name as name, p.imageUrl as imageUrl from ProductEntity p where p.id in :productIds")
     List<ProductSummaryProjection> findProductSummariesByIds(@Param("productIds") List<Long> productIds);

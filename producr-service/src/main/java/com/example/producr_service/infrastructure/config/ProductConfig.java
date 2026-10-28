@@ -32,6 +32,7 @@ import com.example.producr_service.application.service.ProductService;
 import com.example.producr_service.application.service.ProductUpdateService;
 import com.example.producr_service.application.service.ShopProductPageAssembler;
 import com.example.producr_service.application.service.ShopOverviewService;
+import com.example.producr_service.application.service.SellerOverviewService;
 import com.example.producr_service.application.service.VariantSaleResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +43,12 @@ import java.time.Duration;
 
 @Configuration
 public class ProductConfig {
+    @Bean
+    SellerOverviewService sellerOverviewService(
+            CurrentUserPort currentUserPort, ProductRepositoryPort productRepositoryPort) {
+        return new SellerOverviewService(currentUserPort, productRepositoryPort);
+    }
+
     @Bean
     GetTopSellingProductsUseCase getTopSellingProductsUseCase(ProductService productService) {
         return productService;

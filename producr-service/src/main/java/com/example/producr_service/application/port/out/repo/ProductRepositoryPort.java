@@ -5,6 +5,7 @@ import com.example.producr_service.application.dto.embedding.ProductPreferenceDa
 import com.example.producr_service.application.dto.request.SellerProductFilter;
 import com.example.producr_service.application.dto.response.ProductSummaryResponse;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
+import com.example.producr_service.application.dto.response.SellerProductOverviewResponse;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.domain.model.Product;
 
@@ -25,6 +26,8 @@ public interface ProductRepositoryPort {
     List<ProductSearchResponse> findTopSellingProducts(int limit);
 
     long countActiveByUserId(Long userId);
+
+    SellerProductOverviewResponse getSellerProductOverview(Long sellerUserId);
 
     List<ProductSummaryResponse> findProductSummariesByIds(List<Long> productIds);
     // Đọc toàn bộ lựa chọn sản phẩm thuộc Shop, gồm cả sản phẩm bị khóa.
