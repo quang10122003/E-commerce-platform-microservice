@@ -8,6 +8,7 @@ import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRe
 import com.example.producr_service.application.service.FlashSaleCampaignService;
 import com.example.producr_service.application.port.in.CancelFlashSaleCampaignUseCase;
 import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignsUseCase;
+import com.example.producr_service.application.port.in.GetShopCompletedFlashSaleCampaignsUseCase;
 import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignDetailUseCase;
 import com.example.producr_service.application.port.in.GetShopFlashSaleProductsUseCase;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
@@ -36,6 +37,12 @@ import java.util.List;
 
 @Configuration
 public class FlashSaleConfig {
+
+    @Bean
+    GetShopCompletedFlashSaleCampaignsUseCase getShopCompletedFlashSaleCampaignsUseCase(
+            FlashSaleCampaignService flashSaleCampaignService) {
+        return flashSaleCampaignService;
+    }
 
     @Bean
     GetShopFlashSaleItemsUseCase getShopFlashSaleItemsUseCase(FlashSaleItemService flashSaleItemService) {

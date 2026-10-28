@@ -6,6 +6,8 @@ import com.example.producr_service.adapter.mapper.FlashSaleCampaignMapper;
 import com.example.producr_service.adapter.out.persistence.ProductVariant.ProductVariantJpa;
 import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRepositoryPort;
 import com.example.producr_service.application.dto.response.FlashSaleCampaignView;
+import com.example.producr_service.application.dto.response.CompletedFlashSaleCampaignView;
+import com.example.producr_service.adapter.out.persistence.projection.CompletedFlashSaleCampaignProjection;
 import com.example.producr_service.domain.model.FlashSaleCampaign;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 import lombok.AccessLevel;
@@ -30,8 +32,26 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
     ProductVariantJpa productVariantJpa;
 
     @Override
+    public PageResponse<CompletedFlashSaleCampaignView> findCompletedByShopId(
+            Long shopId, PageQuery pageQuery, String keyword, LocalDateTime from, LocalDateTime to) {
+        String escapedKeyword = keyword == null ? null
+                : keyword.replace("!", "!!").replace("%", "!%").replace("_", "!_");
+        Page<CompletedFlashSaleCampaignProjection> campaigns = flashSaleCampaignJpa.findCompletedByShopId(
+                shopId, FlashSaleCampaignStatus.DONE, escapedKeyword, from, to,
+                PageRequest.of(pageQuery.pageIndex(), pageQuery.size()));
+        return new PageResponse<>(campaigns.getContent().stream()
+                .map(flashSaleCampaignMapper::toCompletedView).toList(),
+                campaigns.getNumber() + 1, campaigns.getSize(), campaigns.getTotalElements(), campaigns.getTotalPages());
+    }
+
+    @Override
     public Optional<FlashSaleCampaignView> findViewById(Long campaignId) {
         return flashSaleCampaignJpa.findById(campaignId).map(flashSaleCampaignMapper::toView);
+    }
+
+    @Override
+    public boolean existsById(Long campaignId) {
+        return flashSaleCampaignJpa.existsById(campaignId);
     }
 
     @Override

@@ -1,6 +1,9 @@
 package com.example.producr_service.adapter.in.rest;
 
 import com.example.common.response.PageResponse;
+import com.example.producr_service.application.dto.request.ShopCompletedFlashSaleCampaignFilter;
+import com.example.producr_service.application.dto.response.ShopCompletedFlashSaleCampaignResponse;
+import com.example.producr_service.application.port.in.GetShopCompletedFlashSaleCampaignsUseCase;
 import com.example.producr_service.application.dto.request.ShopFlashSaleCampaignFilter;
 import com.example.producr_service.application.dto.response.ShopFlashSaleCampaignResponse;
 import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignsUseCase;
@@ -35,6 +38,8 @@ import com.example.producr_service.application.port.in.RemoveShopFlashSaleItemUs
 import com.example.producr_service.application.port.in.UpdateShopFlashSaleItemUseCase;
 import com.example.producr_service.adapter.DTO.request.UpdateShopFlashSaleItemHttpRequest;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
@@ -44,6 +49,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 @PreAuthorize("hasAuthority('ROLE_SHOP')")
 public class ShopFlashSaleController {
     private final GetShopFlashSaleCampaignsUseCase getShopFlashSaleCampaignsUseCase;
+    private final GetShopCompletedFlashSaleCampaignsUseCase getShopCompletedFlashSaleCampaignsUseCase;
     private final RegisterFlashSaleItemUseCase registerFlashSaleItemUseCase;
     private final PreviewFlashSalePriceUseCase previewFlashSalePriceUseCase;
     private final GetShopFlashSaleProductsUseCase getShopFlashSaleProductsUseCase;
@@ -53,14 +59,25 @@ public class ShopFlashSaleController {
     private final RemoveShopFlashSaleItemUseCase removeShopFlashSaleItemUseCase;
     private final UpdateShopFlashSaleItemUseCase updateShopFlashSaleItemUseCase;
 
-    @GetMapping("/drafts/{campaignId}/items")
+    @GetMapping("/completed")
+    public ResponseEntity<PageResponse<ShopCompletedFlashSaleCampaignResponse>> getCompletedCampaigns(
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "20") @Min(10) @Max(30) int size,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
+            @RequestParam(required = false) String keyword) {
+        return ResponseEntity.ok(getShopCompletedFlashSaleCampaignsUseCase.getShopCompletedCampaigns(
+                new ShopCompletedFlashSaleCampaignFilter(page, size, from, to, keyword)));
+    }
+
+    @GetMapping("/{campaignId}/items")
     public ResponseEntity<List<ShopFlashSaleItemResponse>> getItems(
             @PathVariable @Positive Long campaignId,
             @RequestParam(required = false) String keyword) {
         return ResponseEntity.ok(getShopFlashSaleItemsUseCase.getShopItems(campaignId, keyword));
     }
 
-    @DeleteMapping("/drafts/{campaignId}/items/{itemId}")
+    @DeleteMapping("/{campaignId}/items/{itemId}")
     public ResponseEntity<Void> removeItem(@PathVariable @Positive Long campaignId,
             @PathVariable @Positive Long itemId) {
         removeShopFlashSaleItemUseCase.removeItem(campaignId, itemId);
@@ -68,7 +85,7 @@ public class ShopFlashSaleController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/drafts/{campaignId}/items/{itemId}")
+    @PutMapping("/{campaignId}/items/{itemId}")
     public ResponseEntity<Void> updateItem(@PathVariable @Positive Long campaignId,
             @PathVariable @Positive Long itemId, @Valid @RequestBody UpdateShopFlashSaleItemHttpRequest request) {
         updateShopFlashSaleItemUseCase.updateItem(campaignId, itemId, request.toApplicationRequest());
@@ -102,7 +119,7 @@ public class ShopFlashSaleController {
         return ResponseEntity.ok(previewFlashSalePriceUseCase.previewPrice(variantId, request));
     }
 
-    @GetMapping
+    @GetMapping("/drafts")
     public ResponseEntity<PageResponse<ShopFlashSaleCampaignResponse>> getCampaigns(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,

@@ -10,6 +10,7 @@ public record ShopFlashSaleItemResponse(
         String productName,
         List<VariantOption> options,
         int registeredQuantity,
+        long sold_quality,
         Integer stockQuantity,
         FlashSaleItemStatus status,
         BigDecimal discountPercent,

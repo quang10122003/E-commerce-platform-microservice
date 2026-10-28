@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Set;
 import com.example.producr_service.adapter.entity.FlashSaleCampaignEntity;
 import com.example.producr_service.application.dto.response.FlashSaleCampaignView;
+import com.example.producr_service.application.dto.response.CompletedFlashSaleCampaignView;
+import com.example.producr_service.adapter.out.persistence.projection.CompletedFlashSaleCampaignProjection;
 import com.example.producr_service.domain.model.FlashSaleCampaign;
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FlashSaleCampaignMapper {
     private final FlashSaleItemMapper itemMapper;
+
+    public CompletedFlashSaleCampaignView toCompletedView(CompletedFlashSaleCampaignProjection projection) {
+        return new CompletedFlashSaleCampaignView(projection.getId(), projection.getName(),
+                projection.getStartsAt(), projection.getEndsAt());
+    }
 
     public FlashSaleCampaignEntity toEntity(FlashSaleCampaign campaign,
             Function<Long, ProductVariantEntity> variantReference) {

@@ -3,8 +3,12 @@ package com.example.producr_service.application.service;
 import com.example.common.exception.BusinessException;
 import com.example.common.response.PageQuery;
 import com.example.producr_service.application.dto.request.FlashSaleCampaignFilter;
+import com.example.producr_service.application.dto.request.ShopCompletedFlashSaleCampaignFilter;
 import com.example.common.response.PageResponse;
 import com.example.producr_service.application.dto.response.FlashSaleCampaignResponse;
+import com.example.producr_service.application.dto.response.CompletedFlashSaleCampaignView;
+import com.example.producr_service.application.dto.response.ShopCompletedFlashSaleCampaignResponse;
+import com.example.producr_service.application.port.in.GetShopCompletedFlashSaleCampaignsUseCase;
 import com.example.producr_service.application.port.in.GetFlashSaleCampaignsUseCase;
 import com.example.producr_service.application.dto.request.CreateFlashSaleCampaignRequest;
 import com.example.producr_service.application.error.ProductError;
@@ -23,11 +27,10 @@ import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 import java.time.OffsetDateTime;
 import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignDetailUseCase;
 import com.example.producr_service.application.dto.response.ShopFlashSaleCampaignDetailResponse;
-import com.example.producr_service.domain.error.DomainProductError;
 import java.time.Clock;
 import java.time.LocalDateTime;
 
-public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase, GetFlashSaleCampaignsUseCase, CancelFlashSaleCampaignUseCase, GetShopFlashSaleCampaignsUseCase, GetShopFlashSaleCampaignDetailUseCase {
+public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase, GetFlashSaleCampaignsUseCase, CancelFlashSaleCampaignUseCase, GetShopFlashSaleCampaignsUseCase, GetShopFlashSaleCampaignDetailUseCase, GetShopCompletedFlashSaleCampaignsUseCase {
     private final CurrentUserPort currentUserPort;
     private final FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort;
     private final Clock clock;
@@ -40,7 +43,26 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
         this.clock = clock;
     }
 
-    // Cho phép đọc DRAFT đã hết hạn để FE hiển thị và chặn đăng ký theo deadline.
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<ShopCompletedFlashSaleCampaignResponse> getShopCompletedCampaigns(
+            ShopCompletedFlashSaleCampaignFilter filter) {
+        validateCampaignFilter(filter.page(), filter.size(), filter.from(), filter.to());
+
+        Long shopId = currentUserPort.getUserInfo().userId();
+        String searchKeyword = filter.keyword() == null || filter.keyword().isBlank() ? null : filter.keyword().trim();
+        LocalDateTime from = filter.from() == null ? null
+                : filter.from().atZoneSameInstant(clock.getZone()).toLocalDateTime();
+        LocalDateTime to = filter.to() == null ? null
+                : filter.to().atZoneSameInstant(clock.getZone()).toLocalDateTime();
+        PageResponse<CompletedFlashSaleCampaignView> campaigns = flashSaleCampaignRepositoryPort.findCompletedByShopId(
+                shopId, new PageQuery(filter.page(), filter.size()), searchKeyword, from, to);
+        return new PageResponse<>(campaigns.items().stream()
+                .map(campaign -> ShopCompletedFlashSaleCampaignResponse.from(campaign, clock.getZone())).toList(),
+                campaigns.page(), campaigns.pageSize(), campaigns.totalItems(), campaigns.totalPages());
+    }
+
+    // Đọc chi tiết không phụ thuộc trạng thái; điều kiện đăng ký được kiểm tra ở luồng ghi.
     @Override
     @Transactional(readOnly = true)
     public ShopFlashSaleCampaignDetailResponse getShopCampaignDetail(Long campaignId) {
@@ -49,9 +71,6 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
         }
         FlashSaleCampaignView campaign = flashSaleCampaignRepositoryPort.findViewById(campaignId)
                 .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
-        if (campaign.status() != FlashSaleCampaignStatus.DRAFT) {
-            throw new BusinessException(DomainProductError.FLASH_SALE_REGISTRATION_CLOSED);
-        }
         return new ShopFlashSaleCampaignDetailResponse(campaign.name(),
                 campaign.registrationDeadline().atZone(clock.getZone()).toOffsetDateTime());
     }

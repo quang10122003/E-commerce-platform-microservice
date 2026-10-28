@@ -41,10 +41,8 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
     @Transactional(readOnly = true)
     public List<ShopFlashSaleItemResponse> getShopItems(Long campaignId, String keyword) {
         Long shopId = currentUser.getUserInfo().userId();
-        FlashSaleCampaignView campaign = flashSaleCampaignRepositoryPort.findViewById(campaignId)
-                .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
-        if (campaign.status() != FlashSaleCampaignStatus.DRAFT) {
-            throw new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_DRAFT);
+        if (!flashSaleCampaignRepositoryPort.existsById(campaignId)) {
+            throw new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND);
         }
         List<FlashSaleItem> items = flashSaleItemRepositoryPort.findShopItems(campaignId, shopId);
         List<Long> variantIds = items.stream().map(FlashSaleItem::variantId)
@@ -63,7 +61,7 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
                     item.attributes().stream()
                             .map(attribute -> new ShopFlashSaleItemResponse.VariantOption(attribute.name(), attribute.value()))
                             .toList(),
-                    item.registeredQuantity(), null, item.status(), item.discountPercent(), null, true);
+                    item.registeredQuantity(), item.soldQuantity(), null, item.status(), item.discountPercent(), null, true);
         }
         FlashSaleVariantSnapshot variant = variantsById.get(item.variantId());
         if (variant == null) {
@@ -73,7 +71,7 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
                 variant.attributes().stream()
                         .map(attribute -> new ShopFlashSaleItemResponse.VariantOption(attribute.name(), attribute.value()))
                         .toList(),
-                item.registeredQuantity(), variant.stockQuantity(), item.status(), item.discountPercent(),
+                item.registeredQuantity(), item.soldQuantity(), variant.stockQuantity(), item.status(), item.discountPercent(),
                 FlashSaleRules.calculateSalePrice(variant.price(), item.discountPercent()), false);
     }
 

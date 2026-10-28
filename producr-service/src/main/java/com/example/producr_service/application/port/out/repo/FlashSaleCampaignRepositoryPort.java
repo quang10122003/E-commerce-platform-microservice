@@ -2,6 +2,7 @@ package com.example.producr_service.application.port.out.repo;
 
 import com.example.producr_service.domain.model.FlashSaleCampaign;
 import com.example.producr_service.application.dto.response.FlashSaleCampaignView;
+import com.example.producr_service.application.dto.response.CompletedFlashSaleCampaignView;
 import com.example.common.response.PageQuery;
 import com.example.common.response.PageResponse;
 
@@ -12,7 +13,12 @@ import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 
 public interface FlashSaleCampaignRepositoryPort {
 
+    PageResponse<CompletedFlashSaleCampaignView> findCompletedByShopId(
+            Long shopId, PageQuery pageQuery, String keyword, LocalDateTime from, LocalDateTime to);
+
     Optional<FlashSaleCampaignView> findViewById(Long campaignId);
+
+    boolean existsById(Long campaignId);
 
     boolean existsOverlapping(LocalDateTime startsAt, LocalDateTime endsAt);
 

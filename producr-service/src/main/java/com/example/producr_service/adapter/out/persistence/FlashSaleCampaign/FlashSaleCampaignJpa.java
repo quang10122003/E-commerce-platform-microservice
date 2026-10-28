@@ -1,6 +1,7 @@
 package com.example.producr_service.adapter.out.persistence.FlashSaleCampaign;
 
 import com.example.producr_service.adapter.entity.FlashSaleCampaignEntity;
+import com.example.producr_service.adapter.out.persistence.projection.CompletedFlashSaleCampaignProjection;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,29 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEntity, Long> {
+
+    @Query(value = """
+            SELECT c.id AS id, c.name AS name, c.startsAt AS startsAt, c.endsAt AS endsAt
+            FROM FlashSaleCampaignEntity c
+            WHERE c.status = :status
+              AND (:fromTime IS NULL OR c.startsAt >= :fromTime)
+              AND (:toTime IS NULL OR c.startsAt <= :toTime)
+              AND (:keyword IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '!')
+              AND EXISTS (SELECT i.id FROM FlashSaleItemEntity i WHERE i.campaign = c AND i.shopId = :shopId)
+            ORDER BY c.endsAt DESC, c.id DESC
+            """, countQuery = """
+            SELECT COUNT(c)
+            FROM FlashSaleCampaignEntity c
+            WHERE c.status = :status
+              AND (:fromTime IS NULL OR c.startsAt >= :fromTime)
+              AND (:toTime IS NULL OR c.startsAt <= :toTime)
+              AND (:keyword IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '!')
+              AND EXISTS (SELECT i.id FROM FlashSaleItemEntity i WHERE i.campaign = c AND i.shopId = :shopId)
+            """)
+    Page<CompletedFlashSaleCampaignProjection> findCompletedByShopId(
+            @Param("shopId") Long shopId, @Param("status") FlashSaleCampaignStatus status,
+            @Param("keyword") String keyword, @Param("fromTime") LocalDateTime from,
+            @Param("toTime") LocalDateTime to, Pageable pageable);
 
     @Query(value = """
             select id from flash_sale_campaigns
