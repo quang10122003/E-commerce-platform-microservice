@@ -1,6 +1,7 @@
 package com.example.producr_service.application.service;
 
 import com.example.common.exception.BusinessException;
+import com.example.common.error.AuthorizationError;
 import com.example.common.exception.CacheAccessException;
 import com.example.common.response.PageResponse;
 import com.example.producr_service.application.constant.Constant;
@@ -18,6 +19,7 @@ import com.example.producr_service.application.dto.request.CreateProductData;
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
 import com.example.producr_service.application.dto.request.SellerProductFilter;
 import com.example.producr_service.application.dto.request.ShopProductFilter;
+import com.example.producr_service.application.dto.request.UpdateProductStatusRequest;
 import com.example.producr_service.application.dto.response.ProductCatalogSearchResponse;
 import com.example.producr_service.application.dto.response.ProductPriceRangeResponse;
 import com.example.producr_service.application.dto.response.ProductResponse;
@@ -44,6 +46,7 @@ import com.example.producr_service.application.port.out.storage.ProductImageRoll
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.domain.model.Brand;
 import com.example.producr_service.domain.model.Product;
+import com.example.producr_service.domain.model.ProductStatus;
 import com.example.producr_service.domain.model.ProductVariant;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -63,7 +66,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase, GetShopFlashSaleProductsUseCase, GetUserProductDetailUseCase, GetProductPriceRangeUseCase, GetTopSellingProductsUseCase {
+public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase, UpdateProductStatusUseCase, GetShopFlashSaleProductsUseCase, GetUserProductDetailUseCase, GetProductPriceRangeUseCase, GetTopSellingProductsUseCase {
     ProductImageRollbackPort productImageRollbackPort;
     ProductImageUploadService productImageUploadService;
     ProductCreationService productCreationService;
@@ -84,6 +87,37 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     ProductEventPublisherPort productEventPublisherPort;
     CachePort cachePort;
     Duration topSellingProductsCacheTtl;
+
+    @Override
+    @Transactional
+    public void updateProductStatus(Long productId, UpdateProductStatusRequest request) {
+        if (request == null || request.status() == null) {
+            throw new BusinessException(ProductError.INVALID_PRODUCT_UPDATE);
+        }
+        UserInternaInfoRespone user = currentUserPort.getUserInfo();
+        if (user.isShopLock()) {
+            throw new BusinessException(AuthorizationError.ACCESS_DENIED);
+        }
+        // Giữ cùng thứ tự khóa với luồng chỉnh sửa sản phẩm để tránh deadlock.
+        productHelper.validateProductOwnership(productId, user.userId());
+        productVariantRepoPort.findByProductIdForUpdate(productId);
+        Product product = productRepositoryPort.findById(productId)
+                .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
+        if (product.getStatus() == request.status()) {
+            return;
+        }
+        if (request.status() == ProductStatus.ACTIVE) {
+            product.activate();
+        } else {
+            product.deactivate();
+        }
+        LocalDateTime now = LocalDateTime.now(clock);
+        productRepositoryPort.updateStatus(productId, product.getStatus(), now);
+        outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
+                String.valueOf(productId), ProductUpdatedOutboxPayload.EVENT_TYPE,
+                new ProductUpdatedOutboxPayload(productId), now));
+        log.info("Đã cập nhật trạng thái sản phẩm productId={}, status={}", productId, request.status());
+    }
 
     @Override
     public List<ProductSearchResponse> getTopSellingProducts() {

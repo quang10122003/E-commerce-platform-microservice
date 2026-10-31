@@ -10,6 +10,7 @@ import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
 import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
 import com.example.producr_service.application.port.in.GetUserProductDetailUseCase;
 import com.example.producr_service.application.port.in.UpdateProductUseCase;
+import com.example.producr_service.application.port.in.UpdateProductStatusUseCase;
 import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
@@ -43,6 +44,11 @@ import java.time.Duration;
 
 @Configuration
 public class ProductConfig {
+    @Bean
+    UpdateProductStatusUseCase updateProductStatusUseCase(ProductService productService) {
+        return productService;
+    }
+
     @Bean
     SellerOverviewService sellerOverviewService(
             CurrentUserPort currentUserPort, ProductRepositoryPort productRepositoryPort) {

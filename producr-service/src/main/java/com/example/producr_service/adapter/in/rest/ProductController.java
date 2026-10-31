@@ -20,6 +20,7 @@ import com.example.producr_service.application.port.in.GetProductPriceRangeUseCa
 import com.example.producr_service.application.port.in.GetSellerProductsUseCase;
 import com.example.producr_service.application.port.in.GetShopProductDetailUseCase;
 import com.example.producr_service.application.port.in.UpdateProductUseCase;
+import com.example.producr_service.application.port.in.UpdateProductStatusUseCase;
 import com.example.producr_service.application.port.in.GetUserProductDetailUseCase;
 import com.example.producr_service.application.port.in.GetVariantSaleUseCase;
 import com.example.producr_service.application.dto.response.UserProductDetailResponse;
@@ -59,9 +60,19 @@ public class ProductController {
     DeleteProductvariantUseCase deleteProductvariantUseCase;
     GetShopProductDetailUseCase getShopProductDetailUseCase;
     UpdateProductUseCase updateProductUseCase;
+    UpdateProductStatusUseCase updateProductStatusUseCase;
     GetUserProductDetailUseCase getUserProductDetailUseCase;
     GetVariantSaleUseCase getVariantSaleUseCase;
     GetProductPriceRangeUseCase getProductPriceRangeUseCase;
+
+    @PostMapping("/{productId}/status")
+    @PreAuthorize("hasAuthority('ROLE_SHOP')")
+    public ResponseEntity<Void> updateProductStatus(
+            @PathVariable("productId") @Positive Long productId,
+            @Valid @RequestBody UpdateProductStatusRequest request) {
+        updateProductStatusUseCase.updateProductStatus(productId, request);
+        return ResponseEntity.noContent().build();
+    }
 
     @GetMapping("/{productId}/price-range")
     public ResponseEntity<ProductPriceRangeResponse> getProductPriceRange(

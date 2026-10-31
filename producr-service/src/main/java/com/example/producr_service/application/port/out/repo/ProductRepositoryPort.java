@@ -8,6 +8,9 @@ import com.example.producr_service.application.dto.response.ProductSearchRespons
 import com.example.producr_service.application.dto.response.SellerProductOverviewResponse;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.domain.model.Product;
+import com.example.producr_service.domain.model.ProductStatus;
+
+import java.time.LocalDateTime;
 
 import java.util.Collection;
 import java.util.List;
@@ -35,6 +38,7 @@ public interface ProductRepositoryPort {
 
     Product save(Product product);
     Product update(Product product);
+    void updateStatus(Long productId, ProductStatus status, LocalDateTime updatedAt);
     Optional<Product> findById(Long id);
 
     // Kiểm tra bản ghi sản phẩm tồn tại, không lọc trạng thái hoặc tải aggregate.

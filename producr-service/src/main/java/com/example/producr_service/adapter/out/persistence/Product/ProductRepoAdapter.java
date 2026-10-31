@@ -25,6 +25,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -140,6 +141,15 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
         productMapper.updateEntity(product, entity, category, brand);
         productJpa.flush();
         return productMapper.toDomain(entity);
+    }
+
+    @Override
+    public void updateStatus(Long productId, ProductStatus status, LocalDateTime updatedAt) {
+        ProductEntity entity = productJpa.findById(productId)
+                .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
+        entity.setStatus(status);
+        entity.setUpdatedAt(updatedAt);
+        productJpa.flush();
     }
 
     // Đọc một sản phẩm và chuyển toàn bộ dữ liệu liên quan sang domain.
