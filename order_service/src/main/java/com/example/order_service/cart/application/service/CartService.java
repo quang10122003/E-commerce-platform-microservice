@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -80,12 +81,13 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                         productInfo -> productInfo,
                         (existing, duplicate) -> existing));
 
+        Instant now = clock.instant();
         // Thiếu metadata sản phẩm chỉ ẩn item khỏi response, không xóa dữ liệu giỏ đã lưu.
         List<CartRepone.CartItemInfo> responseItems = cart.getItems().stream()
                 .filter(cartItem -> productInfoByVariantId.containsKey(cartItem.getProductVariantId()))
                 .map(cartItem -> toCartItemInfo(
                         cartItem,
-                        productInfoByVariantId.get(cartItem.getProductVariantId())))
+                        productInfoByVariantId.get(cartItem.getProductVariantId()), now))
                 .toList();
 
         log.debug("Đã lấy giỏ hàng: user_id={}, cart_id={}, total_items={}",
@@ -98,10 +100,14 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 .build();
     }
 
-    private CartRepone.CartItemInfo toCartItemInfo(CartItem cartItem, CartInfoRepone productInfo) {
+    private CartRepone.CartItemInfo toCartItemInfo(CartItem cartItem, CartInfoRepone productInfo, Instant now) {
         List<CartRepone.VariantOptions> variantOptions = productInfo.variantOptions().stream()
                 .map(option -> new CartRepone.VariantOptions(option.name(), option.value()))
                 .toList();
+        // Sale có thể hết hạn trong lúc gọi Product Service nên cần kiểm tra lại trước khi trả giỏ hàng.
+        CartInfoRepone.Sale sale = productInfo.sale();
+        CartRepone.Sale applicableSale = sale != null && sale.endsAt().toInstant().isAfter(now)
+                ? new CartRepone.Sale(sale.salePrice(), sale.endsAt()) : null;
         return CartRepone.CartItemInfo.builder()
                 .cartItemId(cartItem.getId())
                 .productId(productInfo.productId())
@@ -116,8 +122,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 .quantity(cartItem.getQuantity())
                 .stockQuantity(productInfo.stockQuantity())
                 .status(productInfo.status())
-                .sale(productInfo.sale() == null ? null
-                        : new CartRepone.Sale(productInfo.sale().salePrice(), productInfo.sale().endsAt()))
+                .sale(applicableSale)
                 .build();
     }
 

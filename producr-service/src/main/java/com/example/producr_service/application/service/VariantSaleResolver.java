@@ -8,6 +8,7 @@ import com.example.producr_service.domain.service.FlashSaleRules;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class VariantSaleResolver {
@@ -20,14 +21,18 @@ public class VariantSaleResolver {
 
     // lọc ưu đãi đang hiệu lực trước; tồn kho hoặc quota hết thì sale không còn áp dụng.
     public VariantSaleResponse.Sale resolve(BigDecimal price, int stockQuantity, List<FlashSaleOfferView> offers) {
+        // Ưu đãi có thể hết hạn sau truy vấn nên phải lọc trước khi kiểm tra trùng lịch.
+        LocalDateTime now = LocalDateTime.now(clock);
+        List<FlashSaleOfferView> activeOffers = offers.stream()
+                .filter(offer -> offer.endsAt().isAfter(now)).toList();
         // Không chọn ngẫu nhiên ưu đãi khi dữ liệu vi phạm quy tắc lịch sale không chồng nhau.
-        if (offers.size() > 1) {
+        if (activeOffers.size() > 1) {
             throw new BusinessException(ProductError.FLASH_SALE_SCHEDULE_CONFLICT);
         }
-        if (offers.isEmpty()) {
+        if (activeOffers.isEmpty()) {
             return null;
         }
-        FlashSaleOfferView offer = offers.getFirst();
+        FlashSaleOfferView offer = activeOffers.getFirst();
         if (stockQuantity <= 0 || offer.soldQuantity() >= offer.registeredQuantity()) {
             return null;
         }
