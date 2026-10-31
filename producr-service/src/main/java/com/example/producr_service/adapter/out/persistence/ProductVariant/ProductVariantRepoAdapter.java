@@ -6,6 +6,7 @@ import com.example.producr_service.adapter.entity.VariantImageEntity;
 import com.example.producr_service.application.dto.response.CartInfoRepone;
 import com.example.producr_service.application.dto.response.VariantCartView;
 import com.example.producr_service.application.dto.response.VariantPriceView;
+import com.example.producr_service.application.dto.response.VariantUnitPriceView;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.domain.model.ProductVariant;
@@ -23,6 +24,12 @@ import java.util.stream.Collectors;
 public class ProductVariantRepoAdapter implements ProductVariantRepoPort {
     private final ProductVariantJpa productVariantJpa;
     private final ProductVariantMapper productVariantMapper;
+
+    @Override
+    public List<VariantUnitPriceView> findUnitPricesByVariantIds(Collection<Long> variantIds) {
+        return variantIds.isEmpty() ? List.of() : productVariantJpa.findUnitPricesByVariantIds(variantIds).stream()
+                .map(productVariantMapper::toUnitPriceView).toList();
+    }
 
     @Override
     public Optional<Long> findProductIdByVariantId(Long variantId) {

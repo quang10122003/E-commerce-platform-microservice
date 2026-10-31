@@ -7,6 +7,8 @@ import com.example.producr_service.application.dto.response.CartInfoRepone;
 import com.example.producr_service.application.dto.response.VariantCartView;
 import com.example.producr_service.application.dto.response.VariantPriceView;
 import com.example.producr_service.adapter.out.persistence.projection.VariantPriceProjection;
+import com.example.producr_service.adapter.out.persistence.projection.VariantUnitPriceProjection;
+import com.example.producr_service.application.dto.response.VariantUnitPriceView;
 import com.example.producr_service.domain.model.AttributeValue;
 import com.example.producr_service.domain.model.Money;
 import com.example.producr_service.domain.model.ProductVariant;
@@ -18,6 +20,9 @@ import java.util.List;
 
 @Component
 public class ProductVariantMapper {
+    public VariantUnitPriceView toUnitPriceView(VariantUnitPriceProjection projection) {
+        return new VariantUnitPriceView(projection.getVariantId(), projection.getPrice());
+    }
 
     public VariantPriceView toPriceView(VariantPriceProjection projection) {
         return new VariantPriceView(projection.getVariantId(), projection.getPrice(),

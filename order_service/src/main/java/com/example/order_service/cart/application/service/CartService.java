@@ -6,6 +6,8 @@ import com.example.order_service.cart.application.dto.outbox.OutboxEventDto;
 import com.example.order_service.cart.application.port.out.outbox.OutboxPort;
 import com.example.order_service.cart.application.dto.repone.CartInfoRepone;
 import com.example.order_service.cart.application.dto.repone.CartRepone;
+import com.example.order_service.cart.application.dto.request.CartQuoteRequest;
+import com.example.order_service.cart.application.dto.repone.CartQuoteResponse;
 import com.example.order_service.cart.application.dto.event.ProductDeleteEvent;
 import com.example.order_service.cart.application.dto.event.ProductvariantDeleteEvent;
 import com.example.order_service.cart.application.port.in.*;
@@ -35,12 +37,18 @@ import java.util.stream.Collectors;
 @Slf4j
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class CartService implements GetCartUseCase, AddCartItemUseCase,
-        UpdateCartItemQuantityUseCase, RemoveCartItemUseCase, GetCountItemCartUseCase {
+        UpdateCartItemQuantityUseCase, RemoveCartItemUseCase, GetCountItemCartUseCase, GetCartQuoteUseCase {
     CurrentUserPort currentUserPort;
     CartRepoPort cartRepoPort;
     ProductClientPort productClientPort;
     Clock clock;
     OutboxPort outboxPort;
+
+    // Giá xem trước không giữ hàng hoặc thay đổi dữ liệu giỏ hàng.
+    @Override
+    public CartQuoteResponse getCartQuote(CartQuoteRequest request) {
+        return productClientPort.getCartQuote(request);
+    }
 
     @Override
     @Transactional(readOnly = true)

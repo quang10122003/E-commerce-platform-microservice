@@ -1,6 +1,10 @@
 package com.example.producr_service.adapter.in.rest;
 
 import com.example.producr_service.application.dto.response.ProductExistsResponse;
+import com.example.producr_service.application.dto.request.VariantQuoteRequest;
+import com.example.producr_service.application.dto.response.VariantQuoteResponse;
+import com.example.producr_service.application.port.in.GetVariantQuoteUseCase;
+import jakarta.validation.Valid;
 import com.example.producr_service.application.dto.response.ProductShopIdResponse;
 import com.example.producr_service.application.dto.response.ProductSummaryResponse;
 import com.example.producr_service.application.dto.response.CartInfoRepone;
@@ -31,6 +35,12 @@ public class InternalProductController {
     private final GetProductShopIdUseCase getProductShopIdUseCase;
     private final GetProductSummariesUseCase getProductSummariesUseCase;
     private final GetCartInfoUseCase getCartInfoUseCase;
+    private final GetVariantQuoteUseCase getVariantQuoteUseCase;
+
+    @PostMapping("/variants/quote")
+    public ResponseEntity<VariantQuoteResponse> getVariantQuote(@Valid @RequestBody VariantQuoteRequest request) {
+        return ResponseEntity.ok(getVariantQuoteUseCase.getVariantQuote(request));
+    }
 
     @PostMapping("/cart-info")
     public ResponseEntity<List<CartInfoRepone>> getCartInfo(

@@ -9,6 +9,8 @@ import com.example.producr_service.application.dto.response.ProductSaleOfferView
 import com.example.producr_service.application.dto.response.FlashSaleOfferView;
 import com.example.producr_service.adapter.out.persistence.projection.ProductSaleOfferProjection;
 import com.example.producr_service.adapter.out.persistence.projection.FlashSaleOfferProjection;
+import com.example.producr_service.adapter.out.persistence.projection.VariantDiscountProjection;
+import com.example.producr_service.application.dto.response.VariantDiscountView;
 import com.example.producr_service.domain.model.FlashSaleItem;
 import com.example.producr_service.domain.model.ProductStatus;
 import lombok.AccessLevel;
@@ -23,6 +25,10 @@ import java.util.Comparator;
 public class FlashSaleItemMapper {
      JsonUtils jsonUtils;
      ProductVariantMapper productVariantMapper;
+
+    public VariantDiscountView toVariantDiscount(VariantDiscountProjection projection) {
+        return new VariantDiscountView(projection.getVariantId(), projection.getDiscountPercent());
+    }
 
     public ProductSaleOfferView toProductSaleOffer(ProductSaleOfferProjection projection) {
         return new ProductSaleOfferView(projection.getProductId(), projection.getVariantId(),

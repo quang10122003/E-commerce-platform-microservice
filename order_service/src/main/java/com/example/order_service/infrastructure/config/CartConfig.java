@@ -2,6 +2,7 @@ package com.example.order_service.infrastructure.config;
 
 import com.example.order_service.cart.application.port.in.AddCartItemUseCase;
 import com.example.order_service.cart.application.port.in.GetCartUseCase;
+import com.example.order_service.cart.application.port.in.GetCartQuoteUseCase;
 import com.example.order_service.cart.application.port.in.GetCountItemCartUseCase;
 import com.example.order_service.cart.application.port.in.RemoveCartItemUseCase;
 import com.example.order_service.cart.application.port.in.UpdateCartItemQuantityUseCase;
@@ -56,6 +57,11 @@ public class CartConfig {
 
     @Bean
     GetCartUseCase getCartUseCase(CartService cartService) {
+        return cartService;
+    }
+
+    @Bean
+    GetCartQuoteUseCase getCartQuoteUseCase(CartService cartService) {
         return cartService;
     }
 

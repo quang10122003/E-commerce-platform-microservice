@@ -2,6 +2,12 @@ package com.example.producr_service.application.service;
 
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.application.dto.response.ProductExistsResponse;
+import com.example.producr_service.application.dto.request.VariantQuoteRequest;
+import com.example.producr_service.application.dto.response.VariantQuoteResponse;
+import com.example.producr_service.application.dto.response.VariantUnitPriceView;
+import com.example.producr_service.application.dto.response.VariantDiscountView;
+import com.example.producr_service.application.port.in.GetVariantQuoteUseCase;
+import com.example.producr_service.domain.service.FlashSaleRules;
 import com.example.producr_service.application.dto.response.ProductShopIdResponse;
 import com.example.producr_service.application.dto.response.ProductSummaryResponse;
 import com.example.producr_service.application.error.ProductError;
@@ -25,6 +31,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,13 +45,41 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class ProductInternalService implements GetCartInfoUseCase, CheckProductExistsUseCase,
-        GetProductShopIdUseCase, GetProductSummariesUseCase {
+        GetProductShopIdUseCase, GetProductSummariesUseCase, GetVariantQuoteUseCase {
     ProductVariantRepoPort productVariantRepoPort;
     ProductRepositoryPort productRepositoryPort;
     ShopInfoClientPort shopInfoClientPort;
     FlashSaleItemRepositoryPort flashSaleItemRepositoryPort;
     VariantSaleResolver variantSaleResolver;
     Clock clock;
+
+    @Override
+    @Transactional(readOnly = true)
+    public VariantQuoteResponse getVariantQuote(VariantQuoteRequest request) {
+        List<Long> variantIds = request.items().stream().map(VariantQuoteRequest.Item::variantId).distinct().toList();
+        Map<Long, BigDecimal> prices = productVariantRepoPort.findUnitPricesByVariantIds(variantIds).stream()
+                .collect(Collectors.toMap(VariantUnitPriceView::variantId, VariantUnitPriceView::price));
+        if (!prices.keySet().containsAll(variantIds)) {
+            throw new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND);
+        }
+        Map<Long, BigDecimal> discounts = new HashMap<>();
+        LocalDateTime now = LocalDateTime.now(clock);
+        for (VariantDiscountView discount : flashSaleItemRepositoryPort.findPublishedDiscountsByVariantIds(variantIds, now)) {
+            if (discounts.putIfAbsent(discount.variantId(), discount.discountPercent()) != null) {
+                throw new BusinessException(ProductError.FLASH_SALE_SCHEDULE_CONFLICT);
+            }
+        }
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        for (VariantQuoteRequest.Item item : request.items()) {
+            BigDecimal unitPrice = prices.get(item.variantId());
+            BigDecimal discountPercent = discounts.get(item.variantId());
+            if (discountPercent != null) {
+                unitPrice = FlashSaleRules.calculateSalePrice(unitPrice, discountPercent);
+            }
+            totalAmount = totalAmount.add(unitPrice.multiply(BigDecimal.valueOf(item.quantity())));
+        }
+        return new VariantQuoteResponse(totalAmount);
+    }
 
     // Chat vẫn cần hiển thị sản phẩm ngừng bán nên không lọc theo trạng thái ACTIVE.
     @Override

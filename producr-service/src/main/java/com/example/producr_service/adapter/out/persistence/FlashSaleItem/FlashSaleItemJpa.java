@@ -3,6 +3,7 @@ package com.example.producr_service.adapter.out.persistence.FlashSaleItem;
 import com.example.producr_service.adapter.entity.FlashSaleItemEntity;
 import com.example.producr_service.adapter.out.persistence.projection.ProductSaleOfferProjection;
 import com.example.producr_service.adapter.out.persistence.projection.FlashSaleOfferProjection;
+import com.example.producr_service.adapter.out.persistence.projection.VariantDiscountProjection;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 import com.example.producr_service.domain.model.FlashSaleItemStatus;
 import com.example.producr_service.domain.model.ProductStatus;
@@ -16,6 +17,18 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FlashSaleItemJpa extends JpaRepository<FlashSaleItemEntity, Long> {
+    // Không chờ job đổi trạng thái để ngừng áp dụng sale đã hết giờ; vẫn không kiểm tra hạn mức.
+    @Query("""
+            select i.variant.id as variantId, i.discountPercent as discountPercent
+            from FlashSaleItemEntity i join i.campaign c
+            where i.variant.id in :variantIds and i.status = :itemStatus and c.status = :campaignStatus
+              and c.startsAt <= :now
+              and c.endsAt > :now
+            """)
+    List<VariantDiscountProjection> findPublishedDiscountsByVariantIds(
+            @Param("variantIds") List<Long> variantIds, @Param("itemStatus") FlashSaleItemStatus itemStatus,
+            @Param("campaignStatus") FlashSaleCampaignStatus campaignStatus, @Param("now") LocalDateTime now);
+
 
     List<FlashSaleItemEntity> findByCampaign_IdAndShopIdOrderByIdAsc(Long campaignId, Long shopId);
 

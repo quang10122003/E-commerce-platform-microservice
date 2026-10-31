@@ -7,6 +7,7 @@ import com.example.producr_service.adapter.out.persistence.ProductVariant.Produc
 import com.example.producr_service.application.dto.response.FlashSaleVariantSnapshot;
 import com.example.producr_service.application.dto.response.UserFlashSaleItemView;
 import com.example.producr_service.application.dto.response.FlashSaleOfferView;
+import com.example.producr_service.application.dto.response.VariantDiscountView;
 import com.example.producr_service.domain.model.FlashSaleItem;
 import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
@@ -30,6 +31,13 @@ public class FlashSaleItemRepoAdapter implements FlashSaleItemRepositoryPort {
      FlashSaleItemMapper flashSaleItemMapper;
      FlashSaleItemJpa flashSaleItemJpa;
      ProductVariantMapper productVariantMapper;
+
+    @Override
+    public List<VariantDiscountView> findPublishedDiscountsByVariantIds(List<Long> variantIds, LocalDateTime now) {
+        return variantIds.isEmpty() ? List.of() : flashSaleItemJpa.findPublishedDiscountsByVariantIds(
+                variantIds, FlashSaleItemStatus.REGISTERED, FlashSaleCampaignStatus.PUBLISHED, now).stream()
+                .map(flashSaleItemMapper::toVariantDiscount).toList();
+    }
 
     @Override
     public List<FlashSaleItem> findShopItems(Long campaignId, Long shopId) {

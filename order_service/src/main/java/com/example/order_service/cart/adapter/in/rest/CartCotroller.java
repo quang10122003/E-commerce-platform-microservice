@@ -2,6 +2,8 @@ package com.example.order_service.cart.adapter.in.rest;
 
 import com.example.order_service.cart.application.dto.request.AddCartItemRequest;
 import com.example.order_service.cart.application.dto.repone.CartRepone;
+import com.example.order_service.cart.application.dto.request.CartQuoteRequest;
+import com.example.order_service.cart.application.dto.repone.CartQuoteResponse;
 import com.example.order_service.cart.application.port.in.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,12 @@ public class CartCotroller {
     UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase;
     RemoveCartItemUseCase removeCartItemUseCase;
     GetCountItemCartUseCase getCountItemCartUseCase;
+    GetCartQuoteUseCase getCartQuoteUseCase;
+
+    @PostMapping("/quote")
+    public ResponseEntity<CartQuoteResponse> getCartQuote(@Valid @RequestBody CartQuoteRequest request) {
+        return ResponseEntity.ok(getCartQuoteUseCase.getCartQuote(request));
+    }
 
     @GetMapping
     public ResponseEntity<CartRepone> getCart(){
