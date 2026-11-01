@@ -27,6 +27,6 @@ public record CartInfoRepone(
     }
 
     // sale null nghĩa là không còn ưu đãi áp dụng, không phải giá sale bằng 0.
-    public record Sale(BigDecimal salePrice, OffsetDateTime endsAt) {
+    public record Sale(BigDecimal salePrice, OffsetDateTime endsAt, long remainingQuantity) {
     }
 }

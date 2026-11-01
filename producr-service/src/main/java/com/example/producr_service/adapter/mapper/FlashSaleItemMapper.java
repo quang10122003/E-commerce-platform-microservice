@@ -27,7 +27,8 @@ public class FlashSaleItemMapper {
      ProductVariantMapper productVariantMapper;
 
     public VariantDiscountView toVariantDiscount(VariantDiscountProjection projection) {
-        return new VariantDiscountView(projection.getVariantId(), projection.getDiscountPercent());
+        return new VariantDiscountView(projection.getVariantId(), projection.getDiscountPercent(),
+                projection.getRegisteredQuantity(), projection.getSoldQuantity());
     }
 
     public ProductSaleOfferView toProductSaleOffer(ProductSaleOfferProjection projection) {

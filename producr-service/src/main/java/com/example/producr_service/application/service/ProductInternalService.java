@@ -56,27 +56,34 @@ public class ProductInternalService implements GetCartInfoUseCase, CheckProductE
     @Override
     @Transactional(readOnly = true)
     public VariantQuoteResponse getVariantQuote(VariantQuoteRequest request) {
-        List<Long> variantIds = request.items().stream().map(VariantQuoteRequest.Item::variantId).distinct().toList();
+        Map<Long, Long> quantities = request.items().stream()
+                .collect(Collectors.toMap(VariantQuoteRequest.Item::variantId,
+                        item -> item.quantity().longValue(), Long::sum));
+        List<Long> variantIds = List.copyOf(quantities.keySet());
         Map<Long, BigDecimal> prices = productVariantRepoPort.findUnitPricesByVariantIds(variantIds).stream()
                 .collect(Collectors.toMap(VariantUnitPriceView::variantId, VariantUnitPriceView::price));
         if (!prices.keySet().containsAll(variantIds)) {
             throw new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND);
         }
-        Map<Long, BigDecimal> discounts = new HashMap<>();
+        Map<Long, VariantDiscountView> discounts = new HashMap<>();
         LocalDateTime now = LocalDateTime.now(clock);
         for (VariantDiscountView discount : flashSaleItemRepositoryPort.findPublishedDiscountsByVariantIds(variantIds, now)) {
-            if (discounts.putIfAbsent(discount.variantId(), discount.discountPercent()) != null) {
+            if (discounts.putIfAbsent(discount.variantId(), discount) != null) {
                 throw new BusinessException(ProductError.FLASH_SALE_SCHEDULE_CONFLICT);
             }
         }
         BigDecimal totalAmount = BigDecimal.ZERO;
-        for (VariantQuoteRequest.Item item : request.items()) {
-            BigDecimal unitPrice = prices.get(item.variantId());
-            BigDecimal discountPercent = discounts.get(item.variantId());
-            if (discountPercent != null) {
-                unitPrice = FlashSaleRules.calculateSalePrice(unitPrice, discountPercent);
+        for (Map.Entry<Long, Long> item : quantities.entrySet()) {
+            BigDecimal unitPrice = prices.get(item.getKey());
+            long quantity = item.getValue();
+            VariantDiscountView discount = discounts.get(item.getKey());
+            long saleQuantity = discount == null ? 0
+                    : Math.min(quantity, Math.max(0L, discount.registeredQuantity() - discount.soldQuantity()));
+            if (saleQuantity > 0) {
+                BigDecimal salePrice = FlashSaleRules.calculateSalePrice(unitPrice, discount.discountPercent());
+                totalAmount = totalAmount.add(salePrice.multiply(BigDecimal.valueOf(saleQuantity)));
             }
-            totalAmount = totalAmount.add(unitPrice.multiply(BigDecimal.valueOf(item.quantity())));
+            totalAmount = totalAmount.add(unitPrice.multiply(BigDecimal.valueOf(quantity - saleQuantity)));
         }
         return new VariantQuoteResponse(totalAmount);
     }
@@ -143,8 +150,13 @@ public class ProductInternalService implements GetCartInfoUseCase, CheckProductE
         // Sản phẩm ngừng hoạt động vẫn ở trong giỏ nhưng không được hưởng giá sale.
         VariantSaleResponse.Sale applicableSale = view.status() == ProductStatus.ACTIVE
                 ? variantSaleResolver.resolve(view.price(), view.stockQuantity(), offers) : null;
+        long remainingQuantity = applicableSale == null ? 0 : offers.stream()
+                .filter(offer -> offer.endsAt().equals(applicableSale.endsAt().toLocalDateTime()))
+                .mapToLong(offer -> Math.min(view.stockQuantity(),
+                        Math.max(0L, offer.registeredQuantity() - offer.soldQuantity())))
+                .findFirst().orElseThrow();
         CartInfoRepone.Sale sale = applicableSale == null ? null
-                : new CartInfoRepone.Sale(applicableSale.salePrice(), applicableSale.endsAt());
+                : new CartInfoRepone.Sale(applicableSale.salePrice(), applicableSale.endsAt(), remainingQuantity);
         return  new CartInfoRepone(
                 view.variantId(), view.productId(), view.shopId(),
                 shopInfo == null ? null : shopInfo.shopName(), view.productName(),

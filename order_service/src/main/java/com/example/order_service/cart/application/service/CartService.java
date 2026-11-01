@@ -106,8 +106,11 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 .toList();
         // Sale có thể hết hạn trong lúc gọi Product Service nên cần kiểm tra lại trước khi trả giỏ hàng.
         CartInfoRepone.Sale sale = productInfo.sale();
-        CartRepone.Sale applicableSale = sale != null && sale.endsAt().toInstant().isAfter(now)
+        CartRepone.Sale applicableSale = sale != null && sale.remainingQuantity() > 0
+                && sale.endsAt().toInstant().isAfter(now)
                 ? new CartRepone.Sale(sale.salePrice(), sale.endsAt()) : null;
+        int saleQuantity = applicableSale == null ? 0
+                : (int) Math.min(cartItem.getQuantity(), sale.remainingQuantity());
         return CartRepone.CartItemInfo.builder()
                 .cartItemId(cartItem.getId())
                 .productId(productInfo.productId())
@@ -120,6 +123,8 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 .variantOptions(variantOptions)
                 .price(productInfo.price())
                 .quantity(cartItem.getQuantity())
+                .saleQuantity(saleQuantity)
+                .regularQuantity(cartItem.getQuantity() - saleQuantity)
                 .stockQuantity(productInfo.stockQuantity())
                 .status(productInfo.status())
                 .sale(applicableSale)

@@ -17,9 +17,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FlashSaleItemJpa extends JpaRepository<FlashSaleItemEntity, Long> {
-    // Không chờ job đổi trạng thái để ngừng áp dụng sale đã hết giờ; vẫn không kiểm tra hạn mức.
+    // Không chờ job đổi trạng thái để ngừng áp dụng sale đã hết giờ.
     @Query("""
-            select i.variant.id as variantId, i.discountPercent as discountPercent
+            select i.variant.id as variantId, i.discountPercent as discountPercent,
+                i.registeredQuantity as registeredQuantity, i.soldQuantity as soldQuantity
             from FlashSaleItemEntity i join i.campaign c
             where i.variant.id in :variantIds and i.status = :itemStatus and c.status = :campaignStatus
               and c.startsAt <= :now

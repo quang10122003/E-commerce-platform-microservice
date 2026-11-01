@@ -23,6 +23,6 @@ public record CartInfoRepone(
     public record VariantOption(String name, String value) {
     }
 
-    public record Sale(BigDecimal salePrice, OffsetDateTime endsAt) {
+    public record Sale(BigDecimal salePrice, OffsetDateTime endsAt, long remainingQuantity) {
     }
 }

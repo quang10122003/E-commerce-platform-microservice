@@ -5,4 +5,6 @@ import java.math.BigDecimal;
 public interface VariantDiscountProjection {
     Long getVariantId();
     BigDecimal getDiscountPercent();
+    int getRegisteredQuantity();
+    long getSoldQuantity();
 }

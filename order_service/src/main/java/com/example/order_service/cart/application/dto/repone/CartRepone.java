@@ -20,7 +20,7 @@ public record CartRepone(Long CartId, int totalItems, int totalQuantity, List<Ca
                                Long shopId, String shopName, String productName,
                                String imageUrl, boolean hasOption,
                                List<VariantOptions> variantOptions, BigDecimal price, int quantity, int stockQuantity,
-                               ProductStatus status, Sale sale) {
+                               ProductStatus status, Sale sale, int saleQuantity, int regularQuantity) {
 
     }
 
