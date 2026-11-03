@@ -56,5 +56,5 @@ CREATE TABLE outbox_event (
     published_at    DATETIME NULL COMMENT 'Thời điểm publish thành công ra message broker',
 
     error_message   TEXT NULL COMMENT 'Thông báo lỗi lần publish gần nhất, phục vụ debug',
-    UNIQUE KEY uk_outbox_event_id (event_id)
+    CONSTRAINT uk_outbox_event_id UNIQUE (event_id)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

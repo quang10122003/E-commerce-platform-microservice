@@ -176,3 +176,16 @@ CREATE TABLE IF NOT EXISTS payment (
 -- Application cấp thời gian qua Clock chung; khóa hoặc cập nhật có điều kiện để tránh xử lý trùng.
 -- Application kiểm tra tổng tiền liên bảng và lưu mã thao tác Product trước khi gọi ra ngoài.
 -- shortcut: một payment không giữ lịch sử nhiều giao dịch độc lập; cần mở rộng khi hỗ trợ thanh toán lại hoặc hoàn tiền nhiều lần.
+
+-- Cần MySQL 8.0.16+ để các ràng buộc CHECK được thực thi.
+-- Inbox được commit cùng nghiệp vụ, chống xử lý lại bằng event_id.
+-- UNIQUE event_id chặn hai consumer xử lý đồng thời cùng event; lỗi nghiệp vụ phải rollback cả Inbox.
+CREATE TABLE IF NOT EXISTS inbox_events (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    event_id VARCHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    payload JSON NOT NULL,
+    processed_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_inbox_event_id UNIQUE (event_id)
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

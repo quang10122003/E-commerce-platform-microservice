@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS outbox_event (
     next_attempt_at DATETIME NOT NULL,
     published_at DATETIME NULL,
     error_message TEXT NULL,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    CONSTRAINT uk_outbox_event_id UNIQUE (event_id)
 ) ENGINE = InnoDB;
 
 -- Hãng sản phẩm - tách riêng để lọc/filter khi tìm kiếm
@@ -164,7 +165,6 @@ CREATE TABLE variant_attribute_values (
 -- ============================================================
 -- INDEX
 -- ============================================================
-CREATE UNIQUE INDEX uk_outbox_event_id ON outbox_event(event_id);
 CREATE INDEX idx_outbox_pending ON outbox_event(status, next_attempt_at, created_at);
 CREATE INDEX idx_outbox_aggregate ON outbox_event(aggregate_type, aggregate_id, event_type);
 CREATE INDEX idx_products_by_brand ON products(brands_id);
@@ -305,3 +305,17 @@ CREATE TABLE flash_sale_items (
 ) ENGINE=InnoDB
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
+
+-- Cần MySQL 8.0.16+ để các ràng buộc CHECK được thực thi.
+-- Không FK xuyên service hoặc sang variant/đăng ký sale để việc xóa dữ liệu nguồn không xóa dấu vết thao tác.
+-- Inbox được commit cùng nghiệp vụ, chống xử lý lại bằng event_id.
+-- UNIQUE event_id chặn hai consumer xử lý đồng thời cùng event; lỗi nghiệp vụ phải rollback cả Inbox.
+CREATE TABLE IF NOT EXISTS inbox_events (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    event_id VARCHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    payload JSON NOT NULL,
+    processed_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_inbox_event_id UNIQUE (event_id)
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
