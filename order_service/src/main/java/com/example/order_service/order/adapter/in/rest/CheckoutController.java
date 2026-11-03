@@ -3,10 +3,12 @@ package com.example.order_service.order.adapter.in.rest;
 import com.example.order_service.order.application.dto.repone.CreateCheckoutResponse;
 import com.example.order_service.order.application.dto.request.CreateCheckoutRequest;
 import com.example.order_service.order.application.port.in.CreateCheckoutUseCase;
-import com.example.order_service.order.application.port.in.CheckCheckoutAccessUseCase;
-import jakarta.validation.constraints.Positive;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import com.example.order_service.order.application.dto.request.CheckoutQuoteRequest;
+import com.example.order_service.order.application.dto.repone.CheckoutQuoteResponse;
+import com.example.order_service.order.application.port.in.GetCheckoutQuoteUseCase;
+import com.example.order_service.order.application.port.in.GetCheckoutItemsUseCase;
+import com.example.order_service.order.application.dto.request.CheckoutItemsRequest;
+import com.example.order_service.order.application.dto.repone.CheckoutItemsResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -22,19 +24,25 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/checkouts")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ROLE_USER')")
 public class CheckoutController {
 
     private final CreateCheckoutUseCase createCheckoutUseCase;
-    private final CheckCheckoutAccessUseCase checkCheckoutAccessUseCase;
+    private final GetCheckoutItemsUseCase getCheckoutItemsUseCase;
+    private final GetCheckoutQuoteUseCase getCheckoutQuoteUseCase;
 
-    @GetMapping("/{checkoutId}/access")
-    public ResponseEntity<Void> checkAccess(@PathVariable @Positive Long checkoutId) {
-        checkCheckoutAccessUseCase.checkAccess(checkoutId);
-        return ResponseEntity.noContent().build();
+    @PostMapping("/quote")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    public ResponseEntity<CheckoutQuoteResponse> getCheckoutQuote(@Valid @RequestBody CheckoutQuoteRequest request) {
+        return ResponseEntity.ok(getCheckoutQuoteUseCase.getCheckoutQuote(request));
+    }
+
+    @PostMapping("/items")
+    public ResponseEntity<CheckoutItemsResponse> getCheckoutItems(@Valid @RequestBody CheckoutItemsRequest request) {
+        return ResponseEntity.ok(getCheckoutItemsUseCase.getCheckoutItems(request));
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public ResponseEntity<CreateCheckoutResponse> createCheckout(
             @Valid @RequestBody CreateCheckoutRequest request,
             @RequestHeader(name = "Idempotency-Key", defaultValue = "")

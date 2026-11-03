@@ -6,6 +6,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "order-service")
 public interface CheckoutFeignClient {
-    @GetMapping("/api/checkouts/{checkoutId}/access")
+    @GetMapping("/api/internal/checkouts/{checkoutId}/access")
     void checkAccess(@PathVariable("checkoutId") Long checkoutId);
 }

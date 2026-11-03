@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-public record CartInfoRepone(
+public record VariantInfoResponse(
         Long productVariantId,
         Long productId,
         Long shopId,

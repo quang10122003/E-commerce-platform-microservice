@@ -15,14 +15,14 @@ import com.example.producr_service.application.port.in.CheckProductExistsUseCase
 import com.example.producr_service.application.port.in.GetProductShopIdUseCase;
 import com.example.producr_service.application.port.in.GetProductSummariesUseCase;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
-import com.example.producr_service.application.dto.response.CartInfoRepone;
+import com.example.producr_service.application.dto.response.VariantInfoResponse;
 import com.example.producr_service.application.dto.response.ShopInfoResponse;
 import com.example.producr_service.application.dto.response.VariantCartView;
 import com.example.producr_service.application.dto.response.FlashSaleOfferView;
 import com.example.producr_service.application.dto.response.VariantSaleResponse;
 import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import com.example.producr_service.domain.model.ProductStatus;
-import com.example.producr_service.application.port.in.GetCartInfoUseCase;
+import com.example.producr_service.application.port.in.GetVariantInfoUseCase;
 import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import lombok.AccessLevel;
@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class ProductInternalService implements GetCartInfoUseCase, CheckProductExistsUseCase,
+public class ProductInternalService implements GetVariantInfoUseCase, CheckProductExistsUseCase,
         GetProductShopIdUseCase, GetProductSummariesUseCase, GetVariantQuoteUseCase {
     ProductVariantRepoPort productVariantRepoPort;
     ProductRepositoryPort productRepositoryPort;
@@ -116,7 +116,7 @@ public class ProductInternalService implements GetCartInfoUseCase, CheckProductE
 
     @Override
     @Transactional(readOnly = true)
-    public List<CartInfoRepone> getCartInfo(List<Long> variantIds) {
+    public List<VariantInfoResponse> getVariantInfo(List<Long> variantIds) {
         List<VariantCartView> views = productVariantRepoPort.findCartViewsByVariantIds(variantIds);
         if (views.isEmpty()) {
             return List.of();
@@ -131,33 +131,33 @@ public class ProductInternalService implements GetCartInfoUseCase, CheckProductE
         List<Long> activeVariantIds = views.stream()
                 .filter(view -> view.status() == ProductStatus.ACTIVE)
                 .map(VariantCartView::variantId).distinct().toList();
+        LocalDateTime now = LocalDateTime.now(clock);
         Map<Long, List<FlashSaleOfferView>> offersByVariantId = flashSaleItemRepositoryPort
-                .findOngoingOffersByVariantIds(activeVariantIds, LocalDateTime.now(clock)).stream()
+                .findOngoingOffersByVariantIds(activeVariantIds, now).stream()
                 .collect(Collectors.groupingBy(FlashSaleOfferView::variantId));
         return views.stream()
-                .map(view -> toCartInfoRepone(view, shopInfos.get(view.shopId()),
-                        offersByVariantId.getOrDefault(view.variantId(), List.of())))
+                .map(view -> toVariantInfoResponse(view, shopInfos.get(view.shopId()),
+                        offersByVariantId.getOrDefault(view.variantId(), List.of()), now))
                 .toList();
     }
 
-    private CartInfoRepone toCartInfoRepone(VariantCartView view, ShopInfoResponse shopInfo,
-                                          List<FlashSaleOfferView> offers){
-        List<CartInfoRepone.VariantOption> options  = view.options().stream().sorted(Comparator.comparing(VariantCartView.OptionView::attributeId).thenComparing(VariantCartView.OptionView::valueId)).map(optionView -> new CartInfoRepone.VariantOption(optionView.name(),optionView.value())).toList();
+    private VariantInfoResponse toVariantInfoResponse(VariantCartView view, ShopInfoResponse shopInfo,
+                                          List<FlashSaleOfferView> offers, LocalDateTime now){
+        List<VariantInfoResponse.VariantOption> options  = view.options().stream().sorted(Comparator.comparing(VariantCartView.OptionView::attributeId).thenComparing(VariantCartView.OptionView::valueId)).map(optionView -> new VariantInfoResponse.VariantOption(optionView.name(),optionView.value())).toList();
 
         boolean hasOption = !options.isEmpty();
 
         String imgUrl = hasOption ? pickVariantImage(view.images()).orElse(view.productImageUrl()) : view.productImageUrl();
         // Sản phẩm ngừng hoạt động vẫn ở trong giỏ nhưng không được hưởng giá sale.
         VariantSaleResponse.Sale applicableSale = view.status() == ProductStatus.ACTIVE
-                ? variantSaleResolver.resolve(view.price(), view.stockQuantity(), offers) : null;
+                ? variantSaleResolver.resolve(view.price(), offers, now) : null;
         long remainingQuantity = applicableSale == null ? 0 : offers.stream()
                 .filter(offer -> offer.endsAt().equals(applicableSale.endsAt().toLocalDateTime()))
-                .mapToLong(offer -> Math.min(view.stockQuantity(),
-                        Math.max(0L, offer.registeredQuantity() - offer.soldQuantity())))
+                .mapToLong(offer -> Math.max(0L, offer.registeredQuantity() - offer.soldQuantity()))
                 .findFirst().orElseThrow();
-        CartInfoRepone.Sale sale = applicableSale == null ? null
-                : new CartInfoRepone.Sale(applicableSale.salePrice(), applicableSale.endsAt(), remainingQuantity);
-        return  new CartInfoRepone(
+        VariantInfoResponse.Sale sale = applicableSale == null ? null
+                : new VariantInfoResponse.Sale(applicableSale.salePrice(), applicableSale.endsAt(), remainingQuantity);
+        return  new VariantInfoResponse(
                 view.variantId(), view.productId(), view.shopId(),
                 shopInfo == null ? null : shopInfo.shopName(), view.productName(),
                 imgUrl, hasOption, options, view.price(), view.stockQuantity(),

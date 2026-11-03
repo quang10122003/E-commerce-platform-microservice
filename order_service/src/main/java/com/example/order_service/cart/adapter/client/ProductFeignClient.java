@@ -1,6 +1,6 @@
 package com.example.order_service.cart.adapter.client;
 
-import com.example.order_service.cart.application.dto.repone.CartInfoRepone;
+import com.example.order_service.cart.application.dto.repone.VariantInfoResponse;
 import com.example.order_service.cart.application.dto.request.CartQuoteRequest;
 import com.example.order_service.cart.application.dto.repone.CartQuoteResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -15,6 +15,6 @@ public interface ProductFeignClient {
     @PostMapping(value = "/api/internal/variants/quote", consumes = MediaType.APPLICATION_JSON_VALUE)
     CartQuoteResponse getCartQuote(@RequestBody CartQuoteRequest request);
 
-    @PostMapping("/api/internal/cart-info")
-    List<CartInfoRepone> getCartInfo(@RequestBody List<Long> variantIds);
+    @PostMapping("/api/internal/variants/info")
+    List<VariantInfoResponse> getVariantInfo(@RequestBody List<Long> variantIds);
 }

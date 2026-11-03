@@ -6,7 +6,6 @@ import com.example.producr_service.application.dto.checkout.CheckoutVariantDto;
 import com.example.producr_service.adapter.mapper.ProductVariantMapper;
 import com.example.producr_service.adapter.entity.ProductVariantEntity;
 import com.example.producr_service.adapter.entity.VariantImageEntity;
-import com.example.producr_service.application.dto.response.CartInfoRepone;
 import com.example.producr_service.application.dto.response.VariantCartView;
 import com.example.producr_service.application.dto.response.VariantPriceView;
 import com.example.producr_service.application.dto.response.VariantUnitPriceView;

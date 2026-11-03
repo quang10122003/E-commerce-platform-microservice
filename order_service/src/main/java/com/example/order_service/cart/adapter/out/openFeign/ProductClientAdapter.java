@@ -1,7 +1,7 @@
 package com.example.order_service.cart.adapter.out.openFeign;
 
 import com.example.order_service.cart.adapter.client.ProductFeignClient;
-import com.example.order_service.cart.application.dto.repone.CartInfoRepone;
+import com.example.order_service.cart.application.dto.repone.VariantInfoResponse;
 import com.example.order_service.cart.application.dto.request.CartQuoteRequest;
 import com.example.order_service.cart.application.dto.repone.CartQuoteResponse;
 import com.example.order_service.cart.application.error.CartQuoteError;
@@ -24,6 +24,11 @@ public class ProductClientAdapter implements ProductClientPort {
     ProductFeignClient productFeignClient;
 
     @Override
+    public List<VariantInfoResponse> getVariantInfo(List<Long> variantIds) {
+        return productFeignClient.getVariantInfo(variantIds);
+    }
+
+    @Override
     public CartQuoteResponse getCartQuote(CartQuoteRequest request) {
         try {
             CartQuoteResponse response = productFeignClient.getCartQuote(request);
@@ -44,8 +49,4 @@ public class ProductClientAdapter implements ProductClientPort {
         }
     }
 
-    @Override
-    public List<CartInfoRepone> getCartInfo(List<Long> variantIds) {
-        return productFeignClient.getCartInfo(variantIds);
-    }
 }

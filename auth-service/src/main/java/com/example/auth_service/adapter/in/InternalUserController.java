@@ -48,7 +48,7 @@ public class InternalUserController {
         return internalGetUserInfoUseCase.getInfoUserInternal(authorizationHeader);
     }
 
-    // Cần xác thực, không yêu cầu role; giữ API theo lô để lấy tên, logo của nhiều shop mà tránh N+1 lời gọi.
+    // Checkout công khai cần lấy tên và logo shop theo lô khi chưa đăng nhập.
     @PostMapping("shop-info")
     List<ShopInfoResponse> getShopInfos(@RequestBody List<Long> userIds) {
         return internalGetUserInfoUseCase.getShopInfos(userIds);

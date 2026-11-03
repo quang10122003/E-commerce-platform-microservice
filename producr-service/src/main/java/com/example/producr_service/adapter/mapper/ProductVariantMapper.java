@@ -3,7 +3,6 @@ package com.example.producr_service.adapter.mapper;
 import com.example.producr_service.adapter.entity.AttributeValueEntity;
 import com.example.producr_service.adapter.entity.ProductVariantEntity;
 import com.example.producr_service.adapter.entity.VariantImageEntity;
-import com.example.producr_service.application.dto.response.CartInfoRepone;
 import com.example.producr_service.application.dto.response.VariantCartView;
 import com.example.producr_service.application.dto.response.VariantPriceView;
 import com.example.producr_service.adapter.out.persistence.projection.VariantPriceProjection;

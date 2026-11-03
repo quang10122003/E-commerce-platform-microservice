@@ -21,8 +21,12 @@ public class VariantSaleResolver {
 
     // lọc ưu đãi đang hiệu lực trước; tồn kho hoặc quota hết thì sale không còn áp dụng.
     public VariantSaleResponse.Sale resolve(BigDecimal price, int stockQuantity, List<FlashSaleOfferView> offers) {
+        VariantSaleResponse.Sale sale = resolve(price, offers, LocalDateTime.now(clock));
+        return stockQuantity <= 0 ? null : sale;
+    }
+
+    public VariantSaleResponse.Sale resolve(BigDecimal price, List<FlashSaleOfferView> offers, LocalDateTime now) {
         // Ưu đãi có thể hết hạn sau truy vấn nên phải lọc trước khi kiểm tra trùng lịch.
-        LocalDateTime now = LocalDateTime.now(clock);
         List<FlashSaleOfferView> activeOffers = offers.stream()
                 .filter(offer -> offer.endsAt().isAfter(now)).toList();
         // Không chọn ngẫu nhiên ưu đãi khi dữ liệu vi phạm quy tắc lịch sale không chồng nhau.
@@ -33,7 +37,7 @@ public class VariantSaleResolver {
             return null;
         }
         FlashSaleOfferView offer = activeOffers.getFirst();
-        if (stockQuantity <= 0 || offer.soldQuantity() >= offer.registeredQuantity()) {
+        if (offer.soldQuantity() >= offer.registeredQuantity()) {
             return null;
         }
         return new VariantSaleResponse.Sale(offer.discountPercent(),

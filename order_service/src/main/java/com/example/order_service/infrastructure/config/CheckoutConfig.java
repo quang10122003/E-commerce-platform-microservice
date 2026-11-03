@@ -1,6 +1,10 @@
 package com.example.order_service.infrastructure.config;
 
 import com.example.order_service.cart.application.port.out.client.CurrentUserPort;
+import com.example.order_service.cart.application.port.out.client.ProductClientPort;
+import com.example.order_service.order.application.service.CheckoutItemsService;
+import com.example.order_service.order.application.service.CheckoutQuoteService;
+import com.example.order_service.order.application.port.out.client.ProductQuotePort;
 import com.example.order_service.cart.application.port.out.kafka.OrderEventPublisherPort;
 import com.example.order_service.cart.application.port.out.outbox.OutboxPort;
 import com.example.order_service.cart.application.port.out.objettMapper.ObjectMapperPort;
@@ -12,6 +16,7 @@ import com.example.order_service.order.application.port.out.repo.CheckoutRepoPor
 import com.example.order_service.order.application.port.out.repo.PaymentRepoPort;
 import com.example.order_service.order.application.service.CheckoutCreationService;
 import com.example.order_service.order.application.service.CheckoutService;
+import com.example.order_service.order.application.service.CheckoutInternalService;
 import com.example.order_service.order.application.service.CheckoutEventApplicationService;
 import com.example.order_service.order.application.service.CheckoutProcessingService;
 import com.example.order_service.order.application.service.CheckoutCancellationService;
@@ -38,6 +43,22 @@ import java.util.List;
 
 @Configuration
 public class CheckoutConfig {
+
+    @Bean
+    CheckoutQuoteService checkoutQuoteService(ProductQuotePort productQuotePort) {
+        return new CheckoutQuoteService(productQuotePort);
+    }
+
+    @Bean
+    CheckoutItemsService checkoutItemsService(ProductClientPort productClientPort, Clock clock) {
+        return new CheckoutItemsService(productClientPort, clock);
+    }
+
+    @Bean
+    CheckoutInternalService checkoutInternalService(CurrentUserPort currentUserPort,
+            CheckoutRepoPort checkoutRepoPort) {
+        return new CheckoutInternalService(currentUserPort, checkoutRepoPort);
+    }
 
     @Bean
     CheckoutCreationService checkoutCreationService(CheckoutRepoPort checkoutRepoPort,

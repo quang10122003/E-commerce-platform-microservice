@@ -4,7 +4,7 @@ import com.example.order_service.cart.application.Constant.Constant;
 import com.example.order_service.cart.application.dto.outbox.CartItemAddedOutboxPayload;
 import com.example.order_service.cart.application.dto.outbox.OutboxEventDto;
 import com.example.order_service.cart.application.port.out.outbox.OutboxPort;
-import com.example.order_service.cart.application.dto.repone.CartInfoRepone;
+import com.example.order_service.cart.application.dto.repone.VariantInfoResponse;
 import com.example.order_service.cart.application.dto.repone.CartRepone;
 import com.example.order_service.cart.application.dto.request.CartQuoteRequest;
 import com.example.order_service.cart.application.dto.repone.CartQuoteResponse;
@@ -71,13 +71,13 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
         List<Long> variantIds = cart.getItems().stream()
                 .map(CartItem::getProductVariantId)
                 .toList();
-        List<CartInfoRepone> productInfoList = variantIds.isEmpty()
+        List<VariantInfoResponse> productInfoList = variantIds.isEmpty()
                 ? List.of()
-                : productClientPort.getCartInfo(variantIds);
+                : productClientPort.getVariantInfo(variantIds);
 
-        Map<Long, CartInfoRepone> productInfoByVariantId = productInfoList.stream()
+        Map<Long, VariantInfoResponse> productInfoByVariantId = productInfoList.stream()
                 .collect(Collectors.toMap(
-                        CartInfoRepone::productVariantId,
+                        VariantInfoResponse::productVariantId,
                         productInfo -> productInfo,
                         (existing, duplicate) -> existing));
 
@@ -100,17 +100,18 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 .build();
     }
 
-    private CartRepone.CartItemInfo toCartItemInfo(CartItem cartItem, CartInfoRepone productInfo, Instant now) {
+    private CartRepone.CartItemInfo toCartItemInfo(CartItem cartItem, VariantInfoResponse productInfo, Instant now) {
         List<CartRepone.VariantOptions> variantOptions = productInfo.variantOptions().stream()
                 .map(option -> new CartRepone.VariantOptions(option.name(), option.value()))
                 .toList();
         // Sale có thể hết hạn trong lúc gọi Product Service nên cần kiểm tra lại trước khi trả giỏ hàng.
-        CartInfoRepone.Sale sale = productInfo.sale();
+        VariantInfoResponse.Sale sale = productInfo.sale();
         CartRepone.Sale applicableSale = sale != null && sale.remainingQuantity() > 0
+                && productInfo.stockQuantity() > 0
                 && sale.endsAt().toInstant().isAfter(now)
                 ? new CartRepone.Sale(sale.salePrice(), sale.endsAt()) : null;
         int saleQuantity = applicableSale == null ? 0
-                : (int) Math.min(cartItem.getQuantity(), sale.remainingQuantity());
+                : (int) Math.min(cartItem.getQuantity(), Math.min(productInfo.stockQuantity(), sale.remainingQuantity()));
         return CartRepone.CartItemInfo.builder()
                 .cartItemId(cartItem.getId())
                 .productId(productInfo.productId())

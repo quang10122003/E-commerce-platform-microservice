@@ -7,11 +7,11 @@ import com.example.producr_service.application.port.in.GetVariantQuoteUseCase;
 import jakarta.validation.Valid;
 import com.example.producr_service.application.dto.response.ProductShopIdResponse;
 import com.example.producr_service.application.dto.response.ProductSummaryResponse;
-import com.example.producr_service.application.dto.response.CartInfoRepone;
+import com.example.producr_service.application.dto.response.VariantInfoResponse;
 import com.example.producr_service.application.port.in.CheckProductExistsUseCase;
 import com.example.producr_service.application.port.in.GetProductShopIdUseCase;
 import com.example.producr_service.application.port.in.GetProductSummariesUseCase;
-import com.example.producr_service.application.port.in.GetCartInfoUseCase;
+import com.example.producr_service.application.port.in.GetVariantInfoUseCase;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -34,7 +34,7 @@ public class InternalProductController {
     private final CheckProductExistsUseCase checkProductExistsUseCase;
     private final GetProductShopIdUseCase getProductShopIdUseCase;
     private final GetProductSummariesUseCase getProductSummariesUseCase;
-    private final GetCartInfoUseCase getCartInfoUseCase;
+    private final GetVariantInfoUseCase getVariantInfoUseCase;
     private final GetVariantQuoteUseCase getVariantQuoteUseCase;
 
     @PostMapping("/variants/quote")
@@ -42,11 +42,11 @@ public class InternalProductController {
         return ResponseEntity.ok(getVariantQuoteUseCase.getVariantQuote(request));
     }
 
-    @PostMapping("/cart-info")
-    public ResponseEntity<List<CartInfoRepone>> getCartInfo(
+    @PostMapping("/variants/info")
+    public ResponseEntity<List<VariantInfoResponse>> getVariantInfo(
             @RequestBody @NotEmpty(message = "Danh sách variant không được để trống")
             List<@NotNull(message = "ID variant không được để trống") Long> variantIds) {
-        return ResponseEntity.ok(getCartInfoUseCase.getCartInfo(variantIds));
+        return ResponseEntity.ok(getVariantInfoUseCase.getVariantInfo(variantIds));
     }
 
     // Chat vẫn cần thông tin hiển thị của sản phẩm ngừng bán nên không lọc ACTIVE.
