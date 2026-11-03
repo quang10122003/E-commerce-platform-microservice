@@ -5,16 +5,25 @@ import org.springframework.context.annotation.Configuration;
 
 import com.example.notification.application.registry.KafkaEventHandlerRegistry;
 import com.example.notification.application.dto.template.UserRegisteredEmailTemplate;
+import com.example.notification.application.dto.template.CheckoutSucceededEmailTemplate;
 import com.example.notification.application.strategy.event.EventHandler;
 import com.example.notification.application.strategy.event.UserRegisteredEventHandler;
 import com.example.notification.application.service.NotificationApplicationService;
 import com.example.notification.application.service.AuthEventApplicationService;
 import com.example.notification.application.port.in.ProcessAuthEventUseCase;
+import com.example.notification.application.port.in.ProcessOrderEventUseCase;
+import com.example.notification.application.port.out.NotificationStreamPort;
+import com.example.notification.application.port.out.client.CheckoutAccessPort;
+import com.example.notification.application.service.CheckoutNotificationApplicationService;
+import com.example.notification.application.service.OrderEventApplicationService;
+import com.example.notification.application.strategy.event.CheckoutSucceededEventHandler;
+import com.example.notification.application.strategy.event.CheckoutFailedEventHandler;
 import com.example.notification.application.port.out.mail.EmailSenderPort;
 import com.example.notification.application.port.out.objectMapper.ObjectMapperPort;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.time.Clock;
 
 @Configuration
 @Slf4j
@@ -23,9 +32,10 @@ public class NotificationConfig {
     @Bean
     NotificationApplicationService sendEmailUserRegisteredUseCase(
             EmailSenderPort emailSenderPort,
-            UserRegisteredEmailTemplate template
+            UserRegisteredEmailTemplate template,
+            CheckoutSucceededEmailTemplate checkoutTemplate
     ) {
-        return new NotificationApplicationService(emailSenderPort, template);
+        return new NotificationApplicationService(emailSenderPort, template, checkoutTemplate);
     }
 
     @Bean
@@ -42,8 +52,37 @@ public class NotificationConfig {
     }
 
     @Bean
+    ProcessOrderEventUseCase processOrderEventUseCase(KafkaEventHandlerRegistry eventHandlerRegistry) {
+        return new OrderEventApplicationService(eventHandlerRegistry);
+    }
+
+    @Bean
+    CheckoutSucceededEventHandler checkoutSucceededEventHandler(
+            ObjectMapperPort objectMapperPort, CheckoutNotificationApplicationService service,
+            NotificationApplicationService emailService) {
+        return new CheckoutSucceededEventHandler(objectMapperPort, service, emailService);
+    }
+
+    @Bean
+    CheckoutFailedEventHandler checkoutFailedEventHandler(
+            ObjectMapperPort objectMapperPort, CheckoutNotificationApplicationService service) {
+        return new CheckoutFailedEventHandler(objectMapperPort, service);
+    }
+
+    @Bean
+    CheckoutNotificationApplicationService checkoutNotificationApplicationService(
+            CheckoutAccessPort checkoutAccessPort, NotificationStreamPort notificationStreamPort) {
+        return new CheckoutNotificationApplicationService(checkoutAccessPort, notificationStreamPort);
+    }
+
+    @Bean
     UserRegisteredEmailTemplate userRegisteredEmailTemplate(MailSenderProperties mailSenderProperties) {
         return new UserRegisteredEmailTemplate(mailSenderProperties.welcomeSender());
+    }
+
+    @Bean
+    CheckoutSucceededEmailTemplate checkoutSucceededEmailTemplate(MailSenderProperties mailSenderProperties, Clock clock) {
+        return new CheckoutSucceededEmailTemplate(mailSenderProperties.orderSender(), clock.getZone());
     }
 
     @Bean

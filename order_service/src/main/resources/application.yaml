@@ -47,17 +47,13 @@ eureka:
 
 app:
   kafka:
-    checkout:
-      group-id: ${CHECKOUT_KAFKA_GROUP_ID:order-service.checkout}
-      # Chỉ bật khi môi trường đã sẵn sàng xử lý checkout COD.
-      auto-startup: ${CHECKOUT_KAFKA_AUTO_STARTUP:false}
     consumer:
-      retry-interval-ms: ${ORDER_KAFKA_RETRY_INTERVAL_MS:60000}
-      retry-increment-ms: ${ORDER_KAFKA_RETRY_INCREMENT_MS:300000}
-      max-retries: ${ORDER_KAFKA_MAX_RETRIES:3}
-      dlt-partitions: ${ORDER_KAFKA_DLT_PARTITIONS:3}
-      dlt-replicas: ${ORDER_KAFKA_DLT_REPLICAS:1}
+      retry-interval-ms: 60000
+      retry-increment-ms: 300000
+      max-retries: 3
+      dlt-partitions: 3
+      dlt-replicas: 1
   outbox:
-    fixed-delay-ms: ${ORDER_OUTBOX_FIXED_DELAY_MS:5000}
+    fixed-delay-ms: 2000
   jwt:
     public-key: ${JWT_PUBLIC_KEY}

@@ -15,6 +15,12 @@ spring:
       server:
         webflux:
           routes:
+            # Stream SSE phải được truyền thẳng để tránh bộ lọc JSON giữ toàn bộ response.
+            - id: notification-sse
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/notifications/checkouts/*/stream
+
             # WebSocket upgrade đi riêng, không bọc response hoặc xử lý frame như HTTP JSON.
             - id: notification-websocket
               uri: lb:ws://notification-service

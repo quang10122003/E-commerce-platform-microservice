@@ -22,9 +22,9 @@ public class CheckoutConsumer {
     private final ObjectMapper objectMapper;
     private final ProcessCheckoutEventUseCase processCheckoutEventUseCase;
 
-    @KafkaListener(id = "checkoutConsumer", topics = {Constant.ORDER_EVENTS_TOPIC, Constant.PRODUCT_EVENTS_TOPIC},
-            groupId = "${app.kafka.checkout.group-id}",
-            autoStartup = "${app.kafka.checkout.auto-startup:false}")
+    // Tách group khỏi consumer giỏ hàng để cả hai luồng nhận độc lập event product, tránh nhận nhầm rồi bỏ qua.
+    @KafkaListener(topics = {Constant.ORDER_EVENTS_TOPIC, Constant.PRODUCT_EVENTS_TOPIC},
+            groupId = "${spring.kafka.consumer.group-id}.checkout")
     public void listen(String event, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String eventId = null;
         String eventType = null;

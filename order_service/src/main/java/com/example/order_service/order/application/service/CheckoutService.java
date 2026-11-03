@@ -12,6 +12,7 @@ import com.example.order_service.order.application.dto.repone.CreateCheckoutResp
 import com.example.order_service.order.application.dto.request.CreateCheckoutRequest;
 import com.example.order_service.order.application.error.OrderError;
 import com.example.order_service.order.application.port.in.CreateCheckoutUseCase;
+import com.example.order_service.order.application.port.in.CheckCheckoutAccessUseCase;
 import com.example.order_service.order.application.port.out.repo.CheckoutRepoPort;
 import com.example.order_service.order.domain.error.OrderDomainError;
 import com.example.order_service.order.domain.model.Checkout;
@@ -56,7 +57,7 @@ import java.util.Set;
 
 @RequiredArgsConstructor
 @Slf4j
-public class CheckoutService implements CreateCheckoutUseCase {
+public class CheckoutService implements CreateCheckoutUseCase, CheckCheckoutAccessUseCase {
 
     private final CurrentUserPort currentUserPort;
     private final CheckoutRepoPort checkoutRepoPort;
@@ -68,6 +69,17 @@ public class CheckoutService implements CreateCheckoutUseCase {
     private final ObjectMapperPort json;
     private final CheckoutCancellationService cancellation;
     private final Clock clock;
+
+    @Override
+    @Transactional(readOnly = true)
+    public void checkAccess(Long checkoutId) {
+        Long userId = currentUserPort.getInfo().userId();
+        Checkout checkout = checkoutRepoPort.findById(checkoutId)
+                .orElseThrow(() -> new BusinessException(AuthorizationError.ACCESS_DENIED));
+        if (!checkout.getUserId().equals(userId)) {
+            throw new BusinessException(AuthorizationError.ACCESS_DENIED);
+        }
+    }
 
     @Override
     public CreateCheckoutResponse createCheckout(CreateCheckoutRequest request, String idempotencyKey,
@@ -147,7 +159,8 @@ public class CheckoutService implements CreateCheckoutUseCase {
         CheckoutSucceededPayload payload = new CheckoutSucceededPayload(eventId,
                 CheckoutSucceededPayload.EVENT_TYPE, checkout.getId(), checkout.getUserId(), checkout.getStatus(),
                 CheckoutPaymentMethod.COD, orderIds, checkout.getTotalAmount(),
-                now.atZone(clock.getZone()).toOffsetDateTime());
+                now.atZone(clock.getZone()).toOffsetDateTime(),
+                checkout.getBuyerEmailSnapshot(), checkout.getBuyerFullNameSnapshot(), null);
         outbox.save(new OutboxEventDto(eventId, Constant.CHECKOUT, checkout.getId().toString(),
                 payload.eventType(), payload, now));
         log.info("Đã tạo đơn COD: event_id={}, checkout_id={}, order_count={}",

@@ -6,6 +6,7 @@ import com.example.common.error.AuthorizationError;
 import com.example.common.exception.BusinessException;
 import com.example.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +42,7 @@ public class GlobalExceptionHandler {
                 errorCode.getCode(), errorCode.getHttpStatusCode());
         ApiErrorDto errorDto = new ApiErrorDto(errorCode.getCode(), errorCode.getMessage());
         return ResponseEntity.status(errorCode.getHttpStatusCode())
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.error(errorCode.getMessage(), errorDto));
     }
 
@@ -73,6 +75,7 @@ public class GlobalExceptionHandler {
     private ResponseEntity<ApiResponse<Void>> badRequest(String code, String message) {
         ApiErrorDto errorDto = new ApiErrorDto(code, message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.error(message, errorDto));
     }
 

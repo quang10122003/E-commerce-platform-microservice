@@ -18,7 +18,7 @@ public class OrderOutboxRetryScheduler {
 
     private final ProcessOrderOutboxUseCase processOrderOutboxUseCase;
 
-    @Scheduled(fixedDelayString = "${app.outbox.fixed-delay-ms:5000}")
+    @Scheduled(fixedDelayString = "${app.outbox.fixed-delay-ms:2000}")
     public void processPendingEvents() {
         String previousRequestId = MDC.get("request_id");
         MDC.put("request_id", "scheduler-" + UUID.randomUUID());

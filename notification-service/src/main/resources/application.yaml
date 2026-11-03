@@ -54,19 +54,25 @@ eureka:
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
 app:
+  sse:
+    connection-timeout-ms: 300000
+    heartbeat-interval-ms: 15000
+    replay-ttl-ms: 300000
+    replay-max-events: 100
   kafka:
     consumer:
-      retry-interval-ms: ${NOTIFICATION_KAFKA_RETRY_INTERVAL_MS:60000}
-      retry-increment-ms: ${NOTIFICATION_KAFKA_RETRY_INCREMENT_MS:300000}
-      max-retries: ${NOTIFICATION_KAFKA_MAX_RETRIES:3}
-      dlt-partitions: ${NOTIFICATION_KAFKA_DLT_PARTITIONS:3}
-      dlt-replicas: ${NOTIFICATION_KAFKA_DLT_REPLICAS:1}
+      retry-interval-ms: 60000
+      retry-increment-ms: 300000
+      max-retries: 3
+      dlt-partitions: 3
+      dlt-replicas: 1
   websocket:
     ticket-ttl-seconds: 30
-    allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS:http://localhost:3000}
+    allowed-origins: http://localhost:3000
   jwt:
     public-key: ${JWT_PUBLIC_KEY}
   mail:
     welcome-sender: welcome@daoxuanquang.dev
+    order-sender: order@daoxuanquang.dev
   resend:
     resend_key: ${RESEND_KEY}

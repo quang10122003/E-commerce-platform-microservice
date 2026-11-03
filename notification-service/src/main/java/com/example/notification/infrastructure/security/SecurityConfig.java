@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
 
 @Configuration
 @EnableMethodSecurity
@@ -32,7 +33,10 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter,
                                           ApiAuthenticationEntryPoint authenticationEntryPoint,
                                           ApiAccessDeniedHandler accessDeniedHandler) throws Exception {
+        // Giữ xác thực trong cùng request để lượt ASYNC không mất SecurityContext của JWT.
         http.csrf(csrf -> csrf.disable())
+                .securityContext(context -> context.requireExplicitSave(false)
+                        .securityContextRepository(new RequestAttributeSecurityContextRepository()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
