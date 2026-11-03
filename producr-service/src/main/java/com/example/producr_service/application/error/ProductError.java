@@ -3,6 +3,9 @@ package com.example.producr_service.application.error;
 import com.example.common.error.ErrorCode;
 
 public enum ProductError implements ErrorCode  {
+    CHECKOUT_INVALID_ITEMS("CHECKOUT_INVALID_ITEMS", "Danh sách mua không hợp lệ", 400),
+    CHECKOUT_SALE_UNAVAILABLE("CHECKOUT_SALE_UNAVAILABLE", "Ưu đãi không còn hiệu lực hoặc không đủ quota", 409),
+    CHECKOUT_TOTAL_MISMATCH("CHECKOUT_TOTAL_MISMATCH", "Tổng tiền đã thay đổi, cần xác nhận lại", 409),
     RECOMMENDATION_CACHE_UNAVAILABLE("RECOMMENDATION_CACHE_UNAVAILABLE",
             "Tạm thời không thể truy cập cache gợi ý", 503),
     PRODUCT_SEARCH_PAGE_LIMIT_EXCEEDED("PRODUCT_SEARCH_PAGE_LIMIT_EXCEEDED",

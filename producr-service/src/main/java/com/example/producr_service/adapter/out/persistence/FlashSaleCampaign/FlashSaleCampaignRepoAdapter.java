@@ -20,6 +20,7 @@ import com.example.common.response.PageResponse;
 import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +31,14 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
     FlashSaleCampaignJpa flashSaleCampaignJpa;
     FlashSaleCampaignMapper flashSaleCampaignMapper;
     ProductVariantJpa productVariantJpa;
+
+    @Override
+    public void lockCampaignsForShare(Collection<Long> campaignIds) {
+        for (Long campaignId : campaignIds.stream().distinct().sorted().toList()) {
+            flashSaleCampaignJpa.findByIdForShare(campaignId)
+                    .orElseThrow(() -> new IllegalStateException("Chương trình sale đã bị xóa: " + campaignId));
+        }
+    }
 
     @Override
     public PageResponse<CompletedFlashSaleCampaignView> findCompletedByShopId(

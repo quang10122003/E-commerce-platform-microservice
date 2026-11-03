@@ -1,5 +1,6 @@
 package com.example.producr_service.application.port.out.repo;
 
+import com.example.producr_service.application.dto.checkout.CheckoutVariantDto;
 import com.example.producr_service.application.dto.response.VariantCartView;
 import com.example.producr_service.application.dto.response.VariantPriceView;
 import com.example.producr_service.application.dto.response.VariantUnitPriceView;
@@ -13,6 +14,12 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface ProductVariantRepoPort {
+    List<Long> findProductIdsByVariantIds(Collection<Long> variantIds);
+
+    List<CheckoutVariantDto> lockVariantsForUpdate(Collection<Long> variantIds);
+
+    void updateStock(Long variantId, int stockQuantity);
+
     List<VariantUnitPriceView> findUnitPricesByVariantIds(Collection<Long> variantIds);
 
     Optional<Long> findProductIdByVariantId(Long variantId);

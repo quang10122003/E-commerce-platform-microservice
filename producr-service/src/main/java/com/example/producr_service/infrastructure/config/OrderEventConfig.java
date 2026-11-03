@@ -7,12 +7,42 @@ import com.example.producr_service.application.service.OrderEventApplicationServ
 import com.example.producr_service.application.service.ProductRecommendationService;
 import com.example.producr_service.application.strategy.eventKafka.CartItemAddedEventHandler;
 import com.example.producr_service.application.strategy.eventKafka.EventHandler;
+import com.example.producr_service.application.strategy.eventKafka.CheckoutInventoryRequestedHandler;
+import com.example.producr_service.application.strategy.eventKafka.CheckoutInventoryRollbackRequestedHandler;
+import com.example.producr_service.application.service.CheckoutInventoryService;
+import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRepositoryPort;
+import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
+import com.example.producr_service.application.port.out.repo.InboxEventPort;
+import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
+import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
+import com.example.producr_service.application.port.out.outbox.OutboxPort;
+import java.time.Clock;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class OrderEventConfig {
+    @Bean
+    CheckoutInventoryService checkoutInventoryService(InboxEventPort inbox,
+            ProductRepositoryPort productRepositoryPort, ProductVariantRepoPort productVariantRepoPort,
+            FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort,
+            FlashSaleItemRepositoryPort flashSaleItemRepositoryPort,
+            OutboxPort outbox, MapJsonToObjPort json, Clock clock) {
+        return new CheckoutInventoryService(inbox, productRepositoryPort, productVariantRepoPort,
+                flashSaleCampaignRepositoryPort, flashSaleItemRepositoryPort, outbox, json, clock);
+    }
+
+    @Bean
+    EventHandler checkoutInventoryRequestedHandler(MapJsonToObjPort json, CheckoutInventoryService service) {
+        return new CheckoutInventoryRequestedHandler(json, service);
+    }
+
+    @Bean
+    EventHandler checkoutInventoryRollbackRequestedHandler(MapJsonToObjPort json, CheckoutInventoryService service) {
+        return new CheckoutInventoryRollbackRequestedHandler(json, service);
+    }
+
     @Bean
     CartItemAddedEventHandler cartItemAddedEventHandler(
             MapJsonToObjPort mapJsonToObjPort, ProductRecommendationService productRecommendationService) {

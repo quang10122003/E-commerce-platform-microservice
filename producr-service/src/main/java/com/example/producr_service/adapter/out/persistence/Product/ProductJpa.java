@@ -21,6 +21,10 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("select p from ProductEntity p where p.id = :id")
+    Optional<ProductEntity> findByIdForShare(@Param("id") Long id);
+
     @Query("""
             select p.id from ProductEntity p
             where p.status = :status and p.category.id in :categoryIds

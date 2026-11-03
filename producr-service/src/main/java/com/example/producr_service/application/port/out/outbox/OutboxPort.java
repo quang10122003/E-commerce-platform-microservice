@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface OutboxPort {
+    Optional<OutboxEventDto> findByEventId(UUID eventId);
 
     // Event phải lưu cùng transaction nghiệp vụ để không mất sự kiện hoặc phát dữ liệu đã rollback.
     void save(OutboxEventDto event);

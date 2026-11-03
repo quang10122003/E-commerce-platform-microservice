@@ -7,11 +7,13 @@ import com.example.common.response.PageQuery;
 import com.example.common.response.PageResponse;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 
 public interface FlashSaleCampaignRepositoryPort {
+    void lockCampaignsForShare(Collection<Long> campaignIds);
 
     PageResponse<CompletedFlashSaleCampaignView> findCompletedByShopId(
             Long shopId, PageQuery pageQuery, String keyword, LocalDateTime from, LocalDateTime to);

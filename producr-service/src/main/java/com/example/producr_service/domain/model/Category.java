@@ -2,11 +2,9 @@ package com.example.producr_service.domain.model;
 
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.domain.error.DomainProductError;
-import lombok.Getter;
 
 import java.util.Objects;
 
-@Getter
 public class Category {
 
     private final Long id;
@@ -20,6 +18,18 @@ public class Category {
         this.id = id;
         this.name = name;
         this.imageUrl = imageUrl;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
     }
 
     public void rename(String newName) {

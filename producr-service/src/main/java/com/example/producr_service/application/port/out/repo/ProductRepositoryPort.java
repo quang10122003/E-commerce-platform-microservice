@@ -18,6 +18,8 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface ProductRepositoryPort {
+    void lockProductsForShare(Collection<Long> productIds);
+
     List<Long> findCategoryCandidateIds(Collection<Long> categoryIds, int limit);
 
     List<Long> findBrandCandidateIds(Collection<Long> brandIds, int limit);

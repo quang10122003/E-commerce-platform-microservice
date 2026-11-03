@@ -17,6 +17,23 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FlashSaleItemJpa extends JpaRepository<FlashSaleItemEntity, Long> {
+    @Query("""
+            select i.id
+            from FlashSaleItemEntity i join i.campaign c
+            where i.variant.id in :variantIds and i.status = 'REGISTERED' and c.status = 'PUBLISHED'
+              and c.startsAt <= :now and c.endsAt > :now
+            order by c.id, i.id
+            """)
+    List<Long> findCheckoutCandidates(
+            @Param("variantIds") List<Long> variantIds, @Param("now") LocalDateTime now);
+
+    @Query("select distinct i.campaign.id from FlashSaleItemEntity i where i.id in :ids order by i.campaign.id")
+    List<Long> findCampaignIdsByItemIds(@Param("ids") List<Long> ids);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select i from FlashSaleItemEntity i where i.id = :id")
+    Optional<FlashSaleItemEntity> findByIdForUpdate(@Param("id") Long id);
+
     // Không chờ job đổi trạng thái để ngừng áp dụng sale đã hết giờ.
     @Query("""
             select i.variant.id as variantId, i.discountPercent as discountPercent,

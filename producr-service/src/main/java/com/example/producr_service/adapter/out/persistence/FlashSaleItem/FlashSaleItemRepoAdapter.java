@@ -1,5 +1,7 @@
 package com.example.producr_service.adapter.out.persistence.FlashSaleItem;
 
+import com.example.producr_service.adapter.entity.FlashSaleItemEntity;
+import com.example.producr_service.application.dto.checkout.CheckoutSaleDto;
 import com.example.producr_service.adapter.mapper.FlashSaleItemMapper;
 import com.example.producr_service.application.dto.response.ProductSaleOfferView;
 import com.example.producr_service.adapter.mapper.ProductVariantMapper;
@@ -19,6 +21,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Collection;
@@ -31,6 +34,33 @@ public class FlashSaleItemRepoAdapter implements FlashSaleItemRepositoryPort {
      FlashSaleItemMapper flashSaleItemMapper;
      FlashSaleItemJpa flashSaleItemJpa;
      ProductVariantMapper productVariantMapper;
+
+    @Override
+    public List<Long> findCheckoutCandidates(List<Long> variantIds, LocalDateTime now) {
+        return variantIds.isEmpty() ? List.of() : flashSaleItemJpa.findCheckoutCandidates(variantIds, now);
+    }
+
+    @Override
+    public List<Long> findCampaignIdsByItemIds(List<Long> itemIds) {
+        return itemIds.isEmpty() ? List.of() : flashSaleItemJpa.findCampaignIdsByItemIds(itemIds);
+    }
+
+    @Override
+    public List<CheckoutSaleDto> lockItemsForUpdate(List<Long> itemIds) {
+        List<CheckoutSaleDto> result = new ArrayList<>();
+        for (Long itemId : itemIds.stream().distinct().sorted().toList()) {
+            flashSaleItemJpa.findByIdForUpdate(itemId)
+                    .ifPresent((FlashSaleItemEntity item) -> result.add(flashSaleItemMapper.toCheckoutSale(item)));
+        }
+        return result;
+    }
+
+    @Override
+    public void updateSoldQuantity(Long itemId, long soldQuantity, LocalDateTime now) {
+        FlashSaleItemEntity item = flashSaleItemJpa.getReferenceById(itemId);
+        item.setSoldQuantity(soldQuantity);
+        item.setUpdatedAt(now);
+    }
 
     @Override
     public List<VariantDiscountView> findPublishedDiscountsByVariantIds(List<Long> variantIds, LocalDateTime now) {

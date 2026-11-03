@@ -45,11 +45,11 @@ spring:
               filters:
                 - name: ApiResponse
 
-            # Chuyển tiếp các API giỏ hàng đến order-service.
+            # Giỏ hàng và checkout cùng thuộc Order Service.
             - id: order-service
               uri: lb://order-service
               predicates:
-                - Path=/api/cart,/api/cart/**
+                - Path=/api/cart,/api/cart/**,/api/checkouts,/api/checkouts/**
               filters:
                 - name: ApiResponse
   data:

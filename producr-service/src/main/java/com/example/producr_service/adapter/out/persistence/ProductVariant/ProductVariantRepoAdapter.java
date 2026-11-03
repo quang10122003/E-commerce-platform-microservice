@@ -1,5 +1,8 @@
 package com.example.producr_service.adapter.out.persistence.ProductVariant;
 
+import com.example.common.untill.JsonUtils;
+import com.example.producr_service.adapter.mapper.FlashSaleItemMapper;
+import com.example.producr_service.application.dto.checkout.CheckoutVariantDto;
 import com.example.producr_service.adapter.mapper.ProductVariantMapper;
 import com.example.producr_service.adapter.entity.ProductVariantEntity;
 import com.example.producr_service.adapter.entity.VariantImageEntity;
@@ -24,6 +27,36 @@ import java.util.stream.Collectors;
 public class ProductVariantRepoAdapter implements ProductVariantRepoPort {
     private final ProductVariantJpa productVariantJpa;
     private final ProductVariantMapper productVariantMapper;
+    private final FlashSaleItemMapper saleMapper;
+    private final JsonUtils json;
+
+    @Override
+    public List<Long> findProductIdsByVariantIds(Collection<Long> variantIds) {
+        return variantIds.isEmpty() ? List.of() : productVariantJpa.findProductIdsForCheckout(variantIds);
+    }
+
+    @Override
+    public List<CheckoutVariantDto> lockVariantsForUpdate(Collection<Long> variantIds) {
+        if (variantIds.isEmpty()) {
+            return List.of();
+        }
+        for (Long variantId : variantIds.stream().distinct().sorted().toList()) {
+            productVariantJpa.findByIdForUpdate(variantId);
+        }
+        return productVariantJpa.findAllById(variantIds).stream().map(this::toCheckoutVariant).toList();
+    }
+
+    private CheckoutVariantDto toCheckoutVariant(ProductVariantEntity variant) {
+        return new CheckoutVariantDto(variant.getProduct().getId(), variant.getProduct().getUserId(),
+                variant.getProduct().getName(), variant.getProduct().getStatus(),
+                json.toJson(saleMapper.toSnapshot(variant).attributes()), variant.getProduct().getImageUrl(),
+                productVariantMapper.toSellerDomain(variant));
+    }
+
+    @Override
+    public void updateStock(Long variantId, int stockQuantity) {
+        productVariantJpa.getReferenceById(variantId).setStockQuantity(stockQuantity);
+    }
 
     @Override
     public List<VariantUnitPriceView> findUnitPricesByVariantIds(Collection<Long> variantIds) {

@@ -3,10 +3,12 @@ package com.example.producr_service.adapter.out.persistence.outbox;
 import com.example.producr_service.adapter.entity.OutboxEventEntity;
 import com.example.producr_service.adapter.mapper.OutboxEventMapper;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
+import com.example.producr_service.application.constant.Constant;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.common.untill.JsonUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -24,6 +26,11 @@ public class OutboxEventRepoAdapter implements OutboxPort {
     private final Clock clock;
 
     @Override
+    public Optional<OutboxEventDto> findByEventId(UUID eventId) {
+        return outboxEventJpa.findByEventId(eventId.toString()).map(outboxEventMapper::toDto);
+    }
+
+    @Override
     public void save(OutboxEventDto event) {
         outboxEventJpa.save(outboxEventMapper.toEntity(event, jsonUtils.toJson(event.payload())));
     }
@@ -33,7 +40,7 @@ public class OutboxEventRepoAdapter implements OutboxPort {
         return outboxEventJpa
                 .findByStatusAndNextAttemptAtLessThanEqualOrderByIdAsc(
                         OutboxEventEntity.Status.PENDING,
-                        LocalDateTime.now(clock)
+                        LocalDateTime.now(clock), PageRequest.of(0, Constant.OUTBOX_BATCH_SIZE)
                 )
                 .stream()
                 .map(outboxEventMapper::toDto)
@@ -48,7 +55,10 @@ public class OutboxEventRepoAdapter implements OutboxPort {
 
     @Override
     public void markPublished(UUID eventId) {
-        outboxEventJpa.findByEventId(eventId.toString()).ifPresent(event -> {
+        outboxEventJpa.findByEventIdForUpdate(eventId.toString()).ifPresent((OutboxEventEntity event) -> {
+            if (event.getStatus() != OutboxEventEntity.Status.PENDING) {
+                return;
+            }
             event.setStatus(OutboxEventEntity.Status.PUBLISHED);
             event.setPublishedAt(LocalDateTime.now(clock));
             event.setErrorMessage(null);
@@ -57,7 +67,10 @@ public class OutboxEventRepoAdapter implements OutboxPort {
 
     @Override
     public void markFailed(UUID eventId, String errorMessage) {
-        outboxEventJpa.findByEventId(eventId.toString()).ifPresent(event -> {
+        outboxEventJpa.findByEventIdForUpdate(eventId.toString()).ifPresent((OutboxEventEntity event) -> {
+            if (event.getStatus() != OutboxEventEntity.Status.PENDING) {
+                return;
+            }
             int retryCount = event.getRetryCount() + 1;
             event.setRetryCount(retryCount);
             event.setErrorMessage(errorMessage);

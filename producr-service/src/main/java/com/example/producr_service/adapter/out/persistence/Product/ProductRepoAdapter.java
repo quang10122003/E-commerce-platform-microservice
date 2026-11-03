@@ -41,6 +41,14 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     BrandJpa brandJpa;
     ProductMapper productMapper;
 
+    // Khóa SHARE chặn sửa/xóa sản phẩm nhưng vẫn cho mua đồng thời các phân loại khác nhau.
+    @Override
+    public void lockProductsForShare(Collection<Long> productIds) {
+        for (Long productId : productIds.stream().distinct().sorted().toList()) {
+            productJpa.findByIdForShare(productId);
+        }
+    }
+
     @Override
     public List<Long> findCategoryCandidateIds(Collection<Long> categoryIds, int limit) {
         return categoryIds.isEmpty() ? List.of() : productJpa.findCategoryCandidateIds(

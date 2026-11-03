@@ -2,6 +2,7 @@ package com.example.producr_service.adapter.mapper;
 
 import java.util.List;
 import com.example.common.untill.JsonUtils;
+import com.example.producr_service.application.dto.checkout.CheckoutSaleDto;
 import com.example.producr_service.adapter.entity.*;
 import com.example.producr_service.application.dto.response.FlashSaleVariantSnapshot;
 import com.example.producr_service.application.dto.response.UserFlashSaleItemView;
@@ -25,6 +26,14 @@ import java.util.Comparator;
 public class FlashSaleItemMapper {
      JsonUtils jsonUtils;
      ProductVariantMapper productVariantMapper;
+
+    public CheckoutSaleDto toCheckoutSale(FlashSaleItemEntity item) {
+        FlashSaleCampaignEntity campaign = item.getCampaign();
+        return new CheckoutSaleDto(item.getId(), campaign.getId(),
+                item.getVariant() == null ? null : item.getVariant().getId(), item.getDiscountPercent(),
+                item.getRegisteredQuantity(), item.getSoldQuantity(), item.getStatus(), campaign.getStatus(),
+                campaign.getStartsAt(), campaign.getEndsAt());
+    }
 
     public VariantDiscountView toVariantDiscount(VariantDiscountProjection projection) {
         return new VariantDiscountView(projection.getVariantId(), projection.getDiscountPercent(),

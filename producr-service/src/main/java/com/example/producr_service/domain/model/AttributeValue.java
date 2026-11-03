@@ -2,12 +2,10 @@ package com.example.producr_service.domain.model;
 
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.domain.error.DomainProductError;
-import lombok.Getter;
 
 import java.util.Objects;
 
 
-@Getter
 public class AttributeValue {
 
     private final Long id;
@@ -19,6 +17,14 @@ public class AttributeValue {
         }
         this.id = id;
         this.value = value;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getValue() {
+        return value;
     }
 
     @Override

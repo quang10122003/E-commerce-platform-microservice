@@ -7,11 +7,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.auth_service.adapter.entity.OutboxEventEntity;
 import com.example.auth_service.adapter.mapper.OutboxEventMapper;
 import com.example.auth_service.application.DTO.OutboxEventDto;
+import com.example.auth_service.application.constant.Constant;
 import com.example.auth_service.application.port.out.OutboxEventPort;
 import com.example.auth_service.domain.model.OutboxEvent;
 import com.example.common.untill.JsonUtils;
@@ -37,7 +39,7 @@ public class OutboxEventRepoAdapter implements OutboxEventPort {
     @Transactional(readOnly = true)
     public List<OutboxEventDto> findPending() {
         return outboxEventRepoJpaJpa.findByStatusOrderByIdAsc(
-                        OutboxEventEntity.Status.PENDING)
+                        OutboxEventEntity.Status.PENDING, PageRequest.of(0, Constant.OUTBOX_BATCH_SIZE))
                 .stream()
                 .map(outboxEventMapper::toDto)
                 .toList();
@@ -52,7 +54,10 @@ public class OutboxEventRepoAdapter implements OutboxEventPort {
     @Override
     @Transactional
     public void markPublished(UUID eventId) {
-        outboxEventRepoJpaJpa.findByEventId(eventId.toString()).ifPresent(event -> {
+        outboxEventRepoJpaJpa.findByEventIdForUpdate(eventId.toString()).ifPresent((OutboxEventEntity event) -> {
+            if (event.getStatus() != OutboxEventEntity.Status.PENDING) {
+                return;
+            }
             event.setStatus(OutboxEventEntity.Status.PUBLISHED);
             event.setPublishedAt(LocalDateTime.now(clock));
             event.setErrorMessage(null);
@@ -62,7 +67,10 @@ public class OutboxEventRepoAdapter implements OutboxEventPort {
     @Override
     @Transactional
     public void markFailed(UUID eventId, String errorMessage) {
-        outboxEventRepoJpaJpa.findByEventId(eventId.toString()).ifPresent(event -> {
+        outboxEventRepoJpaJpa.findByEventIdForUpdate(eventId.toString()).ifPresent((OutboxEventEntity event) -> {
+            if (event.getStatus() != OutboxEventEntity.Status.PENDING) {
+                return;
+            }
             int retryCount = event.getRetryCount() + 1;
             event.setRetryCount(retryCount);
             event.setErrorMessage(errorMessage);

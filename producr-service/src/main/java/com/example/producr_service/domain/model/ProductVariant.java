@@ -2,7 +2,6 @@ package com.example.producr_service.domain.model;
 
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.domain.error.DomainProductError;
-import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -17,13 +16,9 @@ public class ProductVariant {
 
     public static final long MINIMUM_PRICE = 1_000L;
 
-    @Getter
     private final Long id;
-    @Getter
     private final String sku;
-    @Getter
     private Money price;
-    @Getter
     private int stockQuantity;
     private final Set<AttributeValue> attributeValues = new HashSet<>();
     private final List<VariantImage> images = new ArrayList<>();
@@ -51,6 +46,22 @@ public class ProductVariant {
         ProductVariant variant = new ProductVariant(id, sku, stockQuantity);
         variant.price = Objects.requireNonNull(price, "Giá phân loại không được null");
         return variant;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public Money getPrice() {
+        return price;
+    }
+
+    public int getStockQuantity() {
+        return stockQuantity;
     }
 
     public Set<AttributeValue> getAttributeValues() {

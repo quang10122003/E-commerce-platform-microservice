@@ -9,6 +9,10 @@ import com.example.producr_service.application.service.ProductOutboxStatusServic
 import com.example.producr_service.application.service.ProductEmbeddingService;
 import com.example.producr_service.application.service.ProductService;
 import com.example.producr_service.application.strategy.outbox.OutboxEventHandler;
+import com.example.producr_service.application.strategy.outbox.CheckoutInventorySucceededOutboxHandler;
+import com.example.producr_service.application.strategy.outbox.CheckoutInventoryFailedOutboxHandler;
+import com.example.producr_service.application.strategy.outbox.CheckoutInventoryRolledBackOutboxHandler;
+import com.example.producr_service.application.port.out.kafka.ProductEventPublisherPort;
 import com.example.producr_service.application.strategy.outbox.ProductCreatedOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.ProductEmbeddingSyncOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.ProductUpdatedOutboxHandler;
@@ -22,6 +26,21 @@ import java.util.List;
 
 @Configuration
 public class ProductOutboxConfig {
+    @Bean
+    OutboxEventHandler checkoutInventorySucceededOutboxHandler(ProductEventPublisherPort publisher) {
+        return new CheckoutInventorySucceededOutboxHandler(publisher);
+    }
+
+    @Bean
+    OutboxEventHandler checkoutInventoryFailedOutboxHandler(ProductEventPublisherPort publisher) {
+        return new CheckoutInventoryFailedOutboxHandler(publisher);
+    }
+
+    @Bean
+    OutboxEventHandler checkoutInventoryRolledBackOutboxHandler(ProductEventPublisherPort publisher) {
+        return new CheckoutInventoryRolledBackOutboxHandler(publisher);
+    }
+
     @Bean
     OutboxEventHandler productEmbeddingSyncOutboxHandler(
             MapJsonToObjPort mapJsonToObjPort, ProductEmbeddingService productEmbeddingService) {

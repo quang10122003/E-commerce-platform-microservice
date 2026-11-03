@@ -18,6 +18,13 @@ import org.springframework.data.repository.query.Param;
 
 public interface ProductVariantJpa
         extends JpaRepository<ProductVariantEntity, Long> {
+    @Query("select distinct v.product.id from ProductVariantEntity v where v.id in :ids order by v.product.id")
+    List<Long> findProductIdsForCheckout(@Param("ids") Collection<Long> ids);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select v from ProductVariantEntity v where v.id = :id")
+    Optional<ProductVariantEntity> findByIdForUpdate(@Param("id") Long id);
+
     @Query("select v.id as variantId, v.price as price from ProductVariantEntity v where v.id in :variantIds")
     List<VariantUnitPriceProjection> findUnitPricesByVariantIds(@Param("variantIds") Collection<Long> variantIds);
 

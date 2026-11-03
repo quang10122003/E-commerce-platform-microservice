@@ -6,6 +6,8 @@ import java.time.Duration;
 import java.util.Map;
 
 public final class Constant {
+    public static final String CHECKOUT = "Checkout";
+    public static final int OUTBOX_BATCH_SIZE = 100;
     public static final int TOP_SELLING_PRODUCTS_LIMIT = 50;
     public static final int PRODUCT_VIEW_DELAY_SECONDS = 3;
     public static final int BEHAVIOR_EVENT_ID_LENGTH = 36;

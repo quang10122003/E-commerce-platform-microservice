@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,7 +17,8 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = "outbox_event")
+@Table(name = "outbox_event", uniqueConstraints =
+        @UniqueConstraint(name = "uk_outbox_event_id", columnNames = "event_id"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -27,7 +29,7 @@ public class OutboxEventEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(name = "event_id", nullable = false, unique = true, length = 36)
+    @Column(name = "event_id", nullable = false, length = 36)
     String eventId;
 
     @Column(name = "aggregate_type", nullable = false, length = 100)

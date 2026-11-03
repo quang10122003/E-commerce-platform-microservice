@@ -2,18 +2,20 @@ package com.example.producr_service.domain.model;
 
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.domain.error.DomainProductError;
-import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.util.Objects;
 
-@Getter
 public final class Money {
 
     private final BigDecimal amount;
 
     private Money(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
     }
 
 

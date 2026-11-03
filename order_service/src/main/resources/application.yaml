@@ -47,6 +47,10 @@ eureka:
 
 app:
   kafka:
+    checkout:
+      group-id: ${CHECKOUT_KAFKA_GROUP_ID:order-service.checkout}
+      # Chỉ bật khi môi trường đã sẵn sàng xử lý checkout COD.
+      auto-startup: ${CHECKOUT_KAFKA_AUTO_STARTUP:false}
     consumer:
       retry-interval-ms: ${ORDER_KAFKA_RETRY_INTERVAL_MS:60000}
       retry-increment-ms: ${ORDER_KAFKA_RETRY_INCREMENT_MS:300000}

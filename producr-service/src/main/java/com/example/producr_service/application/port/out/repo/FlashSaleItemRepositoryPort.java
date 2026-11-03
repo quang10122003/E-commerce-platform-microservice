@@ -1,5 +1,6 @@
 package com.example.producr_service.application.port.out.repo;
 
+import com.example.producr_service.application.dto.checkout.CheckoutSaleDto;
 import com.example.producr_service.application.dto.response.ProductSaleOfferView;
 import com.example.producr_service.application.dto.response.FlashSaleVariantSnapshot;
 import com.example.producr_service.application.dto.response.UserFlashSaleItemView;
@@ -12,6 +13,14 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FlashSaleItemRepositoryPort {
+    List<Long> findCheckoutCandidates(List<Long> variantIds, LocalDateTime now);
+
+    List<Long> findCampaignIdsByItemIds(List<Long> itemIds);
+
+    List<CheckoutSaleDto> lockItemsForUpdate(List<Long> itemIds);
+
+    void updateSoldQuantity(Long itemId, long soldQuantity, LocalDateTime now);
+
     List<VariantDiscountView> findPublishedDiscountsByVariantIds(List<Long> variantIds, LocalDateTime now);
 
     List<FlashSaleItem> findShopItems(Long campaignId, Long shopId);
