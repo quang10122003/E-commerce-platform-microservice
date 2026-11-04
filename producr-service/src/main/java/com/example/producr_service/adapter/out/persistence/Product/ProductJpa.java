@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
@@ -21,6 +22,10 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
+    @Modifying
+    @Query("update ProductEntity p set p.totalSold = p.totalSold + :quantity where p.id = :id")
+    int increaseTotalSold(@Param("id") Long id, @Param("quantity") long quantity);
+
     @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("select p from ProductEntity p where p.id = :id")
     Optional<ProductEntity> findByIdForShare(@Param("id") Long id);

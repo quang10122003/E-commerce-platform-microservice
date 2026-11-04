@@ -12,6 +12,8 @@ import com.example.producr_service.application.dto.saga.CheckoutInventoryFailedP
 import com.example.producr_service.application.dto.saga.CheckoutInventoryRollbackRequestedPayload;
 import com.example.producr_service.application.dto.saga.CheckoutInventoryRolledBackPayload;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
+import com.example.producr_service.application.dto.outbox.ProductUpdatedOutboxPayload;
+import com.example.producr_service.application.dto.saga.CheckoutSucceededPayload;
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
@@ -55,6 +57,44 @@ public class CheckoutInventoryService {
     private final OutboxPort outbox;
     private final MapJsonToObjPort json;
     private final Clock clock;
+
+    // Đơn đã tạo thành công nên lỗi tại đây chỉ rollback cập nhật lượt mua và truyền về Kafka để xử lý DLT.
+    @Transactional
+    public void increaseCheckoutTotalSold(CheckoutSucceededPayload event) {
+        validateMetadata(event.eventId(), event.checkoutId(), event.occurredAt(),
+                CheckoutSucceededPayload.EVENT_TYPE.equals(event.eventType())
+                        && event.inventorySucceededEventId() != null);
+        if (!recordInboxEvent(event.eventId(), event.eventType(), event)) {
+            return;
+        }
+        OutboxEventDto saved = outbox.findByEventId(event.inventorySucceededEventId())
+                .orElseThrow(() -> new IllegalStateException("Không tìm thấy kết quả trừ tồn gốc"));
+        CheckoutInventorySucceededPayload succeeded = json.readValue(saved.payload(), CheckoutInventorySucceededPayload.class);
+        if (!CheckoutInventorySucceededPayload.EVENT_TYPE.equals(saved.eventType())
+                || !event.inventorySucceededEventId().equals(succeeded.eventId())
+                || !event.checkoutId().equals(succeeded.checkoutId())
+                || succeeded.items() == null || succeeded.items().isEmpty()) {
+            throw new IllegalArgumentException("Event tạo đơn không khớp thao tác trừ tồn");
+        }
+        Map<Long, Long> quantities = new TreeMap<>();
+        for (CheckoutItemSnapshotDto item : succeeded.items()) {
+            if (item.productId() == null || item.productId() <= 0 || item.quantity() <= 0) {
+                throw new IllegalArgumentException("Số lượng mua trong kết quả trừ tồn không hợp lệ");
+            }
+            quantities.merge(item.productId(), (long) item.quantity(), Math::addExact);
+        }
+        LocalDateTime now = LocalDateTime.now(clock);
+        for (Map.Entry<Long, Long> entry : quantities.entrySet()) {
+            if (productRepositoryPort.increaseTotalSold(entry.getKey(), entry.getValue()) != 1) {
+                throw new IllegalStateException("Không tìm thấy sản phẩm để tăng lượt mua: " + entry.getKey());
+            }
+            outbox.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
+                    entry.getKey().toString(), ProductUpdatedOutboxPayload.EVENT_TYPE,
+                    new ProductUpdatedOutboxPayload(entry.getKey()), now));
+        }
+        log.info("Đã tăng lượt mua: event_id={}, event_type={}, checkout_id={}, product_count={}",
+                event.eventId(), event.eventType(), event.checkoutId(), quantities.size());
+    }
 
     // kiểm tra hàng giá tồn kho sản phẩm , sale v.v để tiến hành trừ tồn kho kho có event tử order
     @Transactional

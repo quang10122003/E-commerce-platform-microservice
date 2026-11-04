@@ -8,6 +8,7 @@ import com.example.producr_service.application.service.OrderEventApplicationServ
 import com.example.producr_service.application.service.ProductRecommendationService;
 import com.example.producr_service.application.strategy.eventKafka.CartItemAddedEventHandler;
 import com.example.producr_service.application.strategy.eventKafka.CheckoutInventoryRequestedHandler;
+import com.example.producr_service.application.strategy.eventKafka.CheckoutSucceededHandler;
 import com.example.producr_service.application.strategy.eventKafka.CheckoutInventoryRollbackRequestedHandler;
 import com.example.producr_service.application.service.CheckoutInventoryService;
 import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRepositoryPort;
@@ -24,6 +25,11 @@ import java.util.List;
 
 @Configuration
 public class OrderEventConfig {
+    @Bean
+    EventHandler<String> checkoutSucceededHandler(MapJsonToObjPort json, CheckoutInventoryService service) {
+        return new CheckoutSucceededHandler(json, service);
+    }
+
     @Bean
     CheckoutInventoryService checkoutInventoryService(InboxEventPort inbox,
             ProductRepositoryPort productRepositoryPort, ProductVariantRepoPort productVariantRepoPort,
