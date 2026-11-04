@@ -1,11 +1,12 @@
 package com.example.producr_service.application.strategy.outbox;
 
+import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.dto.outbox.ProductImagesDeleteOutboxPayload;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.service.StoredFileCleaner;
 
-public class ProductImagesDeleteOutboxHandler implements OutboxEventHandler {
+public class ProductImagesDeleteOutboxHandler implements EventHandler<OutboxEventDto> {
     private final MapJsonToObjPort mapJsonToObjPort;
     private final StoredFileCleaner storedFileCleaner;
 

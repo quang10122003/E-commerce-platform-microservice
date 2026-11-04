@@ -1,0 +1,33 @@
+package com.example.order_service.application.registry;
+
+import com.example.order_service.application.dto.outbox.OutboxEventDto;
+import com.example.order_service.application.strategy.EventHandler;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+public class OutboxEventHandlerRegistry {
+
+    private final Map<String, EventHandler<OutboxEventDto>> handlers;
+
+    public OutboxEventHandlerRegistry(List<EventHandler<OutboxEventDto>> eventHandlers) {
+        this.handlers = eventHandlers.stream()
+                .collect(Collectors.toUnmodifiableMap(
+                        EventHandler<OutboxEventDto>::eventType,
+                        Function.identity(),
+                        (first, second) -> {
+                            throw new IllegalStateException(
+                                    "Trùng handler cho eventType=" + first.eventType());
+                        }
+                ));
+    }
+
+    public EventHandler<OutboxEventDto> handle(String eventType) {
+        return Optional.ofNullable(handlers.get(eventType))
+                .orElseThrow(() -> new IllegalStateException(
+                        "Chưa đăng ký handler cho eventType=" + eventType));
+    }
+}

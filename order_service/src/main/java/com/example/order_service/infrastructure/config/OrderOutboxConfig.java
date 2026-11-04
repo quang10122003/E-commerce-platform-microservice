@@ -1,12 +1,13 @@
 package com.example.order_service.infrastructure.config;
 
-import com.example.order_service.cart.application.port.in.ProcessOrderOutboxUseCase;
-import com.example.order_service.cart.application.port.out.kafka.OrderEventPublisherPort;
-import com.example.order_service.cart.application.port.out.outbox.OutboxPort;
-import com.example.order_service.cart.application.registry.OutboxEventHandlerRegistry;
-import com.example.order_service.cart.application.service.OrderOutboxStatusService;
-import com.example.order_service.cart.application.strategy.outbox.CartItemAddedOutboxHandler;
-import com.example.order_service.cart.application.strategy.outbox.OutboxEventHandler;
+import com.example.order_service.application.dto.outbox.OutboxEventDto;
+import com.example.order_service.application.strategy.EventHandler;
+import com.example.order_service.application.port.in.ProcessOrderOutboxUseCase;
+import com.example.order_service.application.port.out.kafka.OrderEventPublisherPort;
+import com.example.order_service.application.port.out.outbox.OutboxPort;
+import com.example.order_service.application.registry.OutboxEventHandlerRegistry;
+import com.example.order_service.application.service.OrderOutboxStatusService;
+import com.example.order_service.application.strategy.outbox.CartItemAddedOutboxHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -23,12 +24,12 @@ public class OrderOutboxConfig {
     }
 
     @Bean
-    OutboxEventHandler cartItemAddedOutboxHandler(OrderEventPublisherPort publisher) {
+    EventHandler<OutboxEventDto> cartItemAddedOutboxHandler(OrderEventPublisherPort publisher) {
         return new CartItemAddedOutboxHandler(publisher);
     }
 
     @Bean
-    OutboxEventHandlerRegistry outboxEventHandlerRegistry(List<OutboxEventHandler> handlers) {
+    OutboxEventHandlerRegistry outboxEventHandlerRegistry(List<EventHandler<OutboxEventDto>> handlers) {
         return new OutboxEventHandlerRegistry(handlers);
     }
 }

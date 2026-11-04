@@ -2,7 +2,7 @@ package com.example.notification.application.service;
 
 import com.example.notification.application.port.in.ProcessProductEventUseCase;
 import com.example.notification.application.registry.KafkaEventHandlerRegistry;
-import com.example.notification.application.strategy.event.EventHandler;
+import com.example.notification.application.strategy.EventHandler;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -16,7 +16,7 @@ public class ProductEventApplicationService implements ProcessProductEventUseCas
     // Chỉ bỏ qua event chưa hỗ trợ; lỗi nghiệp vụ phải truyền về consumer để retry.
     @Override
     public void process(String eventId, String eventType, String message) {
-        EventHandler handler = eventHandlerRegistry.handle(eventType);
+        EventHandler<String> handler = eventHandlerRegistry.handle(eventType);
         if (handler == null) {
             log.warn("Bỏ qua event product chưa hỗ trợ: event_id={}, event_type={}", eventId, eventType);
             return;

@@ -1,14 +1,14 @@
 package com.example.producr_service.application.strategy.eventKafka;
 
+import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.dto.saga.CheckoutInventoryRequestedPayload;
-
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.service.CheckoutInventoryService;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 // event check out order gửi qua để product check giá tồn kho sale v.v
-public class CheckoutInventoryRequestedHandler implements EventHandler {
+public class CheckoutInventoryRequestedHandler implements EventHandler<String> {
     private final MapJsonToObjPort json;
     private final CheckoutInventoryService service;
 

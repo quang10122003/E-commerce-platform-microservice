@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import com.example.notification.application.registry.KafkaEventHandlerRegistry;
 import com.example.notification.application.dto.template.UserRegisteredEmailTemplate;
 import com.example.notification.application.dto.template.CheckoutSucceededEmailTemplate;
-import com.example.notification.application.strategy.event.EventHandler;
+import com.example.notification.application.strategy.EventHandler;
 import com.example.notification.application.strategy.event.UserRegisteredEventHandler;
 import com.example.notification.application.service.NotificationApplicationService;
 import com.example.notification.application.service.AuthEventApplicationService;
@@ -87,13 +87,13 @@ public class NotificationConfig {
 
     @Bean
     KafkaEventHandlerRegistry kafkaEventHandlerRegistry(
-            List<EventHandler> eventHandlers
+            List<EventHandler<String>> eventHandlers
     ) {
         if (eventHandlers.isEmpty()) {
             throw new IllegalStateException("Chưa đăng ký handler xử lý event Kafka");
         }
         log.info("Khởi tạo registry event Kafka: event_types={}",
-                eventHandlers.stream().map(EventHandler::eventType).toList());
+                eventHandlers.stream().map(EventHandler<String>::eventType).toList());
         return new KafkaEventHandlerRegistry(eventHandlers);
     }
 }

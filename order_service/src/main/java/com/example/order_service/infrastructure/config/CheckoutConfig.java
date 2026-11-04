@@ -1,40 +1,39 @@
 package com.example.order_service.infrastructure.config;
 
-import com.example.order_service.cart.application.port.out.client.CurrentUserPort;
-import com.example.order_service.cart.application.port.out.client.ProductClientPort;
-import com.example.order_service.order.application.service.CheckoutItemsService;
-import com.example.order_service.order.application.service.CheckoutQuoteService;
-import com.example.order_service.order.application.port.out.client.ProductQuotePort;
-import com.example.order_service.cart.application.port.out.kafka.OrderEventPublisherPort;
-import com.example.order_service.cart.application.port.out.outbox.OutboxPort;
-import com.example.order_service.cart.application.port.out.objettMapper.ObjectMapperPort;
-import com.example.order_service.cart.application.strategy.outbox.OutboxEventHandler;
-import com.example.order_service.order.application.port.in.ProcessCheckoutEventUseCase;
-import com.example.order_service.order.application.registry.CheckoutEventHandlerRegistry;
-import com.example.order_service.order.application.registry.CheckoutPaymentHandlerRegistry;
-import com.example.order_service.order.application.port.out.repo.CheckoutRepoPort;
-import com.example.order_service.order.application.port.out.repo.PaymentRepoPort;
-import com.example.order_service.order.application.service.CheckoutCreationService;
-import com.example.order_service.order.application.service.CheckoutService;
-import com.example.order_service.order.application.service.CheckoutInternalService;
-import com.example.order_service.order.application.service.CheckoutEventApplicationService;
-import com.example.order_service.order.application.service.CheckoutProcessingService;
-import com.example.order_service.order.application.service.CheckoutCancellationService;
-import com.example.order_service.order.application.strategy.eventKafka.EventHandler;
-import com.example.order_service.order.application.strategy.eventKafka.CheckoutRequestedEventHandler;
-import com.example.order_service.order.application.strategy.payment.CheckoutPaymentHandler;
-import com.example.order_service.order.application.strategy.payment.CodCheckoutHandler;
-import com.example.order_service.order.application.strategy.outbox.CheckoutRequestedOutboxHandler;
-import com.example.order_service.order.application.strategy.outbox.CheckoutInventoryRequestedOutboxHandler;
-import com.example.order_service.order.application.strategy.outbox.CheckoutInventoryRollbackRequestedOutboxHandler;
-import com.example.order_service.order.application.strategy.outbox.CheckoutSucceededOutboxHandler;
-import com.example.order_service.order.application.strategy.outbox.CheckoutFailedOutboxHandler;
-import com.example.order_service.order.application.strategy.eventKafka.CheckoutInventorySucceededHandler;
-import com.example.order_service.order.application.strategy.eventKafka.CheckoutInventoryFailedHandler;
-import com.example.order_service.order.application.strategy.eventKafka.CheckoutInventoryRolledBackHandler;
-import com.example.order_service.order.application.port.out.client.ShopSnapshotPort;
-import com.example.order_service.order.application.port.out.repo.InboxEventPort;
-import com.example.order_service.order.application.port.out.repo.OrderRepoPort;
+import com.example.order_service.application.dto.outbox.OutboxEventDto;
+import com.example.order_service.application.strategy.EventHandler;
+import com.example.order_service.application.port.out.client.CurrentUserPort;
+import com.example.order_service.application.port.out.client.ProductClientPort;
+import com.example.order_service.application.service.CheckoutItemsService;
+import com.example.order_service.application.service.CheckoutQuoteService;
+import com.example.order_service.application.port.out.kafka.OrderEventPublisherPort;
+import com.example.order_service.application.port.out.outbox.OutboxPort;
+import com.example.order_service.application.port.out.serialization.ObjectMapperPort;
+import com.example.order_service.application.port.in.ProcessCheckoutEventUseCase;
+import com.example.order_service.application.registry.KafkaEventHandlerRegistry;
+import com.example.order_service.application.registry.CheckoutPaymentHandlerRegistry;
+import com.example.order_service.application.port.out.repo.CheckoutRepoPort;
+import com.example.order_service.application.port.out.repo.PaymentRepoPort;
+import com.example.order_service.application.service.CheckoutCreationService;
+import com.example.order_service.application.service.CheckoutService;
+import com.example.order_service.application.service.CheckoutInternalService;
+import com.example.order_service.application.service.CheckoutEventApplicationService;
+import com.example.order_service.application.service.CheckoutProcessingService;
+import com.example.order_service.application.service.CheckoutCancellationService;
+import com.example.order_service.application.strategy.eventKafka.CheckoutRequestedEventHandler;
+import com.example.order_service.application.strategy.payment.CheckoutPaymentHandler;
+import com.example.order_service.application.strategy.payment.CodCheckoutHandler;
+import com.example.order_service.application.strategy.outbox.CheckoutRequestedOutboxHandler;
+import com.example.order_service.application.strategy.outbox.CheckoutInventoryRequestedOutboxHandler;
+import com.example.order_service.application.strategy.outbox.CheckoutInventoryRollbackRequestedOutboxHandler;
+import com.example.order_service.application.strategy.outbox.CheckoutSucceededOutboxHandler;
+import com.example.order_service.application.strategy.outbox.CheckoutFailedOutboxHandler;
+import com.example.order_service.application.strategy.eventKafka.CheckoutInventorySucceededHandler;
+import com.example.order_service.application.strategy.eventKafka.CheckoutInventoryFailedHandler;
+import com.example.order_service.application.strategy.eventKafka.CheckoutInventoryRolledBackHandler;
+import com.example.order_service.application.port.out.client.ShopSnapshotPort;
+import com.example.order_service.application.port.out.repo.InboxEventPort;
+import com.example.order_service.application.port.out.repo.OrderRepoPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -45,8 +44,8 @@ import java.util.List;
 public class CheckoutConfig {
 
     @Bean
-    CheckoutQuoteService checkoutQuoteService(ProductQuotePort productQuotePort) {
-        return new CheckoutQuoteService(productQuotePort);
+    CheckoutQuoteService checkoutQuoteService(ProductClientPort productClientPort) {
+        return new CheckoutQuoteService(productClientPort);
     }
 
     @Bean
@@ -76,7 +75,7 @@ public class CheckoutConfig {
     }
 
     @Bean
-    OutboxEventHandler checkoutRequestedOutboxHandler(OrderEventPublisherPort publisher) {
+    EventHandler<OutboxEventDto> checkoutRequestedOutboxHandler(OrderEventPublisherPort publisher) {
         return new CheckoutRequestedOutboxHandler(publisher);
     }
 
@@ -104,53 +103,48 @@ public class CheckoutConfig {
     }
 
     @Bean
-    EventHandler checkoutRequestedEventHandler(ObjectMapperPort objectMapperPort,
+    EventHandler<String> checkoutRequestedEventHandler(ObjectMapperPort objectMapperPort,
             CheckoutProcessingService checkoutProcessingService) {
         return new CheckoutRequestedEventHandler(objectMapperPort, checkoutProcessingService);
     }
 
     @Bean
-    CheckoutEventHandlerRegistry checkoutEventHandlerRegistry(List<EventHandler> handlers) {
-        return new CheckoutEventHandlerRegistry(handlers);
-    }
-
-    @Bean
-    ProcessCheckoutEventUseCase processCheckoutEventUseCase(CheckoutEventHandlerRegistry registry) {
+    ProcessCheckoutEventUseCase processCheckoutEventUseCase(KafkaEventHandlerRegistry registry) {
         return new CheckoutEventApplicationService(registry);
     }
 
     @Bean
-    EventHandler checkoutInventorySucceededHandler(ObjectMapperPort json, CheckoutService service) {
+    EventHandler<String> checkoutInventorySucceededHandler(ObjectMapperPort json, CheckoutService service) {
         return new CheckoutInventorySucceededHandler(json, service);
     }
 
     @Bean
-    EventHandler checkoutInventoryFailedHandler(ObjectMapperPort json, CheckoutService service) {
+    EventHandler<String> checkoutInventoryFailedHandler(ObjectMapperPort json, CheckoutService service) {
         return new CheckoutInventoryFailedHandler(json, service);
     }
 
     @Bean
-    EventHandler checkoutInventoryRolledBackHandler(ObjectMapperPort json, CheckoutService service) {
+    EventHandler<String> checkoutInventoryRolledBackHandler(ObjectMapperPort json, CheckoutService service) {
         return new CheckoutInventoryRolledBackHandler(json, service);
     }
 
     @Bean
-    OutboxEventHandler checkoutInventoryRequestedOutboxHandler(OrderEventPublisherPort publisher) {
+    EventHandler<OutboxEventDto> checkoutInventoryRequestedOutboxHandler(OrderEventPublisherPort publisher) {
         return new CheckoutInventoryRequestedOutboxHandler(publisher);
     }
 
     @Bean
-    OutboxEventHandler checkoutInventoryRollbackRequestedOutboxHandler(OrderEventPublisherPort publisher) {
+    EventHandler<OutboxEventDto> checkoutInventoryRollbackRequestedOutboxHandler(OrderEventPublisherPort publisher) {
         return new CheckoutInventoryRollbackRequestedOutboxHandler(publisher);
     }
 
     @Bean
-    OutboxEventHandler checkoutSucceededOutboxHandler(OrderEventPublisherPort publisher) {
+    EventHandler<OutboxEventDto> checkoutSucceededOutboxHandler(OrderEventPublisherPort publisher) {
         return new CheckoutSucceededOutboxHandler(publisher);
     }
 
     @Bean
-    OutboxEventHandler checkoutFailedOutboxHandler(OrderEventPublisherPort publisher) {
+    EventHandler<OutboxEventDto> checkoutFailedOutboxHandler(OrderEventPublisherPort publisher) {
         return new CheckoutFailedOutboxHandler(publisher);
     }
 

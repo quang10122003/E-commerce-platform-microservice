@@ -1,6 +1,6 @@
 package com.example.notification.application.registry;
 
-import com.example.notification.application.strategy.event.EventHandler;
+import com.example.notification.application.strategy.EventHandler;
 
 import java.util.List;
 import java.util.Map;
@@ -9,12 +9,12 @@ import java.util.stream.Collectors;
 
 public class KafkaEventHandlerRegistry {
 
-    private final Map<String, EventHandler> handlers;
+    private final Map<String, EventHandler<String>> handlers;
 
-    public KafkaEventHandlerRegistry(List<EventHandler> eventHandlers) {
+    public KafkaEventHandlerRegistry(List<EventHandler<String>> eventHandlers) {
         this.handlers = eventHandlers.stream()
                 .collect(Collectors.toUnmodifiableMap(
-                        EventHandler::eventType,
+                        EventHandler<String>::eventType,
                         Function.identity(),
                         (first, second) -> {
                             throw new IllegalStateException(
@@ -23,7 +23,7 @@ public class KafkaEventHandlerRegistry {
                 ));
     }
 
-    public EventHandler handle(String eventType) {
+    public EventHandler<String> handle(String eventType) {
         return handlers.get(eventType);
     }
 }

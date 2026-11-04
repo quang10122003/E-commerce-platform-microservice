@@ -1,5 +1,7 @@
 package com.example.producr_service.infrastructure.config;
 
+import com.example.producr_service.application.dto.outbox.OutboxEventDto;
+import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.port.in.ProcessProductOutboxUseCase;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
@@ -8,7 +10,6 @@ import com.example.producr_service.application.service.StoredFileCleaner;
 import com.example.producr_service.application.service.ProductOutboxStatusService;
 import com.example.producr_service.application.service.ProductEmbeddingService;
 import com.example.producr_service.application.service.ProductService;
-import com.example.producr_service.application.strategy.outbox.OutboxEventHandler;
 import com.example.producr_service.application.strategy.outbox.CheckoutInventorySucceededOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.CheckoutInventoryFailedOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.CheckoutInventoryRolledBackOutboxHandler;
@@ -22,27 +23,28 @@ import com.example.producr_service.application.strategy.outbox.ProductDeletedOut
 import com.example.producr_service.application.strategy.outbox.ProductvariantDeleteOutboxHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import java.util.List;
 
 @Configuration
 public class ProductOutboxConfig {
     @Bean
-    OutboxEventHandler checkoutInventorySucceededOutboxHandler(ProductEventPublisherPort publisher) {
+    EventHandler<OutboxEventDto> checkoutInventorySucceededOutboxHandler(ProductEventPublisherPort publisher) {
         return new CheckoutInventorySucceededOutboxHandler(publisher);
     }
 
     @Bean
-    OutboxEventHandler checkoutInventoryFailedOutboxHandler(ProductEventPublisherPort publisher) {
+    EventHandler<OutboxEventDto> checkoutInventoryFailedOutboxHandler(ProductEventPublisherPort publisher) {
         return new CheckoutInventoryFailedOutboxHandler(publisher);
     }
 
     @Bean
-    OutboxEventHandler checkoutInventoryRolledBackOutboxHandler(ProductEventPublisherPort publisher) {
+    EventHandler<OutboxEventDto> checkoutInventoryRolledBackOutboxHandler(ProductEventPublisherPort publisher) {
         return new CheckoutInventoryRolledBackOutboxHandler(publisher);
     }
 
     @Bean
-    OutboxEventHandler productEmbeddingSyncOutboxHandler(
+    EventHandler<OutboxEventDto> productEmbeddingSyncOutboxHandler(
             MapJsonToObjPort mapJsonToObjPort, ProductEmbeddingService productEmbeddingService) {
         return new ProductEmbeddingSyncOutboxHandler(mapJsonToObjPort, productEmbeddingService);
     }
@@ -59,7 +61,7 @@ public class ProductOutboxConfig {
 
     // Đăng ký strategy đồng bộ Product qua các port của application.
     @Bean
-    OutboxEventHandler productCreatedOutboxHandler(
+    EventHandler<OutboxEventDto> productCreatedOutboxHandler(
             MapJsonToObjPort mapJsonToObjPort,
             ProductService productService
     ) {
@@ -71,7 +73,7 @@ public class ProductOutboxConfig {
 
     // Đăng ký handler đọc lại sản phẩm đã lưu để cập nhật chỉ mục tìm kiếm.
     @Bean
-    OutboxEventHandler productUpdatedOutboxHandler(
+    EventHandler<OutboxEventDto> productUpdatedOutboxHandler(
             MapJsonToObjPort mapJsonToObjPort,
             ProductService productService
     ) {
@@ -81,7 +83,7 @@ public class ProductOutboxConfig {
 
     // Đăng ký handler dọn ảnh sản phẩm sau khi event xóa được xử lý.
     @Bean
-    OutboxEventHandler productImagesDeleteOutboxHandler(
+    EventHandler<OutboxEventDto> productImagesDeleteOutboxHandler(
             MapJsonToObjPort mapJsonToObjPort,
             StoredFileCleaner storedFileCleaner
     ) {
@@ -90,7 +92,7 @@ public class ProductOutboxConfig {
 
     // Đăng ký handler dọn ảnh phân loại sau khi transaction xóa commit.
     @Bean
-    OutboxEventHandler productvariantImagesDeleteOutboxHandler(
+    EventHandler<OutboxEventDto> productvariantImagesDeleteOutboxHandler(
             MapJsonToObjPort mapJsonToObjPort,
             StoredFileCleaner storedFileCleaner
     ) {
@@ -99,7 +101,7 @@ public class ProductOutboxConfig {
 
     // Đăng ký handler cập nhật chỉ mục và phát event Kafka sau khi xóa phân loại.
     @Bean
-    OutboxEventHandler productvariantDeleteOutboxHandler(
+    EventHandler<OutboxEventDto> productvariantDeleteOutboxHandler(
             MapJsonToObjPort mapJsonToObjPort,
             ProductService productService
     ) {
@@ -110,7 +112,7 @@ public class ProductOutboxConfig {
 
     // Đăng ký handler xóa document tìm kiếm sau khi sản phẩm đã bị xóa.
     @Bean
-    OutboxEventHandler productDeletedOutboxHandler(
+    EventHandler<OutboxEventDto> productDeletedOutboxHandler(
             MapJsonToObjPort mapJsonToObjPort,
             ProductService productService
     ) {
@@ -120,7 +122,7 @@ public class ProductOutboxConfig {
     // Gom các strategy outbox để định tuyến theo eventType.
     @Bean
     OutboxEventHandlerRegistry outboxEventHandlerRegistry(
-            List<OutboxEventHandler> eventHandlers
+            List<EventHandler<OutboxEventDto>> eventHandlers
     ) {
         return new OutboxEventHandlerRegistry(eventHandlers);
     }

@@ -1,0 +1,28 @@
+package com.example.order_service.application.service;
+
+import com.example.order_service.application.strategy.EventHandler;
+import com.example.order_service.application.port.in.ProcessProductEventUseCase;
+import com.example.order_service.application.registry.KafkaEventHandlerRegistry;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class ProductEventApplicationService implements ProcessProductEventUseCase {
+    private final KafkaEventHandlerRegistry eventHandlerRegistry;
+
+    public ProductEventApplicationService(KafkaEventHandlerRegistry eventHandlerRegistry) {
+        this.eventHandlerRegistry = eventHandlerRegistry;
+    }
+
+    // Chỉ bỏ qua event chưa hỗ trợ; lỗi handler phải truyền về adapter để retry.
+    @Override
+    public void process(String eventId, String eventType, String message) {
+        EventHandler<String> handler = eventHandlerRegistry.getHandler(eventType);
+        if (handler == null) {
+            log.warn("Bỏ qua event product chưa hỗ trợ: event_id={}, event_type={}", eventId, eventType);
+            return;
+        }
+        log.debug("Bắt đầu xử lý event product: event_id={}, event_type={}", eventId, eventType);
+        handler.handle(message);
+        log.info("Xử lý event product thành công: event_id={}, event_type={}", eventId, eventType);
+    }
+}

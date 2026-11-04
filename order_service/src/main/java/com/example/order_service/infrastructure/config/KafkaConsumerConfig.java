@@ -1,6 +1,6 @@
 package com.example.order_service.infrastructure.config;
 
-import com.example.order_service.cart.application.Constant.Constant;
+import com.example.order_service.application.constant.Constant;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.admin.NewTopic;

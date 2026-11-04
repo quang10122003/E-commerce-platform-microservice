@@ -2,7 +2,7 @@ package com.example.notification.application.service;
 
 import com.example.notification.application.port.in.ProcessOrderEventUseCase;
 import com.example.notification.application.registry.KafkaEventHandlerRegistry;
-import com.example.notification.application.strategy.event.EventHandler;
+import com.example.notification.application.strategy.EventHandler;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -15,7 +15,7 @@ public class OrderEventApplicationService implements ProcessOrderEventUseCase {
 
     @Override
     public void process(String eventId, String eventType, String message) {
-        EventHandler handler = eventHandlerRegistry.handle(eventType);
+        EventHandler<String> handler = eventHandlerRegistry.handle(eventType);
         if (handler == null) {
             log.warn("Bỏ qua event order chưa hỗ trợ: event_id={}, event_type={}", eventId, eventType);
             return;

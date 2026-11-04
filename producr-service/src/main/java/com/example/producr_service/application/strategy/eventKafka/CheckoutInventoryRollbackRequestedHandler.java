@@ -1,13 +1,13 @@
 package com.example.producr_service.application.strategy.eventKafka;
 
+import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.dto.saga.CheckoutInventoryRollbackRequestedPayload;
-
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.service.CheckoutInventoryService;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class CheckoutInventoryRollbackRequestedHandler implements EventHandler {
+public class CheckoutInventoryRollbackRequestedHandler implements EventHandler<String> {
     private final MapJsonToObjPort json;
     private final CheckoutInventoryService checkoutInventoryService;
 

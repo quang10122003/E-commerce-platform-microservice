@@ -1,12 +1,13 @@
 package com.example.producr_service.application.strategy.outbox;
 
+import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.dto.saga.CheckoutInventoryFailedPayload;
 import com.example.producr_service.application.port.out.kafka.ProductEventPublisherPort;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class CheckoutInventoryFailedOutboxHandler implements OutboxEventHandler {
+public class CheckoutInventoryFailedOutboxHandler implements EventHandler<OutboxEventDto> {
     private final ProductEventPublisherPort publisher;
 
     @Override

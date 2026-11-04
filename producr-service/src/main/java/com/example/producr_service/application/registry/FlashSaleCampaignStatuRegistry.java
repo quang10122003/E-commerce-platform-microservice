@@ -1,7 +1,6 @@
 package com.example.producr_service.application.registry;
 
 import com.example.producr_service.application.strategy.FlashSaleCampaign.FlashSaleCampaignStatuHandler;
-import com.example.producr_service.application.strategy.outbox.OutboxEventHandler;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 
 import java.util.List;

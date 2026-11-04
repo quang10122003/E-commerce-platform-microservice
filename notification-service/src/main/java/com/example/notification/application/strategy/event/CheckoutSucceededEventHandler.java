@@ -1,5 +1,6 @@
 package com.example.notification.application.strategy.event;
 
+import com.example.notification.application.strategy.EventHandler;
 import com.example.notification.application.dto.event.CheckoutSucceededNotification;
 import com.example.notification.application.port.out.objectMapper.ObjectMapperPort;
 import com.example.notification.application.service.CheckoutNotificationApplicationService;
@@ -7,7 +8,7 @@ import com.example.notification.application.service.NotificationApplicationServi
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class CheckoutSucceededEventHandler implements EventHandler {
+public class CheckoutSucceededEventHandler implements EventHandler<String> {
     private final ObjectMapperPort objectMapperPort;
     private final CheckoutNotificationApplicationService notificationService;
     private final NotificationApplicationService emailService;

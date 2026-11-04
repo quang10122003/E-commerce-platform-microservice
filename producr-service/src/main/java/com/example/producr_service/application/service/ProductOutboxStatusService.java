@@ -1,13 +1,13 @@
 package com.example.producr_service.application.service;
 
-import java.util.Optional;
+import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.port.in.ProcessProductOutboxUseCase;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.registry.OutboxEventHandlerRegistry;
-import com.example.producr_service.application.strategy.outbox.OutboxEventHandler;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,7 +41,7 @@ public class ProductOutboxStatusService implements ProcessProductOutboxUseCase {
         }
 
         OutboxEventDto event = lockedEvent.get();
-        OutboxEventHandler handler = outboxEventHandlerRegistry.handle(event.eventType());
+        EventHandler<OutboxEventDto> handler = outboxEventHandlerRegistry.handle(event.eventType());
         handler.handle(event);
         outboxPort.markPublished(event.eventId());
         return true;

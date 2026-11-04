@@ -17,7 +17,8 @@ import com.example.auth_service.application.service.AuthServiceInternal;
 import com.example.auth_service.application.port.in.InternalGetUserInfoUseCase;
 import com.example.auth_service.application.port.out.AuthEventPublisherPort;
 import com.example.auth_service.application.registry.OutboxEventHandlerRegistry;
-import com.example.auth_service.application.strategy.outbox.OutboxEventHandler;
+import com.example.auth_service.application.DTO.OutboxEventDto;
+import com.example.auth_service.application.strategy.EventHandler;
 import com.example.auth_service.application.strategy.outbox.UserRegisteredOutboxHandler;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public class AuthConfig {
     }
 
     @Bean
-    OutboxEventHandler userRegisteredOutboxHandler(
+    EventHandler<OutboxEventDto> userRegisteredOutboxHandler(
             AuthEventPublisherPort authEventPublisherPort
     ) {
         return new UserRegisteredOutboxHandler(authEventPublisherPort);
@@ -39,7 +40,7 @@ public class AuthConfig {
 
     @Bean
     OutboxEventHandlerRegistry outboxEventHandlerRegistry(
-            List<OutboxEventHandler> eventHandlers
+            List<EventHandler<OutboxEventDto>> eventHandlers
     ) {
         return new OutboxEventHandlerRegistry(eventHandlers);
     }

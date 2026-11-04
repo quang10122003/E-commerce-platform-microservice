@@ -1,5 +1,6 @@
 package com.example.producr_service.application.strategy.outbox;
 
+import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.dto.outbox.ProductEmbeddingSyncOutboxPayload;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
@@ -7,7 +8,7 @@ import com.example.producr_service.application.service.ProductEmbeddingService;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class ProductEmbeddingSyncOutboxHandler implements OutboxEventHandler {
+public class ProductEmbeddingSyncOutboxHandler implements EventHandler<OutboxEventDto> {
     private final MapJsonToObjPort mapJsonToObjPort;
     private final ProductEmbeddingService productEmbeddingService;
 

@@ -1,5 +1,6 @@
 package com.example.producr_service.application.strategy.outbox;
 
+import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.dto.outbox.ProductvariantImagesDeleteOutboxPayload;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
@@ -10,7 +11,7 @@ import lombok.experimental.FieldDefaults;
 
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true,level = AccessLevel.PRIVATE)
-public class ProductvariantImagesDeleteOutboxHandler implements OutboxEventHandler{
+public class ProductvariantImagesDeleteOutboxHandler implements EventHandler<OutboxEventDto>{
     MapJsonToObjPort mapJsonToObjPort;
     StoredFileCleaner storedFileCleaner;
     @Override

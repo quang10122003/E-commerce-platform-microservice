@@ -1,6 +1,7 @@
 package com.example.producr_service.application.registry;
 
-import com.example.producr_service.application.strategy.outbox.OutboxEventHandler;
+import com.example.producr_service.application.dto.outbox.OutboxEventDto;
+import com.example.producr_service.application.strategy.EventHandler;
 
 import java.util.List;
 import java.util.Map;
@@ -10,12 +11,12 @@ import java.util.stream.Collectors;
 
 public class OutboxEventHandlerRegistry {
 
-    private final Map<String, OutboxEventHandler> handlers;
+    private final Map<String, EventHandler<OutboxEventDto>> handlers;
 
-    public OutboxEventHandlerRegistry(List<OutboxEventHandler> eventHandlers) {
+    public OutboxEventHandlerRegistry(List<EventHandler<OutboxEventDto>> eventHandlers) {
         this.handlers = eventHandlers.stream()
                 .collect(Collectors.toUnmodifiableMap(
-                        OutboxEventHandler::eventType,
+                        EventHandler<OutboxEventDto>::eventType,
                         Function.identity(),
                         (first, second) -> {
                             throw new IllegalStateException(
@@ -24,7 +25,7 @@ public class OutboxEventHandlerRegistry {
                 ));
     }
 
-    public OutboxEventHandler handle(String eventType) {
+    public EventHandler<OutboxEventDto> handle(String eventType) {
         return Optional.ofNullable(handlers.get(eventType))
                 .orElseThrow(() -> new IllegalStateException(
                         "Chưa đăng ký handler cho eventType=" + eventType));

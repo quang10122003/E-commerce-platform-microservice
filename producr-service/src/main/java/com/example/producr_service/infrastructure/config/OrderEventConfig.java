@@ -1,12 +1,12 @@
 package com.example.producr_service.infrastructure.config;
 
+import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.port.in.ProcessOrderEventUseCase;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.registry.KafkaEventHandlerRegistry;
 import com.example.producr_service.application.service.OrderEventApplicationService;
 import com.example.producr_service.application.service.ProductRecommendationService;
 import com.example.producr_service.application.strategy.eventKafka.CartItemAddedEventHandler;
-import com.example.producr_service.application.strategy.eventKafka.EventHandler;
 import com.example.producr_service.application.strategy.eventKafka.CheckoutInventoryRequestedHandler;
 import com.example.producr_service.application.strategy.eventKafka.CheckoutInventoryRollbackRequestedHandler;
 import com.example.producr_service.application.service.CheckoutInventoryService;
@@ -16,10 +16,11 @@ import com.example.producr_service.application.port.out.repo.InboxEventPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
-import java.time.Clock;
-import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.time.Clock;
+import java.util.List;
 
 @Configuration
 public class OrderEventConfig {
@@ -34,12 +35,12 @@ public class OrderEventConfig {
     }
 
     @Bean
-    EventHandler checkoutInventoryRequestedHandler(MapJsonToObjPort json, CheckoutInventoryService service) {
+    EventHandler<String> checkoutInventoryRequestedHandler(MapJsonToObjPort json, CheckoutInventoryService service) {
         return new CheckoutInventoryRequestedHandler(json, service);
     }
 
     @Bean
-    EventHandler checkoutInventoryRollbackRequestedHandler(MapJsonToObjPort json, CheckoutInventoryService service) {
+    EventHandler<String> checkoutInventoryRollbackRequestedHandler(MapJsonToObjPort json, CheckoutInventoryService service) {
         return new CheckoutInventoryRollbackRequestedHandler(json, service);
     }
 
@@ -50,7 +51,7 @@ public class OrderEventConfig {
     }
 
     @Bean
-    KafkaEventHandlerRegistry kafkaEventHandlerRegistry(List<EventHandler> eventHandlers) {
+    KafkaEventHandlerRegistry kafkaEventHandlerRegistry(List<EventHandler<String>> eventHandlers) {
         return new KafkaEventHandlerRegistry(eventHandlers);
     }
 

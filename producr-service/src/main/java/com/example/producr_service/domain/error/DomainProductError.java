@@ -64,7 +64,7 @@ public enum DomainProductError implements ErrorCode {
     ),
     STOCK_INSUFFICIENT(
             "STOCK_INSUFFICIENT",
-            "Không đủ tồn kho để trừ",
+            "Có sản phầm trong quá trình thanh toán k đủ tồn kho",
             409
     ),
     STOCK_INCREASE_QUANTITY_INVALID(

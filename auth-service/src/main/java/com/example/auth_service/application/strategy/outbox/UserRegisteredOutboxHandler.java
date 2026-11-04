@@ -3,8 +3,9 @@ package com.example.auth_service.application.strategy.outbox;
 import com.example.auth_service.application.DTO.OutboxEventDto;
 import com.example.auth_service.application.DTO.event.UserRegisteredEventDto;
 import com.example.auth_service.application.port.out.AuthEventPublisherPort;
+import com.example.auth_service.application.strategy.EventHandler;
 
-public class UserRegisteredOutboxHandler implements OutboxEventHandler {
+public class UserRegisteredOutboxHandler implements EventHandler<OutboxEventDto> {
 
     private final AuthEventPublisherPort authEventPublisherPort;
 

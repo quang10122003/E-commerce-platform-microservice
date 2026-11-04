@@ -1,12 +1,13 @@
 package com.example.producr_service.application.strategy.eventKafka;
 
+import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.dto.event.CartItemAddedEvent;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.service.ProductRecommendationService;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class CartItemAddedEventHandler implements EventHandler {
+public class CartItemAddedEventHandler implements EventHandler<String> {
     private final MapJsonToObjPort mapJsonToObjPort;
     private final ProductRecommendationService productRecommendationService;
 

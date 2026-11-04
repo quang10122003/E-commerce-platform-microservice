@@ -1,10 +1,11 @@
 package com.example.notification.application.strategy.event;
 
+import com.example.notification.application.strategy.EventHandler;
 import com.example.notification.application.dto.event.UserRegisteredEvent;
 import com.example.notification.application.service.NotificationApplicationService;
 import com.example.notification.application.port.out.objectMapper.ObjectMapperPort;
 
-public class UserRegisteredEventHandler implements EventHandler {
+public class UserRegisteredEventHandler implements EventHandler<String> {
 
     private final NotificationApplicationService notificationApplicationService;
     private final ObjectMapperPort objectMapperPort;
