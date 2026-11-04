@@ -23,6 +23,11 @@ import com.example.order_service.application.service.CheckoutCancellationService
 import com.example.order_service.application.strategy.eventKafka.CheckoutRequestedEventHandler;
 import com.example.order_service.application.strategy.payment.CheckoutPaymentHandler;
 import com.example.order_service.application.strategy.payment.CodCheckoutHandler;
+import com.example.order_service.application.strategy.payment.VnpayCheckoutHandler;
+import com.example.order_service.application.service.VnpayPaymentService;
+import com.example.order_service.adapter.out.payment.VnpayPaymentAdapter;
+import com.example.order_service.application.port.out.client.VnpayPaymentPort;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import com.example.order_service.application.strategy.outbox.CheckoutRequestedOutboxHandler;
 import com.example.order_service.application.strategy.outbox.CheckoutInventoryRequestedOutboxHandler;
 import com.example.order_service.application.strategy.outbox.CheckoutInventoryRollbackRequestedOutboxHandler;
@@ -41,6 +46,7 @@ import java.time.Clock;
 import java.util.List;
 
 @Configuration
+@EnableConfigurationProperties(VnpayProperties.class)
 public class CheckoutConfig {
 
     @Bean
@@ -69,9 +75,10 @@ public class CheckoutConfig {
     CheckoutService createCheckoutUseCase(CurrentUserPort currentUserPort,
             CheckoutRepoPort checkoutRepoPort, CheckoutCreationService checkoutCreationService,
             InboxEventPort inbox, OutboxPort outbox, OrderRepoPort orders,
-            ShopSnapshotPort shops, ObjectMapperPort json, CheckoutCancellationService cancellation, Clock clock) {
+            ShopSnapshotPort shops, ObjectMapperPort json, CheckoutCancellationService cancellation,
+            PaymentRepoPort payments, VnpayPaymentService paymentUrls, Clock clock) {
         return new CheckoutService(currentUserPort, checkoutRepoPort, checkoutCreationService,
-                inbox, outbox, orders, shops, json, cancellation, clock);
+                inbox, outbox, orders, shops, json, cancellation, payments, paymentUrls, clock);
     }
 
     @Bean
@@ -82,6 +89,21 @@ public class CheckoutConfig {
     @Bean
     CheckoutPaymentHandler codCheckoutHandler(CheckoutService checkoutService) {
         return new CodCheckoutHandler(checkoutService);
+    }
+
+    @Bean
+    CheckoutPaymentHandler vnpayCheckoutHandler(CheckoutService checkoutService) {
+        return new VnpayCheckoutHandler(checkoutService);
+    }
+
+    @Bean
+    VnpayPaymentPort vnpayPaymentAdapter(VnpayProperties properties) {
+        return new VnpayPaymentAdapter(properties);
+    }
+
+    @Bean
+    VnpayPaymentService vnpayPaymentService(VnpayPaymentPort vnpayPaymentPort, PaymentRepoPort paymentRepoPort) {
+        return new VnpayPaymentService(vnpayPaymentPort, paymentRepoPort);
     }
 
     @Bean

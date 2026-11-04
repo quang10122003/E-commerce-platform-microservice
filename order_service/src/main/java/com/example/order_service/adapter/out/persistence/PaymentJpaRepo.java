@@ -10,6 +10,8 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 public interface PaymentJpaRepo extends JpaRepository<PaymentEntity, Long> {
+    Optional<PaymentEntity> findByCheckoutId(Long checkoutId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from PaymentEntity p where p.checkout.id = :checkoutId")
     Optional<PaymentEntity> findByCheckoutIdForUpdate(@Param("checkoutId") Long checkoutId);

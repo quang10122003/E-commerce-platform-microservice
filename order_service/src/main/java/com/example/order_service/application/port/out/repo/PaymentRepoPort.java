@@ -5,6 +5,7 @@ import com.example.order_service.domain.model.Payment;
 import java.util.Optional;
 
 public interface PaymentRepoPort {
+    Optional<Payment> findByCheckoutId(Long checkoutId);
     Optional<Payment> findByCheckoutIdForUpdate(Long checkoutId);
     void save(Payment payment);
 }

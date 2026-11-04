@@ -46,6 +46,17 @@ eureka:
     lease-expiration-duration-in-seconds: 30
 
 app:
+  vnpay:
+    payment-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+    tmn-code: ${VNPAY_TMN_CODE}
+    hash-secret: ${VNPAY_HASH_SECRET}
+    return-url: http://localhost:3000
+    version: 2.1.0
+    command: pay
+    currency: VND
+    locale: vn
+    order-type: other
+    timeout-minutes: ${VNPAY_TIMEOUT_MINUTES:15}
   kafka:
     consumer:
       retry-interval-ms: 60000

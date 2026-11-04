@@ -17,6 +17,6 @@ public class CodCheckoutHandler implements CheckoutPaymentHandler {
 
     @Override
     public void handle(CheckoutRequestedOutboxPayload event) {
-        checkoutService.processCodCheckout(event);
+        checkoutService.requestInventory(event);
     }
 }

@@ -18,6 +18,11 @@ public class PaymentRepoAdapter implements PaymentRepoPort {
     private final PaymentMapper paymentMapper;
 
     @Override
+    public Optional<Payment> findByCheckoutId(Long checkoutId) {
+        return paymentJpaRepo.findByCheckoutId(checkoutId).map(paymentMapper::toDomain);
+    }
+
+    @Override
     public Optional<Payment> findByCheckoutIdForUpdate(Long checkoutId) {
         return paymentJpaRepo.findByCheckoutIdForUpdate(checkoutId).map(paymentMapper::toDomain);
     }

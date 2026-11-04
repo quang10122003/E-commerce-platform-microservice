@@ -19,6 +19,11 @@ public class CheckoutInventorySucceededHandler implements EventHandler<String> {
     @Override
     public void handle(String message) {
         CheckoutInventorySucceededPayload event = json.readValue(message, CheckoutInventorySucceededPayload.class);
-        checkoutService.processInventorySucceeded(event);
+        try {
+            checkoutService.processInventorySucceeded(event);
+        } catch (RuntimeException exception) {
+            // Transaction tạo đơn phải rollback xong trước khi ghi yêu cầu hoàn kho.
+            checkoutService.requestInventoryRollback(event, exception);
+        }
     }
 }

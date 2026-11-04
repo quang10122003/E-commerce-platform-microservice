@@ -11,7 +11,8 @@ import java.util.UUID;
 public record CheckoutSucceededPayload(
         UUID eventId, String eventType, Long checkoutId, Long userId, CheckoutStatus checkoutStatus,
         CheckoutPaymentMethod paymentMethod, List<Long> orderIds, BigDecimal totalAmount,
-        OffsetDateTime occurredAt, String buyerEmail, String buyerFullName, String urlPayment) {
+        OffsetDateTime occurredAt, String buyerEmail, String buyerFullName, String urlPayment,
+        UUID inventorySucceededEventId) {
     public static final String EVENT_TYPE = "CHECKOUT_SUCCEEDED";
 
     public CheckoutSucceededPayload {
