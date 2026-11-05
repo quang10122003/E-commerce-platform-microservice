@@ -30,6 +30,7 @@ import com.example.producr_service.application.service.ProductHelper;
 import com.example.producr_service.application.service.ProductImageUploadService;
 import com.example.producr_service.application.service.ProductInternalService;
 import com.example.producr_service.application.service.ProductService;
+import com.example.producr_service.application.service.ShopAccessService;
 import com.example.producr_service.application.service.ProductUpdateService;
 import com.example.producr_service.application.service.ShopProductPageAssembler;
 import com.example.producr_service.application.service.ShopOverviewService;
@@ -45,14 +46,20 @@ import java.time.Duration;
 @Configuration
 public class ProductConfig {
     @Bean
+    ShopAccessService shopAccessService(
+            ShopInfoClientPort shopInfoClientPort, CurrentUserPort currentUserPort) {
+        return new ShopAccessService(shopInfoClientPort, currentUserPort);
+    }
+
+    @Bean
     UpdateProductStatusUseCase updateProductStatusUseCase(ProductService productService) {
         return productService;
     }
 
     @Bean
     SellerOverviewService sellerOverviewService(
-            CurrentUserPort currentUserPort, ProductRepositoryPort productRepositoryPort) {
-        return new SellerOverviewService(currentUserPort, productRepositoryPort);
+            CurrentUserPort currentUserPort, ProductRepositoryPort productRepositoryPort, ShopAccessService shopAccessService) {
+        return new SellerOverviewService(currentUserPort, productRepositoryPort, shopAccessService);
     }
 
     @Bean
@@ -63,9 +70,9 @@ public class ProductConfig {
     @Bean
     ShopOverviewService shopOverviewService(
             ShopInfoClientPort shopInfoClientPort, ProductRepositoryPort productRepositoryPort, Clock clock,
-            ProductService productService) {
+            ProductService productService, ShopAccessService shopAccessService, ProductHelper productHelper) {
         return new ShopOverviewService(
-                shopInfoClientPort, productRepositoryPort, clock, productService);
+                shopInfoClientPort, productRepositoryPort, clock, productService, shopAccessService, productHelper);
     }
 
     @Bean
@@ -136,11 +143,11 @@ public class ProductConfig {
             FileUploader fileUploader,
             ProductImageRollbackPort productImageRollbackPort,
             OutboxPort outboxPort,
-            Clock clock
+            Clock clock, ShopAccessService shopAccessService
     ) {
         return new ProductUpdateService(productRepositoryPort, productVariantRepoPort,
                 categoryRepoPort, brandRepositoryPort, currentUserPort, productHelper,
-                fileUploader, productImageRollbackPort, outboxPort, clock);
+                fileUploader, productImageRollbackPort, outboxPort, clock, shopAccessService);
     }
 
     // Đăng ký application service triển khai các use case thuộc phạm vi product.
@@ -164,7 +171,8 @@ public class ProductConfig {
         ProductEmbeddingRepositoryPort productEmbeddingRepositoryPort,
         ProductEventPublisherPort productEventPublisherPort,
         CachePort cachePort,
-        @Value("${app.recommendation.top-selling.cache-ttl}") Duration topSellingProductsCacheTtl
+        @Value("${app.recommendation.top-selling.cache-ttl}") Duration topSellingProductsCacheTtl,
+        ShopAccessService shopAccessService
     ) {
         return new ProductService(
                 productImageRollbackPort,
@@ -185,7 +193,7 @@ public class ProductConfig {
                 productEmbeddingRepositoryPort,
                 productEventPublisherPort,
                 cachePort,
-                topSellingProductsCacheTtl
+                topSellingProductsCacheTtl, shopAccessService
         );
     }
 

@@ -1,5 +1,9 @@
 package com.example.order_service.adapter.client;
 
+import com.example.order_service.application.dto.response.ShopStatusResponse;
+import java.util.List;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import com.example.order_service.application.dto.response.UserInternalInfoResponse;
 import com.example.order_service.application.dto.checkout.ShopSnapshotDto;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -8,6 +12,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @FeignClient(name = "auth-service")
 public interface AuthUserFeignClient {
+    @GetMapping("/api/internal/shops/statuses")
+    List<ShopStatusResponse> getShopStatuses(
+            @RequestParam("shopIds") List<Long> shopIds);
+
     @GetMapping("/api/internal/shops/{shopId}/info")
     ShopSnapshotDto getShopSnapshot(@PathVariable("shopId") Long shopId);
 

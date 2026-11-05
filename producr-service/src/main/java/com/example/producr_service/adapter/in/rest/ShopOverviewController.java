@@ -20,13 +20,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
-@RequestMapping("/api/products/shops")
+@RequestMapping("/api/products")
 @RequiredArgsConstructor
 public class ShopOverviewController {
     private final GetShopOverviewUseCase getShopOverviewUseCase;
     private final GetShopProductsUseCase getShopProductsUseCase;
 
-    @GetMapping("/{shopId}/products")
+    @GetMapping("/shops/{shopId}/products")
     public ResponseEntity<PageResponse<ProductSearchResponse>> getShopProducts(
             @PathVariable("shopId") @Positive Long shopId,
             @RequestParam(required = false) String keyword,
@@ -39,8 +39,8 @@ public class ShopOverviewController {
     }
 
     // Trang shop công khai chỉ tính product ACTIVE, không tính variant.
-    @GetMapping("/{shopId}/overview")
-    public ResponseEntity<ShopOverviewResponse> getShopOverview(@PathVariable("shopId") @Positive Long shopId) {
-        return ResponseEntity.ok(getShopOverviewUseCase.getShopOverview(shopId));
+    @GetMapping("/{productId}/shop/overview")
+    public ResponseEntity<ShopOverviewResponse> getShopOverview(@PathVariable("productId") @Positive Long productId) {
+        return ResponseEntity.ok(getShopOverviewUseCase.getShopOverviewByProductId(productId));
     }
 }

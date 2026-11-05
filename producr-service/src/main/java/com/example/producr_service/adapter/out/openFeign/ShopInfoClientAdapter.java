@@ -1,5 +1,7 @@
 package com.example.producr_service.adapter.out.openFeign;
 
+import com.example.producr_service.application.dto.response.ShopStatusResponse;
+
 import com.example.producr_service.adapter.client.dto.PublicShopInfoResponse;
 import com.example.producr_service.adapter.client.AuthUserFeignClient;
 import com.example.producr_service.application.dto.response.ShopInfoResponse;
@@ -21,13 +23,32 @@ public class ShopInfoClientAdapter implements ShopInfoClientPort {
     private final AuthUserFeignClient authUserFeignClient;
 
     @Override
+    public List<ShopStatusResponse> getShopStatuses(
+            List<Long> shopIds, Boolean locked) {
+        if (shopIds != null && shopIds.isEmpty()) {
+            return List.of();
+        }
+        try {
+            List<ShopStatusResponse> statuses =
+                    authUserFeignClient.getShopStatuses(shopIds, locked);
+            if (statuses == null || statuses.stream().anyMatch(status ->
+                    status == null || status.shopId() == null || status.locked() == null)) {
+                throw new BusinessException(ProductError.SHOP_INFO_UNAVAILABLE);
+            }
+            return statuses;
+        } catch (FeignException exception) {
+            throw new BusinessException(ProductError.SHOP_INFO_UNAVAILABLE, exception);
+        }
+    }
+
+    @Override
     public Optional<ShopProfileResponse> findPublicShopInfo(Long shopId) {
         try {
             PublicShopInfoResponse shop = authUserFeignClient.getPublicShopInfo(shopId);
             if (shop == null || !shopId.equals(shop.shopId())) {
                 throw new BusinessException(ProductError.SHOP_INFO_UNAVAILABLE);
             }
-            return Optional.of(new ShopProfileResponse(shop.shopId(), shop.shopName(),
+            return Optional.of(new ShopProfileResponse(shop.shopId(), shop.shopName(), shop.location(),
                     shop.shopLogoUrl(), shop.shopDescription(), shop.shopCreatedAt()));
         } catch (FeignException exception) {
             if (exception.status() == 404) {

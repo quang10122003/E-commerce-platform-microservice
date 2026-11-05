@@ -87,6 +87,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     ProductEventPublisherPort productEventPublisherPort;
     CachePort cachePort;
     Duration topSellingProductsCacheTtl;
+    ShopAccessService shopAccessService;
 
     @Override
     @Transactional
@@ -94,10 +95,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
         if (request == null || request.status() == null) {
             throw new BusinessException(ProductError.INVALID_PRODUCT_UPDATE);
         }
-        UserInternaInfoRespone user = currentUserPort.getUserInfo();
-        if (user.isShopLock()) {
-            throw new BusinessException(AuthorizationError.ACCESS_DENIED);
-        }
+        UserInternaInfoRespone user = shopAccessService.requireSellerAccess();
         // Giữ cùng thứ tự khóa với luồng chỉnh sửa sản phẩm để tránh deadlock.
         productHelper.validateProductOwnership(productId, user.userId());
         productVariantRepoPort.findByProductIdForUpdate(productId);
@@ -125,7 +123,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
             Optional<List<ProductSearchResponse>> cached = cachePort.getList(
                     ProductCacheKeys.TOP_SELLING_PRODUCTS, ProductSearchResponse.class);
             if (cached.isPresent()) {
-                return cached.get();
+                return filterAvailableShopProducts(cached.get());
             }
         } catch (CacheAccessException exception) {
             // Cache không phải nguồn dữ liệu gốc nên Redis lỗi vẫn cho phép đọc MySQL.
@@ -145,7 +143,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
         } catch (CacheAccessException exception) {
             log.warn("Không thể lưu cache sản phẩm bán chạy, vẫn trả kết quả từ database");
         }
-        return products;
+        return filterAvailableShopProducts(products);
     }
 
     // Đọc lại sản phẩm sau commit để chỉ mục không dùng dữ liệu cũ từ event.
@@ -173,6 +171,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     public ProductPriceRangeResponse getProductPriceRange(Long productId) {
         Product product = productRepositoryPort.findById(productId)
                 .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
+        shopAccessService.requireAvailableShops(List.of(product.getUserId()));
         Product.PriceRange priceRange = product.getPriceRange();
         return new ProductPriceRangeResponse(product.getId(), priceRange.getMin().getAmount(), priceRange.getMax().getAmount());
     }
@@ -183,14 +182,20 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     public UserProductDetailResponse getUserProductDetail(Long productId) {
         Product product = productRepositoryPort.findById(productId)
                 .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
-        return UserProductDetailMapper.toResponse(product);
+        boolean shopLocked = false;
+        try {
+            shopAccessService.requireAvailableShops(List.of(product.getUserId()));
+        } catch (BusinessException exception) {
+            shopLocked = exception.getErrorCode() != ProductError.SHOP_INFO_UNAVAILABLE;
+        }
+        return UserProductDetailMapper.toResponse(product, shopLocked);
     }
 
     // Chỉ đọc sản phẩm của Shop đang đăng nhập, không nhận shopId từ client.
     @Override
     @Transactional(readOnly = true)
     public List<ShopFlashSaleProductResponse> getShopFlashSaleProducts() {
-        Long userId = currentUserPort.getUserInfo().userId();
+        Long userId = shopAccessService.requireSellerAccess().userId();
         List<Product> products = productRepositoryPort.findAllByUserId(userId);
         List<Long> productIds = sellerProductPageAssembler.getListIdProduct(products);
         // Tái sử dụng truy vấn phân loại theo lô của API quản lý sản phẩm.
@@ -203,6 +208,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     @Override
     @Transactional(readOnly = true)
     public ShopProductDetailResponse getShopProductDetail(Long productId) {
+        shopAccessService.requireSellerAccess();
         return productUpdateService.getShopProductDetail(productId);
     }
 
@@ -226,6 +232,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     public ProductResponse createProduct(CreateProductCommand command) {
         log.info("Bắt đầu tạo sản phẩm có phân loại");
         try {
+            UserInternaInfoRespone userInternaInfoRespone = shopAccessService.requireSellerAccess();
             CreateProductData request = command.productRequest();
             List<VariantImageUploadCommand> variantImages = command.variantImages() == null
                     ? List.of()
@@ -243,7 +250,6 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                     storedFiles
             );
 
-            UserInternaInfoRespone userInternaInfoRespone = currentUserPort.getUserInfo();
             Product product = productCreationService.createProduct(userInternaInfoRespone, request);
 
             // lưu outbox
@@ -281,7 +287,17 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
             productHelper.validateSearchKeyword(filter.keyword());
         }
         productHelper.validatePriceRange(filter.minPrice(), filter.maxPrice());
-        ProductCatalogSearchResult result = productSearchIndexPort.search(filter);
+        Set<Long> lockedShopIds;
+        try {
+            lockedShopIds = shopAccessService.findLockedShopIds();
+        } catch (BusinessException exception) {
+            if (exception.getErrorCode() != ProductError.SHOP_INFO_UNAVAILABLE) {
+                throw exception;
+            }
+            log.warn("Không lọc shop khóa khỏi catalog do không kiểm tra được trạng thái shop");
+            lockedShopIds = Set.of();
+        }
+        ProductCatalogSearchResult result = productSearchIndexPort.search(filter, lockedShopIds);
         List<ProductSearchResponse> items = applyCatalogDiscounts(result.items());
         Map<Long, ProductBrandOption> brandsById = brandRepositoryPort.findAllById(result.brandIds()).stream()
                 .collect(Collectors.toMap(Brand::getId,
@@ -306,7 +322,14 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
 
     @Transactional(readOnly = true)
     public List<ProductSearchResponse> getAvailableSearchItemsByIds(Collection<Long> productIds) {
-        return applyCatalogDiscounts(productRepositoryPort.findAvailableSearchItemsByIds(productIds));
+        return applyCatalogDiscounts(filterAvailableShopProducts(
+                productRepositoryPort.findAvailableSearchItemsByIds(productIds)));
+    }
+
+    public List<ProductSearchResponse> filterAvailableShopProducts(List<ProductSearchResponse> items) {
+        Set<Long> available = shopAccessService.findAvailableShopIdsForDisplay(
+                items.stream().map(ProductSearchResponse::UserId).toList());
+        return items.stream().filter(item -> available.contains(item.UserId())).toList();
     }
 
     private List<ProductSearchResponse> applyCatalogDiscounts(List<ProductSearchResponse> items) {
@@ -345,7 +368,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     @Transactional(readOnly = true)
     public PageResponse<SellerProductItemResponse> getSellerProducts(SellerProductFilter filter) {
         // Gọi auth-service lấy ID người bán từ phiên đăng nhập.
-        Long userId = currentUserPort.getUserInfo().userId();
+        Long userId = shopAccessService.requireSellerAccess().userId();
         PageResponse<Product> pageProduct = productRepositoryPort.findProductsFillter(userId,filter);
 
         List<Product> products = pageProduct.items();
@@ -366,7 +389,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     public void deleteProduct(Long productId) {
         log.info("Bắt đầu xóa sản phẩm productId={}", productId);
         try {
-            UserInternaInfoRespone userInternaInfoRespone = currentUserPort.getUserInfo();
+            UserInternaInfoRespone userInternaInfoRespone = shopAccessService.requireSellerAccess();
 
             // lấy id user sở hứu sản phẩm và check xem có phải cùng user request k , khóa sản phẩm lock
             productHelper.validateProductOwnership(productId, userInternaInfoRespone.userId());
@@ -428,7 +451,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     public void deleteProductvariant(Long productId, Long variantId) {
         log.info("Bắt đầu xóa phân loại productId={}, variantId={}", productId, variantId);
         try {
-            UserInternaInfoRespone userInternaInfoRespone = currentUserPort.getUserInfo();
+            UserInternaInfoRespone userInternaInfoRespone = shopAccessService.requireSellerAccess();
             // Khóa sản phẩm và xác nhận quyền sở hữu trước khi khóa phân loại.
             productHelper.validateProductOwnership(productId, userInternaInfoRespone.userId());
             // Chỉ khóa phân loại thuộc đúng sản phẩm cần xử lý.

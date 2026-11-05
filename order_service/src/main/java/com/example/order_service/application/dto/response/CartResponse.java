@@ -17,7 +17,7 @@ public record CartResponse(Long CartId, int totalItems, int totalQuantity, List<
 
     @Builder
     public record CartItemInfo(Long cartItemId, Long productId, Long productVariantId,
-                               Long shopId, String shopName, String productName,
+                               Long shopId, String shopName, Boolean shopLock, String productName,
                                String imageUrl, boolean hasOption,
                                List<VariantOptions> variantOptions, BigDecimal price, int quantity, int stockQuantity,
                                ProductStatus status, Sale sale, int saleQuantity, int regularQuantity) {

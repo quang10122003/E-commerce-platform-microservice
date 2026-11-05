@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import com.example.producr_service.domain.model.ProductStatus;
 
 public interface VariantPriceProjection {
+    Long getShopId();
     Long getVariantId();
     BigDecimal getPrice();
     int getStockQuantity();

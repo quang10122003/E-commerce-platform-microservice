@@ -1,5 +1,8 @@
 package com.example.order_service.infrastructure.config;
 
+import com.example.order_service.application.port.out.client.ShopStatusPort;
+import com.example.order_service.application.service.ShopAvailabilityService;
+
 import com.example.order_service.application.dto.outbox.OutboxEventDto;
 import com.example.order_service.application.strategy.EventHandler;
 import com.example.order_service.application.port.out.client.CurrentUserPort;
@@ -48,15 +51,23 @@ import java.util.List;
 @Configuration
 @EnableConfigurationProperties(VnpayProperties.class)
 public class CheckoutConfig {
-
     @Bean
-    CheckoutQuoteService checkoutQuoteService(ProductClientPort productClientPort) {
-        return new CheckoutQuoteService(productClientPort);
+    ShopAvailabilityService shopAvailabilityService(
+            ProductClientPort productClientPort,
+            ShopStatusPort shopStatusPort) {
+        return new ShopAvailabilityService(productClientPort, shopStatusPort);
     }
 
     @Bean
-    CheckoutItemsService checkoutItemsService(ProductClientPort productClientPort, Clock clock) {
-        return new CheckoutItemsService(productClientPort, clock);
+    CheckoutQuoteService checkoutQuoteService(ProductClientPort productClientPort,
+            ShopAvailabilityService shopAvailabilityService) {
+        return new CheckoutQuoteService(productClientPort, shopAvailabilityService);
+    }
+
+    @Bean
+    CheckoutItemsService checkoutItemsService(ProductClientPort productClientPort, Clock clock,
+            ShopAvailabilityService shopAvailabilityService) {
+        return new CheckoutItemsService(productClientPort, clock, shopAvailabilityService);
     }
 
     @Bean

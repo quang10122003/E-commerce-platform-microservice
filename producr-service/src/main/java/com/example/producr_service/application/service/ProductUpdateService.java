@@ -48,6 +48,7 @@ public class ProductUpdateService {
     ProductImageRollbackPort productImageRollbackPort;
     OutboxPort outboxPort;
     Clock clock;
+    ShopAccessService shopAccessService;
     ShopProductDetailMapper shopProductDetailMapper = new ShopProductDetailMapper();
 
     // Đọc sản phẩm thuộc người dùng hiện tại thành dữ liệu dùng cho form.
@@ -62,7 +63,7 @@ public class ProductUpdateService {
 
     // Khóa sản phẩm và các phân loại trước khi kiểm tra, rồi lưu thay đổi cùng outbox.
     public ShopProductDetailResponse updateProduct(Long productId, UpdateProductCommand command) {
-        UserInternaInfoRespone user = currentUserPort.getUserInfo();
+        UserInternaInfoRespone user = shopAccessService.requireSellerAccess();
 
         productHelper.validateProductOwnership(productId, user.userId());
         List<ProductVariant> lockedVariants = productVariantRepoPort.findByProductIdForUpdate(productId);

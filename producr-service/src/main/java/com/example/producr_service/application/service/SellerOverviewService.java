@@ -11,11 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class SellerOverviewService implements GetSellerProductOverviewUseCase {
     private final CurrentUserPort currentUserPort;
     private final ProductRepositoryPort productRepositoryPort;
+    private final ShopAccessService shopAccessService;
 
     @Override
     @Transactional(readOnly = true)
     public SellerProductOverviewResponse getProductOverview() {
-        Long sellerUserId = currentUserPort.getUserInfo().userId();
+        Long sellerUserId = shopAccessService.requireSellerAccess().userId();
         return productRepositoryPort.getSellerProductOverview(sellerUserId);
     }
 }

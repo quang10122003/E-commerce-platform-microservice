@@ -13,6 +13,7 @@ import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignD
 import com.example.producr_service.application.port.in.GetShopFlashSaleProductsUseCase;
 import com.example.producr_service.application.port.out.client.CurrentUserPort;
 import com.example.producr_service.application.service.ProductService;
+import com.example.producr_service.application.service.ShopAccessService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import com.example.producr_service.application.service.FlashSaleItemService;
@@ -57,9 +58,10 @@ public class FlashSaleConfig {
     @Bean
     FlashSaleItemService flashSaleItemService(CurrentUserPort currentUser,
             FlashSaleCampaignRepositoryPort campaigns, FlashSaleItemRepositoryPort items, Clock clock,
-            ProductVariantRepoPort productVariantRepoPort, VariantSaleResolver variantSaleResolver) {
+            ProductVariantRepoPort productVariantRepoPort, VariantSaleResolver variantSaleResolver,
+            ShopAccessService shopAccessService) {
         return new FlashSaleItemService(currentUser, campaigns, items, clock, productVariantRepoPort,
-                variantSaleResolver);
+                variantSaleResolver, shopAccessService);
     }
 
     @Bean
@@ -98,9 +100,9 @@ public class FlashSaleConfig {
     FlashSaleCampaignService flashSaleCampaignService(
             CurrentUserPort currentUserPort,
             FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort,
-            Clock clock
+            Clock clock, ShopAccessService shopAccessService
     ) {
-        return new FlashSaleCampaignService(currentUserPort, flashSaleCampaignRepositoryPort, clock);
+        return new FlashSaleCampaignService(currentUserPort, flashSaleCampaignRepositoryPort, clock, shopAccessService);
     }
 
     @Bean

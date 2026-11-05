@@ -34,7 +34,7 @@ public interface ProductVariantJpa
 
     @Query("""
             select v.id as variantId, v.price as price,
-                v.stockQuantity as stockQuantity, p.status as productStatus
+                v.stockQuantity as stockQuantity, p.status as productStatus, p.userId as shopId
             from ProductVariantEntity v join v.product p
             where p.id = :productId and v.id = :variantId
             """)

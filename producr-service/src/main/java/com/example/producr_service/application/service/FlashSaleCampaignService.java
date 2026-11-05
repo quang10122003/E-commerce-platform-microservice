@@ -34,13 +34,15 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
     private final CurrentUserPort currentUserPort;
     private final FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort;
     private final Clock clock;
+    private final ShopAccessService shopAccessService;
 
     public FlashSaleCampaignService(CurrentUserPort currentUserPort,
                                     FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort,
-                                    Clock clock) {
+                                    Clock clock, ShopAccessService shopAccessService) {
         this.currentUserPort = currentUserPort;
         this.flashSaleCampaignRepositoryPort = flashSaleCampaignRepositoryPort;
         this.clock = clock;
+        this.shopAccessService = shopAccessService;
     }
 
     @Override
@@ -49,7 +51,7 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
             ShopCompletedFlashSaleCampaignFilter filter) {
         validateCampaignFilter(filter.page(), filter.size(), filter.from(), filter.to());
 
-        Long shopId = currentUserPort.getUserInfo().userId();
+        Long shopId = shopAccessService.requireSellerAccess().userId();
         String searchKeyword = filter.keyword() == null || filter.keyword().isBlank() ? null : filter.keyword().trim();
         LocalDateTime from = filter.from() == null ? null
                 : filter.from().atZoneSameInstant(clock.getZone()).toLocalDateTime();
@@ -66,6 +68,7 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
     @Override
     @Transactional(readOnly = true)
     public ShopFlashSaleCampaignDetailResponse getShopCampaignDetail(Long campaignId) {
+        shopAccessService.requireSellerAccess();
         if (campaignId == null || campaignId <= 0) {
             throw new BusinessException(ProductError.INVALID_FLASH_SALE_CAMPAIGN_ID);
         }
@@ -115,6 +118,7 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ShopFlashSaleCampaignResponse> getShopCampaigns(ShopFlashSaleCampaignFilter filter) {
+        shopAccessService.requireSellerAccess();
         validateCampaignFilter(filter.page(), filter.size(), filter.from(), filter.to());
         LocalDateTime now = LocalDateTime.now(clock);
         LocalDateTime from = filter.from() == null ? null

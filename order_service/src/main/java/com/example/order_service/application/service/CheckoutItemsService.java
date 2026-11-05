@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 public class CheckoutItemsService implements GetCheckoutItemsUseCase {
     private final ProductClientPort productClientPort;
     private final Clock clock;
+    private final ShopAvailabilityService shopAvailabilityService;
 
     @Override
     public CheckoutItemsResponse getCheckoutItems(CheckoutItemsRequest request) {
@@ -34,6 +35,8 @@ public class CheckoutItemsService implements GetCheckoutItemsUseCase {
         if (!infos.keySet().containsAll(variantIds)) {
             throw new BusinessException(ProductQuoteError.VARIANT_NOT_FOUND);
         }
+        shopAvailabilityService.requireAvailableShops(infos.values().stream()
+                .map(ProductVariantInfoResponse::shopId).toList());
         if (infos.values().stream().anyMatch(info -> info.status() != ProductStatus.ACTIVE)) {
             throw new BusinessException(OrderError.CHECKOUT_PRODUCT_UNAVAILABLE);
         }

@@ -11,9 +11,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CheckoutQuoteService implements GetCheckoutQuoteUseCase {
     private final ProductClientPort productClientPort;
+    private final ShopAvailabilityService shopAvailabilityService;
 
     @Override
     public CheckoutQuoteResponse getCheckoutQuote(CheckoutQuoteRequest request) {
+        shopAvailabilityService.requireAvailableVariants(request.items().stream()
+                .map(CheckoutQuoteRequest.Item::variantId).distinct().toList());
         ProductQuoteRequest pricingRequest = new ProductQuoteRequest(request.items().stream()
                 .map(item -> new ProductQuoteRequest.Item(item.variantId(), item.quantity()))
                 .toList());

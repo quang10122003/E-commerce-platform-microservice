@@ -29,7 +29,7 @@ public class SecurityConfig {
             "/api/products",
             "/api/products/recommendations/top-selling",
             "/api/products/recommendations/similar/{productId:-?[0-9]+}",
-            "/api/products/shops/{shopId}/overview",
+            "/api/products/{productId:-?[0-9]+}/shop/overview",
             "/api/products/shops/{shopId}/products",
             "/api/products/{productId:-?[0-9]+}",
             "/api/products/{productId:-?[0-9]+}/price-range",

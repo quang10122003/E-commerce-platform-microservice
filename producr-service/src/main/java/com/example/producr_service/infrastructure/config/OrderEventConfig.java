@@ -1,5 +1,7 @@
 package com.example.producr_service.infrastructure.config;
 
+import com.example.producr_service.application.service.ShopAccessService;
+
 import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.port.in.ProcessOrderEventUseCase;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
@@ -35,9 +37,10 @@ public class OrderEventConfig {
             ProductRepositoryPort productRepositoryPort, ProductVariantRepoPort productVariantRepoPort,
             FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort,
             FlashSaleItemRepositoryPort flashSaleItemRepositoryPort,
-            OutboxPort outbox, MapJsonToObjPort json, Clock clock) {
+            OutboxPort outbox, MapJsonToObjPort json, Clock clock,
+            ShopAccessService shopAccessService) {
         return new CheckoutInventoryService(inbox, productRepositoryPort, productVariantRepoPort,
-                flashSaleCampaignRepositoryPort, flashSaleItemRepositoryPort, outbox, json, clock);
+                flashSaleCampaignRepositoryPort, flashSaleItemRepositoryPort, outbox, json, clock, shopAccessService);
     }
 
     @Bean

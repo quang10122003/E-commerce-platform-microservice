@@ -12,7 +12,7 @@ import java.util.List;
 public final class UserProductDetailMapper {
     private UserProductDetailMapper() {}
 
-    public static UserProductDetailResponse toResponse(Product product) {
+    public static UserProductDetailResponse toResponse(Product product, boolean shopLocked) {
         // Ưu tiên giá cao nhất trong nhóm còn hàng; nếu tất cả hết hàng thì chọn giá cao nhất.
         Long defaultVariantId = product.getVariants().stream()
                 .sorted(Comparator.comparing(ProductVariant::isInStock).reversed()
@@ -31,8 +31,9 @@ public final class UserProductDetailMapper {
                 .toList();
 
         return new UserProductDetailResponse(
-                product.getId(), product.getUserId(), product.getName(), product.getDescription(),
-                product.getImageUrl(), product.getStatus(), product.getLocationSnapshot(), product.getTotalSold(), defaultVariantId, attributes,
+                product.getId(), product.getName(), product.getDescription(),
+                product.getImageUrl(), product.getStatus(), product.getLocationSnapshot(), shopLocked,
+                product.getTotalSold(), defaultVariantId, attributes,
                 product.getVariants().stream().sorted(Comparator.comparing(ProductVariant::getId))
                         .map(UserProductDetailMapper::toVariantResponse).toList()
         );

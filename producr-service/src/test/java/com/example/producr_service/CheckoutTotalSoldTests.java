@@ -42,7 +42,7 @@ class CheckoutTotalSoldTests {
     private final OutboxPort outbox = mock(OutboxPort.class);
     private final MapJsonToObjPort json = mock(MapJsonToObjPort.class);
     private final CheckoutInventoryService service = new CheckoutInventoryService(
-            inbox, products, null, null, null, outbox, json, clock);
+            inbox, products, null, null, null, outbox, json, clock, null);
     private final UUID inventoryId = UUID.randomUUID();
 
     private CheckoutSucceededPayload event(String method) {

@@ -5,8 +5,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record UserProductDetailResponse(
-        Long id, Long shopId, String name, String description, String imageUrl, ProductStatus status,
-        String location,
+        Long id, String name, String description, String imageUrl, ProductStatus status,
+        String location, boolean shopLocked,
         long totalSold, Long defaultVariantId, List<Attribute> attributes, List<Variant> variants
 ) {
     public UserProductDetailResponse {

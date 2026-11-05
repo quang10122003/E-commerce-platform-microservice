@@ -57,6 +57,7 @@ public class CheckoutInventoryService {
     private final OutboxPort outbox;
     private final MapJsonToObjPort json;
     private final Clock clock;
+    private final ShopAccessService shopAccessService;
 
     // Đơn đã tạo thành công nên lỗi tại đây chỉ rollback cập nhật lượt mua và truyền về Kafka để xử lý DLT.
     @Transactional
@@ -132,6 +133,9 @@ public class CheckoutInventoryService {
             sales = flashSaleItemRepositoryPort.lockItemsForUpdate(saleIds);
             items = validateAndBuildCheckoutItemSnapshots(event, quantities, variants, sales, LocalDateTime.now(clock));
         } catch (BusinessException exception) {
+            if (exception.getErrorCode() == ProductError.SHOP_INFO_UNAVAILABLE) {
+                throw exception;
+            }
             publishFailed(event.checkoutId(), event.eventId(),
                     exception.getErrorCode().getCode(), exception.getMessage());
             return;
@@ -179,6 +183,7 @@ public class CheckoutInventoryService {
     private List<CheckoutItemSnapshotDto> validateAndBuildCheckoutItemSnapshots(CheckoutInventoryRequestedPayload event,
             Map<Long, Long> quantities, Map<Long, CheckoutVariantDto> variants,
             List<CheckoutSaleDto> sales, LocalDateTime now) {
+        shopAccessService.requireAvailableShops(variants.values().stream().map(CheckoutVariantDto::shopId).toList());
         // Kiểm tra tồn gộp để hai dòng sale và thường không cùng mua vượt kho của một biến thể.
         for (Map.Entry<Long, Long> entry : quantities.entrySet()) {
             CheckoutVariantDto variant = variants.get(entry.getKey());

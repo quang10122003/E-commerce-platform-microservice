@@ -1,5 +1,7 @@
 package com.example.order_service.infrastructure.config;
 
+import com.example.order_service.application.service.ShopAvailabilityService;
+
 import com.example.order_service.application.strategy.EventHandler;
 import com.example.order_service.application.port.in.AddCartItemUseCase;
 import com.example.order_service.application.port.in.GetCartUseCase;
@@ -31,8 +33,9 @@ public class CartConfig {
             CurrentUserPort currentUserPort,
             CartRepoPort cartRepoPort,
             ProductClientPort productClientPort,
-            Clock clock, OutboxPort outboxPort) {
-        return new CartService(currentUserPort, cartRepoPort, productClientPort, clock, outboxPort);
+            Clock clock, OutboxPort outboxPort,
+            ShopAvailabilityService shopAvailabilityService) {
+        return new CartService(currentUserPort, cartRepoPort, productClientPort, clock, outboxPort, shopAvailabilityService);
     }
 
     @Bean

@@ -1,5 +1,7 @@
 package com.example.producr_service.application.service;
 
+import java.util.Set;
+
 import com.example.producr_service.domain.model.FlashSaleCampaign;
 import com.example.producr_service.domain.model.FlashSaleItem;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
@@ -36,11 +38,12 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
      Clock clock;
      ProductVariantRepoPort productVariantRepoPort;
      VariantSaleResolver variantSaleResolver;
+     ShopAccessService shopAccessService;
 
     @Override
     @Transactional(readOnly = true)
     public List<ShopFlashSaleItemResponse> getShopItems(Long campaignId, String keyword) {
-        Long shopId = currentUser.getUserInfo().userId();
+        Long shopId = shopAccessService.requireSellerAccess().userId();
         if (!flashSaleCampaignRepositoryPort.existsById(campaignId)) {
             throw new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND);
         }
@@ -80,6 +83,7 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
     public VariantSaleResponse getVariantSale(Long productId, Long variantId) {
         VariantPriceView variant = productVariantRepoPort.findPriceView(productId, variantId)
                 .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND));
+        shopAccessService.requireAvailableShops(List.of(variant.shopId()));
         // Không hoạt động và không tồn tại là hai lỗi khác nhau, không gộp chung khi tra ưu đãi.
         if (variant.productStatus() != ProductStatus.ACTIVE) {
             throw new BusinessException(ProductError.PRODUCT_INACTIVE);
@@ -95,7 +99,7 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
     @Override
     @Transactional
     public void register(Long campaignId, RegisterFlashSaleItemRequest request) {
-        Long shopId = currentUser.getUserInfo().userId();
+        Long shopId = shopAccessService.requireSellerAccess().userId();
         FlashSaleCampaign campaign = flashSaleCampaignRepositoryPort.findByIdForUpdate(campaignId)
                 .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
 
@@ -109,7 +113,7 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
     @Override
     @Transactional
     public void removeItem(Long campaignId, Long itemId) {
-        Long shopId = currentUser.getUserInfo().userId();
+        Long shopId = shopAccessService.requireSellerAccess().userId();
         FlashSaleCampaign campaign = flashSaleCampaignRepositoryPort.findByIdForUpdate(campaignId)
                 .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
         campaign.removeItem(itemId, shopId, LocalDateTime.now(clock));
@@ -119,7 +123,7 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
     @Override
     @Transactional
     public void updateItem(Long campaignId, Long itemId, UpdateShopFlashSaleItemRequest request) {
-        Long shopId = currentUser.getUserInfo().userId();
+        Long shopId = shopAccessService.requireSellerAccess().userId();
 
         FlashSaleCampaign campaign = flashSaleCampaignRepositoryPort.findByIdForUpdate(campaignId)
                 .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
@@ -139,7 +143,7 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
     @Override
     @Transactional(readOnly = true)
     public FlashSalePriceResponse previewPrice(Long variantId, PreviewFlashSalePriceRequest request) {
-        FlashSaleVariantSnapshot variant = ownedVariant(variantId, currentUser.getUserInfo().userId());
+        FlashSaleVariantSnapshot variant = ownedVariant(variantId, shopAccessService.requireSellerAccess().userId());
         return new FlashSalePriceResponse(
                 FlashSaleRules.calculateSalePrice(variant.price(), request.discountPercent()));
     }
@@ -171,6 +175,9 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
     private UserFlashSaleResponse getSaleItems(Long categoryId, boolean topSellingOnly) {
         LocalDateTime now = LocalDateTime.now(clock);
         List<UserFlashSaleItemView> items = flashSaleItemRepositoryPort.findItemsInOngoingCampaigns(categoryId, now);
+        Set<Long> availableShopIds = shopAccessService.findAvailableShopIdsForDisplay(
+                items.stream().map(item -> item.variant().shopId()).toList());
+        items = items.stream().filter(item -> availableShopIds.contains(item.variant().shopId())).toList();
         if (items.isEmpty()) {
             return new UserFlashSaleResponse(null, List.of());
         }

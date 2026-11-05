@@ -1,5 +1,7 @@
 package com.example.producr_service.adapter.out.elasticsearch;
 
+import java.util.Set;
+
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregation;
 import co.elastic.clients.elasticsearch._types.SortOrder;
@@ -69,7 +71,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
     }
 
     @Override
-    public ProductCatalogSearchResult search(ProductScrollFilter filter) {
+    public ProductCatalogSearchResult search(ProductScrollFilter filter, Set<Long> excludedShopIds) {
         // Lấy dư một item để xác định còn batch kế tiếp hay không.
         Pageable pageable = PageRequest.of(
                 0,
@@ -79,6 +81,11 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
         NativeQueryBuilder queryBuilder = NativeQuery.builder()
                 .withQuery(boolQueryBuilder -> {
                     BoolQuery.Builder bool = buildProductQuery(filter.keyword(), filter.categoryId());
+                    if (!excludedShopIds.isEmpty()) {
+                        bool.mustNot(query -> query.terms(terms -> terms
+                                .field(ProductSearchDocumentFields.USER_ID)
+                                .terms(values -> values.value(excludedShopIds.stream().map(FieldValue::of).toList()))));
+                    }
                     if (filter.minPrice() != null) {
                         bool.filter(range -> range.range(rangeQuery -> rangeQuery
                                 .number(numberRange -> numberRange

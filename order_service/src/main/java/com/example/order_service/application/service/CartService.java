@@ -44,6 +44,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
     ProductClientPort productClientPort;
     Clock clock;
     OutboxPort outboxPort;
+    ShopAvailabilityService shopAvailabilityService;
 
     // Giá xem trước không giữ hàng hoặc thay đổi dữ liệu giỏ hàng.
     @Override
@@ -80,6 +81,8 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                         ProductVariantInfoResponse::productVariantId,
                         productInfo -> productInfo,
                         (existing, duplicate) -> existing));
+        Map<Long, Boolean> shopLocks = shopAvailabilityService.getShopLocks(productInfoByVariantId.values().stream()
+                .map(ProductVariantInfoResponse::shopId).toList());
 
         Instant now = clock.instant();
         // Thiếu metadata sản phẩm chỉ ẩn item khỏi response, không xóa dữ liệu giỏ đã lưu.
@@ -87,7 +90,8 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 .filter(cartItem -> productInfoByVariantId.containsKey(cartItem.getProductVariantId()))
                 .map(cartItem -> toCartItemInfo(
                         cartItem,
-                        productInfoByVariantId.get(cartItem.getProductVariantId()), now))
+                        productInfoByVariantId.get(cartItem.getProductVariantId()),
+                        shopLocks.get(productInfoByVariantId.get(cartItem.getProductVariantId()).shopId()), now))
                 .toList();
 
         log.debug("Đã lấy giỏ hàng: user_id={}, cart_id={}, total_items={}",
@@ -100,7 +104,8 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 .build();
     }
 
-    private CartResponse.CartItemInfo toCartItemInfo(CartItem cartItem, ProductVariantInfoResponse productInfo, Instant now) {
+    private CartResponse.CartItemInfo toCartItemInfo(CartItem cartItem, ProductVariantInfoResponse productInfo,
+                                                   Boolean shopLock, Instant now) {
         List<CartResponse.VariantOptions> variantOptions = productInfo.variantOptions().stream()
                 .map(option -> new CartResponse.VariantOptions(option.name(), option.value()))
                 .toList();
@@ -118,6 +123,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 .productVariantId(productInfo.productVariantId())
                 .shopId(productInfo.shopId())
                 .shopName(productInfo.shopName())
+                .shopLock(shopLock)
                 .productName(productInfo.productName())
                 .imageUrl(productInfo.imageUrl())
                 .hasOption(productInfo.hasOption())
@@ -142,6 +148,10 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
     @Transactional
     public void addCartItem(Long productVariantId, Integer quantity) {
         ValidationUtils.requirePositiveIfPresent(quantity, CartDomainError.QUANTITY_INVALID);
+        if (productVariantId == null || productVariantId <= 0) {
+            throw new BusinessException(CartDomainError.PRODUCT_VARIANT_ID_REQUIRED);
+        }
+        shopAvailabilityService.requireAvailableVariants(List.of(productVariantId));
         Long userId = currentUserPort.getInfo().userId();
         log.debug("Bắt đầu thêm sản phẩm vào giỏ: user_id={}, product_variant_id={}, quantity={}",
                 userId, productVariantId, quantity == null ? 1 : quantity);
