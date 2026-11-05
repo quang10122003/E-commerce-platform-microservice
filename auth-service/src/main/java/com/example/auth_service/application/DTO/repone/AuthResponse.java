@@ -1,5 +1,7 @@
 package com.example.auth_service.application.DTO.repone;
 
+import com.example.auth_service.domain.model.RoleEnum;
+
 import java.util.Set;
 
 import lombok.Builder;
@@ -12,7 +14,7 @@ public class AuthResponse {
     private String accessToken;
 
     private String refreshToken;
-    Set<String> role;
+    Set<RoleEnum> role;
     private Long userId;
     private String email;
     private String fullName;

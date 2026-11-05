@@ -1,5 +1,7 @@
 package com.example.auth_service.adapter.out.persistence.role;
 
+import com.example.auth_service.domain.model.RoleEnum;
+
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -20,7 +22,7 @@ public class RoleRepositoryAdapter implements RoleRepositoryPort  {
     RoleMapper roleMapper;
 
     @Override
-    public Optional<Role> findByName(String name) {
+    public Optional<Role> findByName(RoleEnum name) {
         return  roleRepoJpa.findByName(name).map(roleMapper::toDomain);
     }
 

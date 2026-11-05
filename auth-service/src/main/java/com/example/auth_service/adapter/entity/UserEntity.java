@@ -99,13 +99,9 @@ public class UserEntity implements UserDetails {
         if (roles == null || roles.isEmpty()) {
             return Set.of();
         }
-        return roles.stream().filter((role) -> role != null && role.getName() != null && !role.getName().isBlank())
-                .map((role) -> {
-                    String name = role.getName();
-                    String roleName = name.startsWith("ROLE_") ? name : "ROLE_" + name;
-                    return new SimpleGrantedAuthority(roleName);
-
-                }).collect(Collectors.toSet());
+        return roles.stream().filter(role -> role != null && role.getName() != null)
+                .map(role -> new SimpleGrantedAuthority(role.getName().name()))
+                .collect(Collectors.toSet());
     }
 
     @Override

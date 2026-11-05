@@ -1,6 +1,6 @@
 package com.example.auth_service.infrastructure.sercurity;
 
-import com.example.auth_service.domain.until.TypeToken;
+import com.example.auth_service.application.constant.Constant;
 import io.jsonwebtoken.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -44,19 +44,19 @@ public class AuthUtil {
     }
 
     public String generateAccessToken(User user) {
-        return generateToken(user, TypeToken.ACCESS_TOKEN.getName(), accessTokenExpirationMillis);
+        return generateToken(user, Constant.ACCESS_TOKEN, accessTokenExpirationMillis);
     }
 
     public String generateRefreshToken(User user) {
-        return generateToken(user, TypeToken.REFRESH_TOKEN.getName(), refreshTokenExpirationMillis);
+        return generateToken(user, Constant.REFRESH_TOKEN, refreshTokenExpirationMillis);
     }
 
     private String generateToken(User user, String tokenType, long expirationMillis) {
         Instant now = Instant.now();
         Set<String> roleNames = user.getRoles().stream()
                 .map(Role::getName)
-                .filter(name -> name != null && !name.isBlank())
-                .map(name -> name.startsWith("ROLE_") ? name : "ROLE_" + name)
+                .filter(java.util.Objects::nonNull)
+                .map(Enum::name)
                 .collect(Collectors.toSet());
 
         return Jwts.builder()
@@ -85,11 +85,11 @@ public class AuthUtil {
     }
 
     public boolean isAccessTokenValid(String token, UserDetails userDetails) {
-        return isTokenValid(token, userDetails, TypeToken.ACCESS_TOKEN.getName());
+        return isTokenValid(token, userDetails, Constant.ACCESS_TOKEN);
     }
 
     public boolean isRefreshTokenValid(String token, UserDetails userDetails) {
-        return isTokenValid(token, userDetails, TypeToken.REFRESH_TOKEN.getName());
+        return isTokenValid(token, userDetails, Constant.REFRESH_TOKEN);
     }
 
     private boolean isTokenValid(String token, UserDetails userDetails, String expectedTokenType) {

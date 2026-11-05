@@ -1,13 +1,15 @@
 package com.example.auth_service.domain.model;
 
+import com.example.auth_service.domain.model.RoleEnum;
+
 public class Role {
 
     private Long id;
-    private String name;
+    private RoleEnum name;
 
     public Role(
             Long id,
-            String name) {
+            RoleEnum name) {
         this.id = id;
         this.name = name;
     }
@@ -16,7 +18,7 @@ public class Role {
         return id;
     }
 
-    public String getName() {
+    public RoleEnum getName() {
         return name;
     }
     

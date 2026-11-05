@@ -25,7 +25,7 @@ import com.example.auth_service.application.port.out.cache.CachePort;
 import com.example.auth_service.domain.model.OutboxEvent;
 import com.example.auth_service.domain.model.Role;
 import com.example.auth_service.domain.model.User;
-import com.example.auth_service.domain.until.RoleEnum;
+import com.example.auth_service.domain.model.RoleEnum;
 import com.example.common.exception.BusinessException;
 import com.example.common.exception.CacheAccessException;
 import com.example.common.security.AccessControlCacheKeys;
@@ -173,7 +173,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
         if (userRepositoryPort.findByEmail(email).isPresent()) {
             throw new BusinessException(AuthError.EMAIL_ALREADY_REGISTERED);
         }
-        Role role = roleRepositoryPort.findByName(RoleEnum.User.getName())
+        Role role = roleRepositoryPort.findByName(RoleEnum.ROLE_USER)
                 .orElseThrow(() -> new BusinessException(AuthError.ROLE_NOT_FOUND));
         String hashedPassword = authenticationManagerPort.encodePassword(request.getPassword());
         String fullName = ValidationUtils.normalize(request.getFullName());
