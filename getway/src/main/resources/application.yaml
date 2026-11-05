@@ -39,7 +39,7 @@ spring:
             - id: auth-service
               uri: lb://auth-service
               predicates:
-                - Path=/api/auth/**,/api/internal/shops/*/info,/api/internal/shop-info
+                - Path=/api/auth/**,/api/users,/api/users/**,/api/internal/shops/*/info,/api/internal/shop-info,/api/internal/shops/statuses
               filters:
                 - name: ApiResponse
 

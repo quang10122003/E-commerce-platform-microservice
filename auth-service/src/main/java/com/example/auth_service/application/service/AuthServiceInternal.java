@@ -1,5 +1,7 @@
 package com.example.auth_service.application.service;
 
+import com.example.auth_service.application.DTO.repone.ShopStatusResponse;
+import com.example.auth_service.application.port.in.GetShopStatusesUseCase;
 import com.example.auth_service.application.DTO.repone.ShopAddressView;
 import com.example.auth_service.application.DTO.repone.PublicShopInfoResponse;
 import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
@@ -23,9 +25,17 @@ import java.util.Objects;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class AuthServiceInternal implements InternalGetUserInfoUseCase, GetPublicShopInfoUseCase {
+public class AuthServiceInternal implements InternalGetUserInfoUseCase, GetPublicShopInfoUseCase,
+        GetShopStatusesUseCase {
     TokenServicePort tokenServicePort;
     UserRepositoryPort userRepositoryPort;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ShopStatusResponse> getShopStatuses(
+            List<Long> shopIds, Boolean locked) {
+        return userRepositoryPort.findShopStatuses(shopIds == null ? null : shopIds.stream().distinct().toList(), locked);
+    }
 
     @Override
     @Transactional(readOnly = true)

@@ -119,6 +119,20 @@ public class User {
         return !locked;
     }
 
+    public void toggleUserLock() {
+        if (!locked && roles.stream().anyMatch(role -> role.getName() == RoleEnum.ROLE_ADMIN)) {
+            throw new BusinessException(DomainAuthError.ADMIN_LOCK_FORBIDDEN);
+        }
+        locked = !locked;
+    }
+
+    public void toggleShopLock() {
+        if (roles.stream().noneMatch(role -> role.getName() == RoleEnum.ROLE_SHOP)) {
+            throw new BusinessException(DomainAuthError.SHOP_NOT_FOUND);
+        }
+        shopLock = !shopLock;
+    }
+
     public void assertUserNotLocked() {
         if (this.isLocked()) {
             throw new BusinessException(DomainAuthError.USER_LOCKED);

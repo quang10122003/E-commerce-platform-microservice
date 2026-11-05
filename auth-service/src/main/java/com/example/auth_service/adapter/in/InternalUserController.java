@@ -1,5 +1,9 @@
 package com.example.auth_service.adapter.in;
 
+import com.example.auth_service.application.DTO.repone.ShopStatusResponse;
+import com.example.auth_service.application.port.in.GetShopStatusesUseCase;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import com.example.auth_service.application.DTO.repone.PublicShopInfoResponse;
 import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
 import com.example.auth_service.application.DTO.repone.UserDisplayInfoResponse;
@@ -29,6 +33,15 @@ import java.util.List;
 public class InternalUserController {
     private final InternalGetUserInfoUseCase internalGetUserInfoUseCase;
     private final GetPublicShopInfoUseCase getPublicShopInfoUseCase;
+    private final GetShopStatusesUseCase getShopStatusesUseCase;
+
+    @GetMapping("/shops/statuses")
+    public List<ShopStatusResponse> getShopStatuses(
+            @RequestParam(required = false)
+            @Size(max = 500) List<@NotNull @Positive Long> shopIds,
+            @RequestParam(required = false) Boolean locked) {
+        return getShopStatusesUseCase.getShopStatuses(shopIds, locked);
+    }
 
     // Cần xác thực, không yêu cầu role; chỉ trả ID, tên theo lô để không lộ thông tin liên hệ khi hiển thị chat.
     @PostMapping("user-info")

@@ -40,6 +40,7 @@ public class SecurityConfig {
     };
 
     private static final String[] PUBLIC_GET_ENDPOINTS = {
+            "/api/internal/shops/statuses",
             "/api/internal/shops/{shopId}/info"
     };
 

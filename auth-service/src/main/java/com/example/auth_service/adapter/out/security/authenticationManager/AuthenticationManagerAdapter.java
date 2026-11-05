@@ -3,6 +3,7 @@ package com.example.auth_service.adapter.out.security.authenticationManager;
 import com.example.auth_service.application.DTO.repone.AuthenticatedUser;
 import com.example.auth_service.application.error.AuthError;
 import com.example.auth_service.application.port.out.AuthenticationManagerPort;
+import com.example.auth_service.domain.error.DomainAuthError;
 import com.example.common.exception.BusinessException;
 
 import lombok.AccessLevel;
@@ -12,6 +13,7 @@ import lombok.experimental.FieldDefaults;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,6 +37,8 @@ public class AuthenticationManagerAdapter implements AuthenticationManagerPort {
         try {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password));
+        } catch (LockedException exception) {
+            throw new BusinessException(DomainAuthError.USER_LOCKED, exception);
         } catch (BadCredentialsException ex) {
             log.warn("Đăng nhập thất bại do thông tin xác thực không hợp lệ: email={}", email);
             throw new BusinessException(AuthError.INVALID_CREDENTIALS, ex);

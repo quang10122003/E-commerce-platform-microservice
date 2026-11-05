@@ -1,7 +1,6 @@
 package com.example.auth_service.infrastructure.config;
 
 import com.example.auth_service.application.port.in.ChecktokenUseCase;
-import com.example.auth_service.application.port.in.GetPublicShopInfoUseCase;
 import com.example.auth_service.application.port.in.LoginUseCase;
 import com.example.auth_service.application.port.in.LogoutUserCase;
 import com.example.auth_service.application.port.in.RefreshTokenUseCase;
@@ -14,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 import com.example.auth_service.application.service.AuthApplicationService;
 import com.example.auth_service.application.service.AuthOutboxStatusService;
 import com.example.auth_service.application.service.AuthServiceInternal;
-import com.example.auth_service.application.port.in.InternalGetUserInfoUseCase;
+import com.example.auth_service.application.service.UserService;
 import com.example.auth_service.application.port.out.AuthEventPublisherPort;
 import com.example.auth_service.application.registry.OutboxEventHandlerRegistry;
 import com.example.auth_service.application.DTO.OutboxEventDto;
@@ -26,11 +25,6 @@ import java.time.Clock;
 
 @Configuration
 public class AuthConfig {
-    @Bean
-    GetPublicShopInfoUseCase getPublicShopInfoUseCase(AuthServiceInternal authServiceInternal) {
-        return authServiceInternal;
-    }
-
     @Bean
     EventHandler<OutboxEventDto> userRegisteredOutboxHandler(
             AuthEventPublisherPort authEventPublisherPort
@@ -61,17 +55,17 @@ public class AuthConfig {
                 userRepositoryPort, outboxEventPort, cachePort, clock);
     }
 
-    @Bean
+    @Bean(name = {"userService", "getUsersUseCase", "getUserOverviewUseCase", "toggleUserLockUseCase", "toggleShopLockUseCase"})
+    UserService userService(UserRepositoryPort userRepositoryPort, CachePort cachePort) {
+        return new UserService(userRepositoryPort, cachePort);
+    }
+
+    @Bean(name = {"authServiceInternal", "getPublicShopInfoUseCase", "internalGetUserInfoUseCase"})
     AuthServiceInternal authServiceInternal(
             TokenServicePort tokenServicePort,
             UserRepositoryPort userRepositoryPort
     ) {
         return new AuthServiceInternal(tokenServicePort, userRepositoryPort);
-    }
-
-    @Bean
-    InternalGetUserInfoUseCase internalGetUserInfoUseCase(AuthServiceInternal authServiceInternal) {
-        return authServiceInternal;
     }
 
     @Bean
