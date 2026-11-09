@@ -1,4 +1,8 @@
 spring:
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:../.env[.properties]
   application:
     name: discovery-server
 
@@ -7,9 +11,38 @@ server:
 
 eureka:
   client:
-    register-with-eureka: false
+    # Tự đăng ký vào chính mình để monitoring-service thấy và kiểm tra health như các service khác.
+    register-with-eureka: true
     fetch-registry: false
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
   server:
-    # Giảm thời gian giữ instance đã tắt trong môi trường phát triển.
-    enable-self-preservation: false
-    eviction-interval-timer-in-ms: 5000
+    # Mặc định tắt cho môi trường phát triển; production cần đặt EUREKA_SELF_PRESERVATION_ENABLED=true.
+    enable-self-preservation: ${EUREKA_SELF_PRESERVATION_ENABLED:false}
+    eviction-interval-timer-in-ms: ${EUREKA_EVICTION_INTERVAL_MS:5000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+  endpoint:
+    health:
+      show-components: always
+      show-details: never
+      group:
+        eureka:
+          # Monitoring gọi group này làm nhóm bắt buộc; Eureka server không phụ thuộc DB hay cache nên chỉ xét tài nguyên máy.
+          include:
+            - diskSpace
+            - ping
+
+app:
+  jwt:
+    public-key: ${JWT_PUBLIC_KEY}

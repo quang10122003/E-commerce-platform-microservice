@@ -17,6 +17,7 @@ public class FeignGlobalConfig {
     @Bean
     public RequestInterceptor requestContextInterceptor() {
         return requestTemplate -> {
+            // Request context gắn với luồng hiện tại, có thể vắng mặt khi gọi từ scheduler hoặc luồng nền.
             ServletRequestAttributes attributes =
                     (ServletRequestAttributes)
                             RequestContextHolder.getRequestAttributes();
@@ -25,6 +26,7 @@ public class FeignGlobalConfig {
             if (attributes != null) {
                 HttpServletRequest request = attributes.getRequest();
 
+                // Chuyển tiếp token của request hiện tại để service đích xác thực cùng người dùng.
                 String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
                 if (authorization != null && !authorization.isBlank()) {
                     requestTemplate.header(HttpHeaders.AUTHORIZATION, authorization);

@@ -12,14 +12,14 @@ target/
 !.env.example
 !.env.sample
 
-# Quy tắc riêng cho Codex, không đưa vào repository.
-AGENTS.md
-
 ### VS Code ###
 .vscode/
 .idea/
 .playwright-mcp/
 
-# Bỏ qua toàn bộ tài liệu Markdown.
+# Bỏ qua tài liệu Markdown, ngoại trừ README và cấu hình AI dùng chung.
 *.[mM][dD]
 !/README.md
+!/AI_RULES.md
+!/AGENTS.md
+!/CLAUDE.md

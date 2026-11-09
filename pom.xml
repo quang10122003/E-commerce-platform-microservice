@@ -26,6 +26,7 @@
 		<module>notification-service</module>
 		<module>producr-service</module>
 		<module>order_service</module>
+		<module>monitoring-service</module>
 	</modules>
 
 	<properties>

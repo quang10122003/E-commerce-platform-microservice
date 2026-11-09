@@ -38,7 +38,9 @@ public class GatewayAccessControlFilter implements org.springframework.cloud.gat
 
         // Token đã gửi vẫn phải được kiểm tra, kể cả khi endpoint cho phép truy cập công khai.
         String token = AuthorizationUtils.extractBearerToken(authorizationHeader);
+        // check token
         authorizeAccessUseCase.authorize(token);
+        // Giữ nguyên exchange để header Authorization tiếp tục đi theo request tới service đích.
         return chain.filter(exchange);
     }
 }

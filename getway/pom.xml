@@ -30,6 +30,12 @@
 			</exclusions>
 		</dependency>
 
+		<!-- Chỉ dùng để khóa actuator của gateway theo quyền admin; các route vẫn do GatewayAccessControlFilter kiểm tra. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
 		<!-- Spring Cloud Gateway - WebFlux -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>

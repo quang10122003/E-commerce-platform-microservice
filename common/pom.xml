@@ -44,6 +44,17 @@
 			<groupId>io.github.openfeign</groupId>
 			<artifactId>feign-core</artifactId>
 		</dependency>
+		<!-- Optional: chỉ service đăng ký Eureka và có actuator mới dùng handler health group. -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-netflix-eureka-client</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
 
 </project>

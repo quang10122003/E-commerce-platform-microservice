@@ -34,8 +34,6 @@ public class SecurityConfig {
             "/api/auth/login",
             "/api/auth/refresh_token",
             "/api/auth/logout",
-            "/actuator/health",
-            "/actuator/info",
             "/error"
     };
 
@@ -57,6 +55,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
                         .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
