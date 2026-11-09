@@ -1,5 +1,8 @@
 package com.example.producr_service.adapter.mapper;
 
+import com.example.producr_service.adapter.out.persistence.projection.CurrentFlashSaleItemProjection;
+import com.example.producr_service.application.dto.response.CurrentFlashSaleCampaignResponse;
+
 import com.example.producr_service.domain.model.FlashSaleItem;
 import java.util.Map;
 import java.util.Set;
@@ -19,6 +22,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FlashSaleCampaignMapper {
     private final FlashSaleItemMapper itemMapper;
+
+    public CurrentFlashSaleCampaignResponse.Item toCurrentItem(CurrentFlashSaleItemProjection projection) {
+        return new CurrentFlashSaleCampaignResponse.Item(projection.getId(),
+                projection.getProductName(), projection.getVariantAttributes(),
+                projection.getDiscountPercent(), projection.getRegisteredQuantity(), projection.getSoldQuantity(),
+                projection.getRegisteredQuantity() - projection.getSoldQuantity(),
+                projection.getStatus(), projection.getVariantDeleted());
+    }
 
     public CompletedFlashSaleCampaignView toCompletedView(CompletedFlashSaleCampaignProjection projection) {
         return new CompletedFlashSaleCampaignView(projection.getId(), projection.getName(),

@@ -1,5 +1,8 @@
 package com.example.producr_service.application.port.out.repo;
 
+import com.example.producr_service.application.dto.response.CurrentFlashSaleCampaignResponse;
+import com.example.producr_service.domain.model.FlashSaleItemStatus;
+
 import com.example.producr_service.domain.model.FlashSaleCampaign;
 import com.example.producr_service.application.dto.response.FlashSaleCampaignView;
 import com.example.producr_service.application.dto.response.CompletedFlashSaleCampaignView;
@@ -13,6 +16,10 @@ import java.util.Optional;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 
 public interface FlashSaleCampaignRepositoryPort {
+    Optional<FlashSaleCampaignView> findCurrent(LocalDateTime now);
+
+    List<CurrentFlashSaleCampaignResponse.Item> findCurrentItems(Long campaignId, FlashSaleItemStatus status, String keyword);
+
     void lockCampaignsForShare(Collection<Long> campaignIds);
 
     PageResponse<CompletedFlashSaleCampaignView> findCompletedByShopId(
@@ -25,7 +32,7 @@ public interface FlashSaleCampaignRepositoryPort {
     boolean existsOverlapping(LocalDateTime startsAt, LocalDateTime endsAt);
 
     PageResponse<FlashSaleCampaignView> findAll(PageQuery pageQuery, LocalDateTime from, LocalDateTime to,
-                                        FlashSaleCampaignStatus status, LocalDateTime now, Boolean registrationOpen);
+                                        FlashSaleCampaignStatus status, LocalDateTime now, Boolean registrationOpen, String keyword);
 
     Optional<FlashSaleCampaign> findByIdForUpdate(Long campaignId);
 

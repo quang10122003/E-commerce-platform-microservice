@@ -1,5 +1,8 @@
 package com.example.producr_service.adapter.out.persistence.FlashSaleCampaign;
 
+import com.example.producr_service.application.dto.response.CurrentFlashSaleCampaignResponse;
+import com.example.producr_service.domain.model.FlashSaleItemStatus;
+
 import com.example.producr_service.adapter.entity.FlashSaleCampaignEntity;
 import org.springframework.data.domain.Page;
 import com.example.producr_service.adapter.mapper.FlashSaleCampaignMapper;
@@ -31,6 +34,22 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
     FlashSaleCampaignJpa flashSaleCampaignJpa;
     FlashSaleCampaignMapper flashSaleCampaignMapper;
     ProductVariantJpa productVariantJpa;
+
+    @Override
+    public Optional<FlashSaleCampaignView> findCurrent(LocalDateTime now) {
+        return flashSaleCampaignJpa
+                .findFirstByStatusAndStartsAtLessThanEqualAndEndsAtGreaterThanOrderByIdAsc(
+                        FlashSaleCampaignStatus.PUBLISHED, now, now)
+                .map(flashSaleCampaignMapper::toView);
+    }
+
+    @Override
+    public List<CurrentFlashSaleCampaignResponse.Item> findCurrentItems(Long campaignId, FlashSaleItemStatus status, String keyword) {
+        String escapedKeyword = keyword == null || keyword.isBlank() ? null
+                : keyword.trim().replace("!", "!!").replace("%", "!%").replace("_", "!_");
+        return flashSaleCampaignJpa.findCurrentItems(campaignId, status, escapedKeyword).stream()
+                .map(flashSaleCampaignMapper::toCurrentItem).toList();
+    }
 
     @Override
     public void lockCampaignsForShare(Collection<Long> campaignIds) {
@@ -72,9 +91,11 @@ public class FlashSaleCampaignRepoAdapter implements FlashSaleCampaignRepository
     @Override
     public PageResponse<FlashSaleCampaignView> findAll(PageQuery pageQuery, LocalDateTime from,
                                                  LocalDateTime to, FlashSaleCampaignStatus status,
-                                                 LocalDateTime now, Boolean registrationOpen) {
+                                                 LocalDateTime now, Boolean registrationOpen, String keyword) {
+        String escapedKeyword = keyword == null ? null
+                : keyword.replace("!", "!!").replace("%", "!%").replace("_", "!_");
         Page<FlashSaleCampaignEntity> entityPage = flashSaleCampaignJpa.findCampaigns(
-                from, to, status == null ? null : status.name(), now, registrationOpen,
+                from, to, status == null ? null : status.name(), now, registrationOpen, escapedKeyword,
                 PageRequest.of(pageQuery.pageIndex(), pageQuery.size())
         );
         return new PageResponse<>(

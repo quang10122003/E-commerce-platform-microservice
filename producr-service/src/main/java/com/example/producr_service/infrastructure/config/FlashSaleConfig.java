@@ -1,5 +1,9 @@
 package com.example.producr_service.infrastructure.config;
 
+import com.example.producr_service.application.port.in.GetCurrentFlashSaleCampaignUseCase;
+import com.example.producr_service.application.port.in.GetAdminFlashSaleCampaignDetailUseCase;
+import com.example.producr_service.application.port.in.UpdateFlashSaleItemStatusUseCase;
+
 import com.example.producr_service.application.port.in.CreateFlashSaleCampaignUseCase;
 import com.example.producr_service.application.port.in.GetFlashSaleCampaignsUseCase;
 import com.example.producr_service.application.port.in.GetUserFlashSaleItemsUseCase;
@@ -38,6 +42,23 @@ import java.util.List;
 
 @Configuration
 public class FlashSaleConfig {
+
+    @Bean
+    GetAdminFlashSaleCampaignDetailUseCase getAdminFlashSaleCampaignDetailUseCase(
+            FlashSaleCampaignService flashSaleCampaignService) {
+        return flashSaleCampaignService;
+    }
+
+    @Bean
+    UpdateFlashSaleItemStatusUseCase updateFlashSaleItemStatusUseCase(FlashSaleItemService flashSaleItemService) {
+        return flashSaleItemService;
+    }
+
+    @Bean
+    GetCurrentFlashSaleCampaignUseCase getCurrentFlashSaleCampaignUseCase(
+            FlashSaleCampaignService flashSaleCampaignService) {
+        return flashSaleCampaignService;
+    }
 
     @Bean
     GetShopCompletedFlashSaleCampaignsUseCase getShopCompletedFlashSaleCampaignsUseCase(

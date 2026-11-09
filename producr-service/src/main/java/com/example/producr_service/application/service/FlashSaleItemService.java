@@ -31,7 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
-public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, PreviewFlashSalePriceUseCase,GetUserFlashSaleItemsUseCase, GetVariantSaleUseCase, GetShopFlashSaleItemsUseCase, RemoveShopFlashSaleItemUseCase, UpdateShopFlashSaleItemUseCase {
+public class FlashSaleItemService implements UpdateFlashSaleItemStatusUseCase, RegisterFlashSaleItemUseCase, PreviewFlashSalePriceUseCase,GetUserFlashSaleItemsUseCase, GetVariantSaleUseCase, GetShopFlashSaleItemsUseCase, RemoveShopFlashSaleItemUseCase, UpdateShopFlashSaleItemUseCase {
      CurrentUserPort currentUser;
      FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort;
      FlashSaleItemRepositoryPort flashSaleItemRepositoryPort;
@@ -39,6 +39,15 @@ public class FlashSaleItemService implements RegisterFlashSaleItemUseCase, Previ
      ProductVariantRepoPort productVariantRepoPort;
      VariantSaleResolver variantSaleResolver;
      ShopAccessService shopAccessService;
+
+    @Override
+    @Transactional
+    public void updateItemStatus(Long campaignId, Long itemId, UpdateFlashSaleItemStatusRequest request) {
+        FlashSaleCampaign campaign = flashSaleCampaignRepositoryPort.findByIdForUpdate(campaignId)
+                .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
+        campaign.updateItemStatus(itemId, request.status(), LocalDateTime.now(clock));
+        flashSaleCampaignRepositoryPort.save(campaign);
+    }
 
     @Override
     @Transactional(readOnly = true)

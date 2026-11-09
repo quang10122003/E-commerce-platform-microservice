@@ -1,5 +1,8 @@
 package com.example.producr_service.adapter.out.persistence.FlashSaleCampaign;
 
+import com.example.producr_service.adapter.out.persistence.projection.CurrentFlashSaleItemProjection;
+import com.example.producr_service.domain.model.FlashSaleItemStatus;
+
 import com.example.producr_service.adapter.entity.FlashSaleCampaignEntity;
 import com.example.producr_service.adapter.out.persistence.projection.CompletedFlashSaleCampaignProjection;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
@@ -17,6 +20,24 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEntity, Long> {
+
+    Optional<FlashSaleCampaignEntity> findFirstByStatusAndStartsAtLessThanEqualAndEndsAtGreaterThanOrderByIdAsc(
+            FlashSaleCampaignStatus status, LocalDateTime startsAt, LocalDateTime endsAt);
+
+    @Query("""
+            select i.id as id, i.productName as productName, i.variantAttributes as variantAttributes,
+                   i.discountPercent as discountPercent,
+                   i.registeredQuantity as registeredQuantity,
+                   i.soldQuantity as soldQuantity, i.status as status,
+                   case when i.variant is null then true else false end as variantDeleted
+            from FlashSaleItemEntity i
+            where i.campaign.id = :campaignId and (:status is null or i.status = :status)
+              and (:keyword is null or lower(i.productName) like lower(concat('%', :keyword, '%')) escape '!')
+            order by i.id asc
+            """)
+    List<CurrentFlashSaleItemProjection> findCurrentItems(
+            @Param("campaignId") Long campaignId, @Param("status") FlashSaleItemStatus status,
+            @Param("keyword") String keyword);
 
     @Query(value = """
             SELECT c.id AS id, c.name AS name, c.startsAt AS startsAt, c.endsAt AS endsAt
@@ -72,6 +93,7 @@ public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEnt
             where (:fromTime is null or c.starts_at >= :fromTime)
               and (:toTime is null or c.starts_at <= :toTime)
               and (:status is null or c.status = :status)
+              and (:keyword is null or lower(c.name) like lower(concat('%', :keyword, '%')) escape '!')
               and (:registrationOpen is null
                    or (:registrationOpen = true and c.status = 'DRAFT' and c.registration_deadline > :now)
                    or (:registrationOpen = false and (c.status != 'DRAFT' or c.registration_deadline <= :now)))
@@ -92,6 +114,7 @@ public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEnt
             where (:fromTime is null or c.starts_at >= :fromTime)
               and (:toTime is null or c.starts_at <= :toTime)
               and (:status is null or c.status = :status)
+              and (:keyword is null or lower(c.name) like lower(concat('%', :keyword, '%')) escape '!')
               and (:registrationOpen is null
                    or (:registrationOpen = true and c.status = 'DRAFT' and c.registration_deadline > :now)
                    or (:registrationOpen = false and (c.status != 'DRAFT' or c.registration_deadline <= :now)))
@@ -103,6 +126,7 @@ public interface FlashSaleCampaignJpa extends JpaRepository<FlashSaleCampaignEnt
             @Param("status") String status,
             @Param("now") LocalDateTime now,
             @Param("registrationOpen") Boolean registrationOpen,
+            @Param("keyword") String keyword,
             Pageable pageable
     );
 

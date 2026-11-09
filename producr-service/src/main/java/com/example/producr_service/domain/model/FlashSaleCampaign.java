@@ -137,12 +137,19 @@ public class FlashSaleCampaign {
 
     // Admin block phải giữ item và số liệu lịch sử, không xóa vật lý đăng ký.
     public void disableItem(Long itemId, LocalDateTime now) {
+        updateItemStatus(itemId, FlashSaleItemStatus.DISABLED, now);
+    }
+
+    public void updateItemStatus(Long itemId, FlashSaleItemStatus nextStatus, LocalDateTime now) {
+        if (status != FlashSaleCampaignStatus.DRAFT && status != FlashSaleCampaignStatus.PUBLISHED) {
+            throw new BusinessException(DomainProductError.FLASH_SALE_ITEM_STATUS_UPDATE_NOT_ALLOWED);
+        }
         for (int index = 0; index < items.size(); index++) {
             FlashSaleItem item = items.get(index);
             if (itemId != null && itemId.equals(item.id())) {
-                FlashSaleItem disabled = item.disable(now);
-                if (disabled != item) {
-                    items.set(index, disabled);
+                FlashSaleItem updatedItem = item.updateStatus(nextStatus, now);
+                if (updatedItem != item) {
+                    items.set(index, updatedItem);
                     updatedAt = now;
                 }
                 return;

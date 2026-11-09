@@ -64,11 +64,18 @@ public record FlashSaleItem(Long id, Long campaignId, Long variantId, Long shopI
 
     // Admin vô hiệu hóa vẫn phải giữ snapshot và số lượng đã mua để bảo toàn lịch sử.
     public FlashSaleItem disable(LocalDateTime now) {
-        if (status == FlashSaleItemStatus.DISABLED) {
+        return updateStatus(FlashSaleItemStatus.DISABLED, now);
+    }
+
+    public FlashSaleItem updateStatus(FlashSaleItemStatus nextStatus, LocalDateTime now) {
+        if (nextStatus == null) {
+            throw new BusinessException(DomainProductError.FLASH_SALE_ITEM_INVALID);
+        }
+        if (status == nextStatus) {
             return this;
         }
         return new FlashSaleItem(id, campaignId, variantId, shopId, productName, attributes,
-                discountPercent, registeredQuantity, soldQuantity, FlashSaleItemStatus.DISABLED, createdAt, now);
+                discountPercent, registeredQuantity, soldQuantity, nextStatus, createdAt, now);
     }
 
     public record RegistrationVariant(Long variantId, Long shopId, String productName,

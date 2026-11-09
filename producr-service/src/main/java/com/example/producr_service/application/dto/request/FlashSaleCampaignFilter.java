@@ -9,6 +9,7 @@ public record FlashSaleCampaignFilter(
         int size,
         OffsetDateTime from,
         OffsetDateTime to,
-        FlashSaleCampaignStatus status
+        FlashSaleCampaignStatus status,
+        String keyword
 ) {
 }

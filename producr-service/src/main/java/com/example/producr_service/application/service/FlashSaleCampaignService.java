@@ -1,5 +1,11 @@
 package com.example.producr_service.application.service;
 
+import com.example.producr_service.application.port.in.GetCurrentFlashSaleCampaignUseCase;
+import com.example.producr_service.application.port.in.GetAdminFlashSaleCampaignDetailUseCase;
+import com.example.producr_service.application.dto.response.CurrentFlashSaleCampaignResponse;
+import com.example.producr_service.application.dto.response.AdminFlashSaleCampaignDetailResponse;
+import com.example.producr_service.domain.model.FlashSaleItemStatus;
+
 import com.example.common.exception.BusinessException;
 import com.example.common.response.PageQuery;
 import com.example.producr_service.application.dto.request.FlashSaleCampaignFilter;
@@ -27,10 +33,11 @@ import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 import java.time.OffsetDateTime;
 import com.example.producr_service.application.port.in.GetShopFlashSaleCampaignDetailUseCase;
 import com.example.producr_service.application.dto.response.ShopFlashSaleCampaignDetailResponse;
+import java.util.Optional;
 import java.time.Clock;
 import java.time.LocalDateTime;
 
-public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase, GetFlashSaleCampaignsUseCase, CancelFlashSaleCampaignUseCase, GetShopFlashSaleCampaignsUseCase, GetShopFlashSaleCampaignDetailUseCase, GetShopCompletedFlashSaleCampaignsUseCase {
+public class FlashSaleCampaignService implements GetAdminFlashSaleCampaignDetailUseCase, GetCurrentFlashSaleCampaignUseCase, CreateFlashSaleCampaignUseCase, GetFlashSaleCampaignsUseCase, CancelFlashSaleCampaignUseCase, GetShopFlashSaleCampaignsUseCase, GetShopFlashSaleCampaignDetailUseCase, GetShopCompletedFlashSaleCampaignsUseCase {
     private final CurrentUserPort currentUserPort;
     private final FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort;
     private final Clock clock;
@@ -43,6 +50,26 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
         this.flashSaleCampaignRepositoryPort = flashSaleCampaignRepositoryPort;
         this.clock = clock;
         this.shopAccessService = shopAccessService;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AdminFlashSaleCampaignDetailResponse getCampaignDetail(Long campaignId, FlashSaleItemStatus status, String keyword) {
+        if (campaignId == null || campaignId <= 0) {
+            throw new BusinessException(ProductError.INVALID_FLASH_SALE_CAMPAIGN_ID);
+        }
+        FlashSaleCampaignView campaign = flashSaleCampaignRepositoryPort.findViewById(campaignId)
+                .orElseThrow(() -> new BusinessException(ProductError.FLASH_SALE_CAMPAIGN_NOT_FOUND));
+        return AdminFlashSaleCampaignDetailResponse.from(campaign,
+                flashSaleCampaignRepositoryPort.findCurrentItems(campaignId, status, keyword), clock.getZone());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<CurrentFlashSaleCampaignResponse> getCurrentCampaign(FlashSaleItemStatus status, String keyword) {
+        return flashSaleCampaignRepositoryPort.findCurrent(LocalDateTime.now(clock))
+                .map(campaign -> CurrentFlashSaleCampaignResponse.from(campaign,
+                        flashSaleCampaignRepositoryPort.findCurrentItems(campaign.id(), status, keyword), clock.getZone()));
     }
 
     @Override
@@ -102,7 +129,8 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
                 : filter.to().atZoneSameInstant(clock.getZone()).toLocalDateTime();
         PageResponse<FlashSaleCampaignView> campaigns = flashSaleCampaignRepositoryPort.findAll(
                 new PageQuery(filter.page(), filter.size()), from, to, filter.status(),
-                LocalDateTime.now(clock), null);
+                LocalDateTime.now(clock), null,
+                filter.keyword() == null || filter.keyword().isBlank() ? null : filter.keyword().trim());
         return new PageResponse<>(
                 campaigns.items().stream()
                         .map(campaign -> FlashSaleCampaignResponse.from(campaign, clock.getZone()))
@@ -127,7 +155,7 @@ public class FlashSaleCampaignService implements CreateFlashSaleCampaignUseCase,
                 : filter.to().atZoneSameInstant(clock.getZone()).toLocalDateTime();
         PageResponse<FlashSaleCampaignView> campaigns = flashSaleCampaignRepositoryPort.findAll(
                 new PageQuery(filter.page(), filter.size()), from, to, FlashSaleCampaignStatus.DRAFT,
-                now, filter.registrationOpen());
+                now, filter.registrationOpen(), null);
         return new PageResponse<>(campaigns.items().stream()
                 .map(campaign -> ShopFlashSaleCampaignResponse.from(campaign, clock.getZone(), now)).toList(),
                 campaigns.page(), campaigns.pageSize(), campaigns.totalItems(), campaigns.totalPages());
