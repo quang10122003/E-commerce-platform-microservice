@@ -17,6 +17,15 @@ CREATE TABLE notifications (
                                PRIMARY KEY (id)
 ) ENGINE = InnoDB;
 
+CREATE TABLE banners (
+                         id BIGINT NOT NULL AUTO_INCREMENT,
+                         name_banner VARCHAR(255) NOT NULL,
+                         is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                         html LONGTEXT NOT NULL,
+                         created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+                         PRIMARY KEY (id)
+) ENGINE=InnoDB;
+
 
 CREATE TABLE IF NOT EXISTS chat_conversations (
                                                   id BIGINT NOT NULL AUTO_INCREMENT,

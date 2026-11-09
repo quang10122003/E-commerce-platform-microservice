@@ -3,6 +3,8 @@ package com.example.notification.application.error;
 import com.example.common.error.ErrorCode;
 
 public enum NotificationError implements ErrorCode {
+    BANNER_NOT_FOUND("BANNER_NOT_FOUND", "Banner không tồn tại", 404),
+    BANNER_LIMIT_REACHED("BANNER_LIMIT_REACHED", "Chỉ được lưu tối đa 5 banner", 409),
     SSE_REPLAY_UNAVAILABLE("SSE_REPLAY_UNAVAILABLE", "Lịch sử SSE không còn đủ, cần tải lại dữ liệu", 409);
 
     private final String code;
