@@ -15,4 +15,19 @@ public interface OrderMapper {
 
     @Mapping(target = "order", ignore = true)
     OrderItemEntity toEntity(OrderItem item);
+
+    default Order toDomain(OrderEntity entity) {
+        return Order.reconstitute(entity.getId(), entity.getCheckout().getId(), entity.getShopId(),
+                entity.getShopNameSnapshot(), entity.getShopLogoUrlSnapshot(), entity.getPriceType(),
+                entity.getPaymentMethod(), entity.getStatus(), entity.getTotalAmount(), entity.getCancellationReason(),
+                entity.getCancelledAt(), entity.getCreatedAt(), entity.getUpdatedAt(),
+                entity.getItems().stream().map(this::toDomain).toList());
+    }
+
+    default OrderItem toDomain(OrderItemEntity entity) {
+        return OrderItem.reconstitute(entity.getId(), entity.getProductId(), entity.getProductVariantId(),
+                entity.getProductName(), entity.getVariantAttributes(), entity.getImageUrl(),
+                entity.getQuantity(), entity.getOriginalUnitPrice(), entity.getUnitPrice(),
+                entity.getTotalAmount(), entity.getPriceType(), entity.getCreatedAt());
+    }
 }

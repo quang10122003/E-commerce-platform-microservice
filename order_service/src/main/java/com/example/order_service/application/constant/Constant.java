@@ -12,6 +12,7 @@ public final class Constant {
     public static final String CHECKOUT = "Checkout";
     public static final String CHECKOUT_INVALID_REQUEST = "CHECKOUT_INVALID_REQUEST";
     public static final String CHECKOUT_ORDER_CREATION_FAILED = "CHECKOUT_ORDER_CREATION_FAILED";
+    public static final String CHECKOUT_PAYMENT_FAILED = "CHECKOUT_PAYMENT_FAILED";
 
     private Constant() {
     }

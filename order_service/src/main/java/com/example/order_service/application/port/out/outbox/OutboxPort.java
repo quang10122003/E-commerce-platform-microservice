@@ -1,5 +1,6 @@
 package com.example.order_service.application.port.out.outbox;
 
+import com.example.order_service.application.dto.event.CheckoutSucceededPayload;
 import com.example.order_service.application.dto.outbox.OutboxEventDto;
 
 import java.util.List;
@@ -12,4 +13,5 @@ public interface OutboxPort {
     Optional<OutboxEventDto> lockPendingEvent(UUID eventId);
     void markPublished(UUID eventId);
     void markFailed(UUID eventId, String errorMessage);
+    Optional<CheckoutSucceededPayload> findCheckoutSucceeded(Long checkoutId);
 }

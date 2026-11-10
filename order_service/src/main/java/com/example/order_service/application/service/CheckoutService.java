@@ -253,7 +253,7 @@ public class CheckoutService implements CreateCheckoutUseCase {
         LocalDateTime now = LocalDateTime.now(clock);
         CheckoutInventoryRollbackRequestedPayload event = new CheckoutInventoryRollbackRequestedPayload(eventId,
                 CheckoutInventoryRollbackRequestedPayload.EVENT_TYPE, succeeded.checkoutId(), succeeded.eventId(),
-                reasonCode, reason, now.atZone(clock.getZone()).toOffsetDateTime());
+                null, reasonCode, reason, now.atZone(clock.getZone()).toOffsetDateTime());
         outbox.save(new OutboxEventDto(eventId, Constant.CHECKOUT, succeeded.checkoutId().toString(),
                 event.eventType(), event, now));
         log.warn("Chờ Product rollback tồn kho: event_id={}, checkout_id={}, reason_code={}",

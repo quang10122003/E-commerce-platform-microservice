@@ -68,6 +68,9 @@ public class PaymentEntity {
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
+    @Column(name = "requested_at")
+    private LocalDateTime requestedAt;
+
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 

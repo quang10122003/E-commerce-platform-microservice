@@ -67,6 +67,12 @@ spring:
               filters:
                 - name: ApiResponse
 
+            # VNPay đọc body thô {RspCode, Message}, nên IPN không được bọc qua ApiResponse.
+            - id: order-service-vnpay-ipn
+              uri: lb://order-service
+              predicates:
+                - Path=/api/payments/vnpay/ipn
+
             # Giỏ hàng và checkout cùng thuộc Order Service.
             - id: order-service
               uri: lb://order-service

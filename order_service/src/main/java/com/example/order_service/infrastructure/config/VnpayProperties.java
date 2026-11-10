@@ -6,5 +6,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record VnpayProperties(String paymentUrl, String tmnCode, String hashSecret,
                               String returnUrl, String version, String command,
                               String currency, String locale, String orderType,
-                              int timeoutMinutes) {
+                              int timeoutMinutes, String queryUrl, int reconcileGraceMinutes) {
 }

@@ -26,6 +26,7 @@ public final class Payment {
     private String transactionStatus;
     private String paymentUrl;
     private LocalDateTime expiresAt;
+    private LocalDateTime requestedAt;
     private LocalDateTime paidAt;
     private LocalDateTime cancelledAt;
     private String cancellationReason;
@@ -35,7 +36,7 @@ public final class Payment {
     private Payment(Long id, Long checkoutId, String paymentMethod, PaymentStatus status, BigDecimal amount,
             String currency, String transactionReference, String providerTransactionId, String bankCode,
             String bankTransactionId, String responseCode, String transactionStatus, String paymentUrl,
-            LocalDateTime expiresAt, LocalDateTime paidAt, LocalDateTime cancelledAt,
+            LocalDateTime expiresAt, LocalDateTime requestedAt, LocalDateTime paidAt, LocalDateTime cancelledAt,
             String cancellationReason, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = validateOptionalId(id);
         this.checkoutId = requireId(checkoutId);
@@ -56,6 +57,7 @@ public final class Payment {
         this.createdAt = validateTime(createdAt, null);
         this.updatedAt = validateTime(updatedAt, createdAt);
         this.expiresAt = expiresAt;
+        this.requestedAt = requestedAt;
         this.paidAt = paidAt;
         this.cancelledAt = cancelledAt;
         this.cancellationReason = validateOptionalText(cancellationReason, 500);
@@ -78,18 +80,18 @@ public final class Payment {
 
     public static Payment create(Long checkoutId, BigDecimal amount, LocalDateTime now) {
         return new Payment(null, checkoutId, null, PaymentStatus.UNPAID, validateAmount(amount), "VND",
-                null, null, null, null, null, null, null, null, null, null, null, now, now);
+                null, null, null, null, null, null, null, null, null, null, null, null, now, now);
     }
 
     public static Payment reconstitute(Long id, Long checkoutId, String paymentMethod, PaymentStatus status,
             BigDecimal amount, String currency, String transactionReference, String providerTransactionId,
             String bankCode, String bankTransactionId, String responseCode, String transactionStatus,
-            String paymentUrl, LocalDateTime expiresAt, LocalDateTime paidAt, LocalDateTime cancelledAt,
-            String cancellationReason, LocalDateTime createdAt, LocalDateTime updatedAt) {
+            String paymentUrl, LocalDateTime expiresAt, LocalDateTime requestedAt, LocalDateTime paidAt,
+            LocalDateTime cancelledAt, String cancellationReason, LocalDateTime createdAt, LocalDateTime updatedAt) {
         requireId(id);
         return new Payment(id, checkoutId, paymentMethod, status, amount, currency,
                 transactionReference, providerTransactionId, bankCode, bankTransactionId,
-                responseCode, transactionStatus, paymentUrl, expiresAt, paidAt, cancelledAt,
+                responseCode, transactionStatus, paymentUrl, expiresAt, requestedAt, paidAt, cancelledAt,
                 cancellationReason, createdAt, updatedAt);
     }
 
@@ -107,6 +109,8 @@ public final class Payment {
         this.amount = validAmount;
         this.transactionReference = validReference;
         this.expiresAt = expiresAt;
+        // Provider truy vấn giao dịch theo đúng thời điểm tạo yêu cầu thanh toán này.
+        this.requestedAt = preparedAt;
         updatedAt = preparedAt;
     }
 
@@ -163,6 +167,10 @@ public final class Payment {
         updatedAt = confirmedAt;
     }
 
+    public boolean isExpiredAt(LocalDateTime time) {
+        return expiresAt == null || time.isAfter(expiresAt);
+    }
+
     // PENDING cần xác minh với provider trước khi hủy, không tự hủy theo đồng hồ local.
     public void cancel(String reason, LocalDateTime now) {
         if (status == PaymentStatus.CANCEL) {
@@ -171,6 +179,21 @@ public final class Payment {
         if (status != PaymentStatus.UNPAID) {
             throw new BusinessException(OrderDomainError.INVALID_STATE);
         }
+        applyCancel(reason, now);
+    }
+
+    // Chỉ gọi khi provider đã xác nhận giao dịch không thành công, không hủy theo đồng hồ local.
+    public void cancelPending(String reason, LocalDateTime now) {
+        if (status == PaymentStatus.CANCEL) {
+            return;
+        }
+        if (status != PaymentStatus.PENDING) {
+            throw new BusinessException(OrderDomainError.INVALID_STATE);
+        }
+        applyCancel(reason, now);
+    }
+
+    private void applyCancel(String reason, LocalDateTime now) {
         String validReason = requireText(reason, 500);
         LocalDateTime cancellationTime = validateTime(now, updatedAt);
         status = PaymentStatus.CANCEL;
@@ -233,6 +256,10 @@ public final class Payment {
 
     public LocalDateTime getExpiresAt() {
         return expiresAt;
+    }
+
+    public LocalDateTime getRequestedAt() {
+        return requestedAt;
     }
 
     public LocalDateTime getPaidAt() {

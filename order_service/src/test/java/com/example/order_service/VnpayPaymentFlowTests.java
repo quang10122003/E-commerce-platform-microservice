@@ -34,6 +34,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.AnnotationTransactionAttributeSource;
 import org.springframework.transaction.interceptor.TransactionInterceptor;
 import org.springframework.transaction.support.SimpleTransactionStatus;
+import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -63,7 +64,8 @@ class VnpayPaymentFlowTests {
     private VnpayPaymentAdapter adapter() {
         return new VnpayPaymentAdapter(new VnpayProperties(
                 "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html", "DEMOV210", "test-secret",
-                "https://shop.example/payment?source=vnpay&lang=vn", "2.1.0", "pay", "VND", "vn", "other", 15));
+                "https://shop.example/payment?source=vnpay&lang=vn", "2.1.0", "pay", "VND", "vn", "other", 15,
+                "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction", 15), RestClient.create());
     }
 
     @Test

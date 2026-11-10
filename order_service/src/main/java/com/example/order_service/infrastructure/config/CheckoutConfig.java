@@ -30,7 +30,15 @@ import com.example.order_service.application.strategy.payment.VnpayCheckoutHandl
 import com.example.order_service.application.service.VnpayPaymentService;
 import com.example.order_service.adapter.out.payment.VnpayPaymentAdapter;
 import com.example.order_service.application.port.out.client.VnpayPaymentPort;
+import com.example.order_service.application.port.out.client.VnpaySignaturePort;
+import com.example.order_service.application.service.VnpayIpnService;
+import com.example.order_service.application.port.in.ReconcileExpiredPaymentUseCase;
+import com.example.order_service.application.port.out.client.VnpayQueryPort;
+import com.example.order_service.application.service.PaymentReconciliationService;
+import com.example.order_service.application.service.PaymentOutcomeService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.client.RestClient;
 import com.example.order_service.application.strategy.outbox.CheckoutRequestedOutboxHandler;
 import com.example.order_service.application.strategy.outbox.CheckoutInventoryRequestedOutboxHandler;
 import com.example.order_service.application.strategy.outbox.CheckoutInventoryRollbackRequestedOutboxHandler;
@@ -46,6 +54,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.util.List;
 
 @Configuration
@@ -108,13 +117,36 @@ public class CheckoutConfig {
     }
 
     @Bean
-    VnpayPaymentPort vnpayPaymentAdapter(VnpayProperties properties) {
-        return new VnpayPaymentAdapter(properties);
+    VnpayPaymentAdapter vnpayPaymentAdapter(VnpayProperties properties) {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofSeconds(5));
+        requestFactory.setReadTimeout(Duration.ofSeconds(10));
+        return new VnpayPaymentAdapter(properties, RestClient.builder().requestFactory(requestFactory).build());
+    }
+
+    @Bean
+    ReconcileExpiredPaymentUseCase reconcileExpiredPaymentUseCase(PaymentRepoPort paymentRepoPort,
+            VnpayQueryPort vnpayQueryPort, Clock clock, VnpayProperties properties,
+            PaymentOutcomeService paymentOutcomeService) {
+        return new PaymentReconciliationService(paymentRepoPort, vnpayQueryPort, clock,
+                properties.reconcileGraceMinutes(), paymentOutcomeService);
+    }
+
+    @Bean
+    PaymentOutcomeService paymentOutcomeService(PaymentRepoPort paymentRepoPort,
+            OrderRepoPort orderRepoPort, OutboxPort outboxPort, Clock clock) {
+        return new PaymentOutcomeService(paymentRepoPort, orderRepoPort, outboxPort, clock);
     }
 
     @Bean
     VnpayPaymentService vnpayPaymentService(VnpayPaymentPort vnpayPaymentPort, PaymentRepoPort paymentRepoPort) {
         return new VnpayPaymentService(vnpayPaymentPort, paymentRepoPort);
+    }
+
+    @Bean
+    VnpayIpnService vnpayIpnService(VnpaySignaturePort vnpaySignaturePort, PaymentRepoPort paymentRepoPort,
+            Clock clock, PaymentOutcomeService paymentOutcomeService) {
+        return new VnpayIpnService(vnpaySignaturePort, paymentRepoPort, clock, paymentOutcomeService);
     }
 
     @Bean

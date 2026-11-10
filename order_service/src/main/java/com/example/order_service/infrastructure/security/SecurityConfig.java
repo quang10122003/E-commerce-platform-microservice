@@ -16,7 +16,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {
-            "/error"
+            "/error",
+            "/api/payments/vnpay/ipn"
     };
 
     private final JwtAuthFilter jwtAuthFilter;

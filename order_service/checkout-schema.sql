@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS payment (
     transaction_status VARCHAR(2) NULL,
     payment_url TEXT NULL,
     expires_at DATETIME(6) NULL,
+    requested_at DATETIME(6) NULL,
     paid_at DATETIME(6) NULL,
     cancelled_at DATETIME(6) NULL,
     cancellation_reason VARCHAR(500) NULL,

@@ -101,6 +101,10 @@ app:
     locale: vn
     order-type: other
     timeout-minutes: ${VNPAY_TIMEOUT_MINUTES:15}
+    query-url: https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
+    # Chờ thêm sau expires_at vì IPN có thể về trễ trước khi tự hỏi QueryDR.
+    reconcile-grace-minutes: ${VNPAY_RECONCILE_GRACE_MINUTES:15}
+    reconcile-fixed-delay-ms: 60000
   kafka:
     consumer:
       retry-interval-ms: 60000

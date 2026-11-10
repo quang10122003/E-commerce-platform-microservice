@@ -37,4 +37,21 @@ public class OrderRepoAdapter implements OrderRepoPort {
         }
         return List.copyOf(ids);
     }
+
+    @Override
+    public List<Order> findByCheckoutIdForUpdate(Long checkoutId) {
+        return orders.findByCheckoutIdForUpdate(checkoutId).stream().map(mapper::toDomain).toList();
+    }
+
+    // Chỉ ghi các trường trạng thái; item của order không đổi nên không ghi lại.
+    @Override
+    public void saveStatus(List<Order> values) {
+        for (Order value : values) {
+            OrderEntity entity = orders.getReferenceById(value.getId());
+            entity.setStatus(value.getStatus());
+            entity.setCancellationReason(value.getCancellationReason());
+            entity.setCancelledAt(value.getCancelledAt());
+            entity.setUpdatedAt(value.getUpdatedAt());
+        }
+    }
 }

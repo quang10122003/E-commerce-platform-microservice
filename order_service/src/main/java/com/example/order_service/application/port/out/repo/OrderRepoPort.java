@@ -5,4 +5,6 @@ import java.util.List;
 
 public interface OrderRepoPort {
     List<Long> saveAll(List<Order> orders);
+    List<Order> findByCheckoutIdForUpdate(Long checkoutId);
+    void saveStatus(List<Order> orders);
 }

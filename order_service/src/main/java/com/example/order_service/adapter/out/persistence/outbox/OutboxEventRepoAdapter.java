@@ -1,7 +1,10 @@
 package com.example.order_service.adapter.out.persistence.outbox;
 
+import com.example.order_service.adapter.entity.OutboxEventEntity;
 import com.example.order_service.adapter.mapper.OutboxEventMapper;
 import com.example.order_service.application.constant.Constant;
+import com.example.order_service.application.dto.event.CheckoutSucceededPayload;
+import com.example.order_service.application.port.out.serialization.ObjectMapperPort;
 import com.example.order_service.application.dto.outbox.OutboxEventDto;
 import com.example.order_service.application.port.out.outbox.OutboxPort;
 import com.example.order_service.domain.model.OutboxEvent;
@@ -21,7 +24,16 @@ import java.util.UUID;
 public class OutboxEventRepoAdapter implements OutboxPort {
     private final OutboxEventJpa outboxEventJpa;
     private final OutboxEventMapper outboxEventMapper;
+    private final ObjectMapperPort objectMapperPort;
     private final Clock clock;
+
+    @Override
+    public Optional<CheckoutSucceededPayload> findCheckoutSucceeded(Long checkoutId) {
+        return outboxEventJpa.findFirstByAggregateTypeAndAggregateIdAndEventTypeOrderByIdDesc(
+                        Constant.CHECKOUT, checkoutId.toString(), CheckoutSucceededPayload.EVENT_TYPE)
+                .map((OutboxEventEntity entity) -> objectMapperPort.readValue(entity.getPayload(),
+                        CheckoutSucceededPayload.class));
+    }
 
     @Override
     public void save(OutboxEventDto event) {

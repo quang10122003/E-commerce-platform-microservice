@@ -29,4 +29,7 @@ public interface OutboxEventJpa extends JpaRepository<OutboxEventEntity, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select e from OutboxEventEntity e where e.eventId = :eventId")
     Optional<OutboxEventEntity> findByEventIdForUpdate(@Param("eventId") String eventId);
+
+    Optional<OutboxEventEntity> findFirstByAggregateTypeAndAggregateIdAndEventTypeOrderByIdDesc(
+            String aggregateType, String aggregateId, String eventType);
 }

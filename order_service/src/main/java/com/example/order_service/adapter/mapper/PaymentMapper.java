@@ -16,7 +16,8 @@ public interface PaymentMapper {
                 entity.getPaymentMethod(), entity.getStatus(), entity.getAmount(), entity.getCurrency(),
                 entity.getTransactionReference(), entity.getProviderTransactionId(), entity.getBankCode(),
                 entity.getBankTransactionId(), entity.getResponseCode(), entity.getTransactionStatus(),
-                entity.getPaymentUrl(), entity.getExpiresAt(), entity.getPaidAt(), entity.getCancelledAt(),
+                entity.getPaymentUrl(), entity.getExpiresAt(), entity.getRequestedAt(), entity.getPaidAt(),
+                entity.getCancelledAt(),
                 entity.getCancellationReason(), entity.getCreatedAt(), entity.getUpdatedAt());
     }
 }
