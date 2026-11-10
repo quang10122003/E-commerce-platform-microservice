@@ -290,9 +290,40 @@ public class CheckoutInventoryService {
                 flashSaleItemRepositoryPort.updateSoldQuantity(sale.id(), sale.soldQuantity() - item.quantity(), LocalDateTime.now(clock));
             }
         }
+        decreaseTotalSoldIfCounted(event, items);
+        LocalDateTime now = LocalDateTime.now(clock);
+        for (Long productId : productIds.stream().distinct().toList()) {
+            outbox.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT, productId.toString(),
+                    ProductUpdatedOutboxPayload.EVENT_TYPE, new ProductUpdatedOutboxPayload(productId), now));
+        }
         publishRolledBack(event);
         log.info("Đã rollback tồn kho checkout: event_id={}, event_type={}, checkout_id={}, item_count={}",
                 event.eventId(), event.eventType(), event.checkoutId(), items.size());
+    }
+
+    // CHECKOUT_SUCCEEDED tới muộn hơn rollback sẽ thấy inbox đã có và bỏ qua, nên không tăng lượt bán sai.
+    private void decreaseTotalSoldIfCounted(CheckoutInventoryRollbackRequestedPayload event,
+                                            List<CheckoutItemSnapshotDto> items) {
+        if (event.checkoutSucceededEventId() == null) {
+            return;
+        }
+        InboxEvent marker = InboxEvent.create(event.checkoutSucceededEventId(), CheckoutSucceededPayload.EVENT_TYPE,
+                json.writeValue(event), LocalDateTime.now(clock));
+        if (inbox.tryInsert(marker)) {
+            log.info("CHECKOUT_SUCCEEDED chưa được xử lý nên không cần trừ lượt bán: event_id={}, checkout_id={}",
+                    event.eventId(), event.checkoutId());
+            return;
+        }
+        Map<Long, Long> quantities = new TreeMap<>();
+        for (CheckoutItemSnapshotDto item : items) {
+            quantities.merge(item.productId(), (long) item.quantity(), Math::addExact);
+        }
+        for (Map.Entry<Long, Long> entry : quantities.entrySet()) {
+            if (productRepositoryPort.decreaseTotalSold(entry.getKey(), entry.getValue()) != 1) {
+                log.warn("Bỏ qua trừ lượt bán: event_id={}, checkout_id={}, product_id={}",
+                        event.eventId(), event.checkoutId(), entry.getKey());
+            }
+        }
     }
 
     // Ghi Inbox để tránh xử lý lặp; trả về false nếu eventId đã tồn tại.

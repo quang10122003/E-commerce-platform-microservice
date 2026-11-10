@@ -26,6 +26,11 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
     @Query("update ProductEntity p set p.totalSold = p.totalSold + :quantity where p.id = :id")
     int increaseTotalSold(@Param("id") Long id, @Param("quantity") long quantity);
 
+    @Modifying
+    @Query("update ProductEntity p set p.totalSold = p.totalSold - :quantity "
+            + "where p.id = :id and p.totalSold >= :quantity")
+    int decreaseTotalSold(@Param("id") Long id, @Param("quantity") long quantity);
+
     @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("select p from ProductEntity p where p.id = :id")
     Optional<ProductEntity> findByIdForShare(@Param("id") Long id);

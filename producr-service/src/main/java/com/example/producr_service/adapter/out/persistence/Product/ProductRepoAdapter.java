@@ -46,6 +46,11 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
         return productJpa.increaseTotalSold(productId, quantity);
     }
 
+    @Override
+    public int decreaseTotalSold(Long productId, long quantity) {
+        return productJpa.decreaseTotalSold(productId, quantity);
+    }
+
     // Khóa SHARE chặn sửa/xóa sản phẩm nhưng vẫn cho mua đồng thời các phân loại khác nhau.
     @Override
     public void lockProductsForShare(Collection<Long> productIds) {
