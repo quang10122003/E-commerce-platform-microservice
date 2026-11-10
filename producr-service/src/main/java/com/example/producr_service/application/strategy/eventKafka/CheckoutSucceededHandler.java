@@ -18,6 +18,6 @@ public class CheckoutSucceededHandler implements EventHandler<String> {
 
     @Override
     public void handle(String message) {
-        service.increaseCheckoutTotalSold(json.readValue(message, CheckoutSucceededPayload.class));
+        service.processCheckoutSucceeded(json.readValue(message, CheckoutSucceededPayload.class));
     }
 }

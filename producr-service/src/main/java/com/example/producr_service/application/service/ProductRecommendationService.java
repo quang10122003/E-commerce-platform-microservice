@@ -223,15 +223,15 @@ public class ProductRecommendationService implements RecordProductViewUseCase, G
             return List.of();
         }
         Set<Long> availableIds = productRepositoryPort.findAvailableProductIds(productIds);
-        Set<Long> purchasedIds = findPurchasedProductIdsInLastSevenDaysDemo(userId, now);
+        Set<Long> purchasedIds = findPurchasedProductIdsInLastSevenDays(userId, now);
         return productIds.stream().distinct().filter(availableIds::contains)
                 .filter(id -> !purchasedIds.contains(id)).toList();
     }
 
-    // filter bỏ các sản phẩm đã mua trong số ngày
-    private Set<Long> findPurchasedProductIdsInLastSevenDaysDemo(Long userId, Instant now) {
-        // TODO: Thay bằng dữ liệu đơn hoàn thành khi triển khai chức năng mua hàng.
-        return Set.of();
+    // filter bỏ các sản phẩm đã mua trong số ngày được cấu hình
+    private Set<Long> findPurchasedProductIdsInLastSevenDays(Long userId, Instant now) {
+        return productBehaviorRepositoryPort.findProductIdsByUserIdAndTypeSince(userId, BehaviorType.PURCHASE,
+                now.minus(Constant.RECOMMENDATION_PURCHASED_EXCLUDE_DURATION));
     }
 
     // hàm lấy các sản phẩm tưong tự sản phẩm đnag chọn

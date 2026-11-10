@@ -16,6 +16,7 @@ import com.example.producr_service.application.service.CheckoutInventoryService;
 import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRepositoryPort;
 import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import com.example.producr_service.application.port.out.repo.InboxEventPort;
+import com.example.producr_service.application.port.out.repo.ProductBehaviorRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
@@ -38,9 +39,10 @@ public class OrderEventConfig {
             FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort,
             FlashSaleItemRepositoryPort flashSaleItemRepositoryPort,
             OutboxPort outbox, MapJsonToObjPort json, Clock clock,
-            ShopAccessService shopAccessService) {
+            ShopAccessService shopAccessService, ProductBehaviorRepositoryPort productBehaviorRepositoryPort) {
         return new CheckoutInventoryService(inbox, productRepositoryPort, productVariantRepoPort,
-                flashSaleCampaignRepositoryPort, flashSaleItemRepositoryPort, outbox, json, clock, shopAccessService);
+                flashSaleCampaignRepositoryPort, flashSaleItemRepositoryPort, outbox, json, clock, shopAccessService,
+                productBehaviorRepositoryPort);
     }
 
     @Bean

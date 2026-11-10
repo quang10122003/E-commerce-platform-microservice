@@ -8,11 +8,14 @@ import com.example.producr_service.application.dto.saga.CheckoutSucceededPayload
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.repo.InboxEventPort;
+import com.example.producr_service.application.port.out.repo.ProductBehaviorRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.registry.KafkaEventHandlerRegistry;
 import com.example.producr_service.application.service.CheckoutInventoryService;
 import com.example.producr_service.application.service.OrderEventApplicationService;
 import com.example.producr_service.application.strategy.eventKafka.CheckoutSucceededHandler;
+import com.example.producr_service.domain.model.BehaviorType;
+import com.example.producr_service.domain.model.UserProductBehavior;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.aop.framework.ProxyFactory;
@@ -22,6 +25,7 @@ import org.springframework.transaction.interceptor.TransactionInterceptor;
 import org.springframework.transaction.support.SimpleTransactionStatus;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -41,14 +45,20 @@ class CheckoutTotalSoldTests {
     private final ProductRepositoryPort products = mock(ProductRepositoryPort.class);
     private final OutboxPort outbox = mock(OutboxPort.class);
     private final MapJsonToObjPort json = mock(MapJsonToObjPort.class);
+    private final ProductBehaviorRepositoryPort behaviors = mock(ProductBehaviorRepositoryPort.class);
     private final CheckoutInventoryService service = new CheckoutInventoryService(
-            inbox, products, null, null, null, outbox, json, clock, null);
+            inbox, products, null, null, null, outbox, json, clock, null, behaviors);
     private final UUID inventoryId = UUID.randomUUID();
 
     private CheckoutSucceededPayload event(String method) {
         return new CheckoutSucceededPayload(UUID.randomUUID(), CheckoutSucceededPayload.EVENT_TYPE,
                 1L, 2L, "DONE", method, List.of(3L), BigDecimal.TEN, OffsetDateTime.now(clock),
                 null, null, null, inventoryId);
+    }
+
+    private CheckoutSucceededPayload eventAt(OffsetDateTime occurredAt) {
+        return new CheckoutSucceededPayload(UUID.randomUUID(), CheckoutSucceededPayload.EVENT_TYPE,
+                1L, 2L, "DONE", "COD", List.of(3L), BigDecimal.TEN, occurredAt, null, null, null, inventoryId);
     }
 
     private void prepare(long checkoutId) {
@@ -79,6 +89,7 @@ class CheckoutTotalSoldTests {
             router.process(event.eventId().toString(), event.eventType(), method);
         }
         verify(products, times(2)).increaseTotalSold(5L, 5L);
+        verify(behaviors, times(2)).saveIfAbsent(any());
         ArgumentCaptor<OutboxEventDto> published = ArgumentCaptor.forClass(OutboxEventDto.class);
         verify(outbox, times(2)).save(published.capture());
         assertTrue(published.getAllValues().stream().allMatch(
@@ -131,5 +142,67 @@ class CheckoutTotalSoldTests {
         verify(transactions).rollback(status);
         verify(transactions, never()).commit(any());
         verify(outbox).save(any());
+    }
+
+    @Test
+    void processCheckoutSucceededIncreasesSoldAndRecordsPurchaseBehavior() {
+        prepare(1L);
+        CheckoutSucceededPayload event = event("COD");
+        service.processCheckoutSucceeded(event);
+        verify(products).increaseTotalSold(5L, 5L);
+        ArgumentCaptor<UserProductBehavior> saved = ArgumentCaptor.forClass(UserProductBehavior.class);
+        verify(behaviors).saveIfAbsent(saved.capture());
+        UserProductBehavior behavior = saved.getValue();
+        assertEquals(2L, behavior.getUserId());
+        assertEquals(5L, behavior.getProductId());
+        assertEquals(BehaviorType.PURCHASE, behavior.getEventType());
+        assertEquals(event.occurredAt().toInstant(), behavior.getCreatedAt());
+        assertEquals(UUID.nameUUIDFromBytes((event.eventId() + ":5").getBytes(StandardCharsets.UTF_8)).toString(),
+                behavior.getEventId());
+    }
+
+    @Test
+    void increaseCheckoutTotalSoldAloneDoesNotRecordBehavior() {
+        prepare(1L);
+        service.increaseCheckoutTotalSold(event("COD"));
+        verifyNoInteractions(behaviors);
+    }
+
+    @Test
+    void replayKeepsSameBehaviorEventIdSoDatabaseDeduplicates() {
+        prepare(1L);
+        when(inbox.tryInsert(any())).thenReturn(true, false);
+        CheckoutSucceededPayload event = event("COD");
+        service.processCheckoutSucceeded(event);
+        service.processCheckoutSucceeded(event);
+        verify(products).increaseTotalSold(5L, 5L);
+        ArgumentCaptor<UserProductBehavior> saved = ArgumentCaptor.forClass(UserProductBehavior.class);
+        verify(behaviors, times(2)).saveIfAbsent(saved.capture());
+        assertEquals(saved.getAllValues().get(0).getEventId(), saved.getAllValues().get(1).getEventId());
+    }
+
+    @Test
+    void expiredEventStillIncreasesSoldButSkipsBehavior() {
+        prepare(1L);
+        service.processCheckoutSucceeded(eventAt(OffsetDateTime.now(clock).minusDays(31)));
+        verify(products).increaseTotalSold(5L, 5L);
+        verify(behaviors, never()).saveIfAbsent(any());
+    }
+
+    @Test
+    void mismatchedSnapshotRecordsNoBehavior() {
+        prepare(99L);
+        assertThrows(IllegalArgumentException.class, () -> service.processCheckoutSucceeded(event("COD")));
+        verifyNoInteractions(products);
+        verify(behaviors, never()).saveIfAbsent(any());
+    }
+
+    @Test
+    void behaviorFailurePropagatesSoKafkaCanRetry() {
+        prepare(1L);
+        IllegalStateException failure = new IllegalStateException("DB unavailable");
+        when(behaviors.saveIfAbsent(any())).thenThrow(failure);
+        assertSame(failure, assertThrows(IllegalStateException.class,
+                () -> service.processCheckoutSucceeded(event("COD"))));
     }
 }

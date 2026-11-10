@@ -15,7 +15,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -49,6 +51,12 @@ public class ProductBehaviorRepoAdapter implements ProductBehaviorRepositoryPort
         return productBehaviorJpa.findLatestCreatedAt(
                 userId, productId, BehaviorType.PRODUCT_VIEW)
                 .map(createdAt -> createdAt.atZone(clock.getZone()).toInstant());
+    }
+
+    @Override
+    public Set<Long> findProductIdsByUserIdAndTypeSince(Long userId, BehaviorType eventType, Instant since) {
+        return new HashSet<>(productBehaviorJpa.findProductIdsByUserIdAndEventTypeSince(
+                userId, eventType, LocalDateTime.ofInstant(since, clock.getZone())));
     }
 
     @Override

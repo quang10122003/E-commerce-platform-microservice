@@ -20,20 +20,25 @@ import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRepositoryPort;
 import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import com.example.producr_service.application.port.out.repo.InboxEventPort;
+import com.example.producr_service.application.port.out.repo.ProductBehaviorRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.domain.error.DomainProductError;
+import com.example.producr_service.domain.model.BehaviorType;
 import com.example.producr_service.domain.model.FlashSaleCampaignStatus;
 import com.example.producr_service.domain.model.FlashSaleItemStatus;
 import com.example.producr_service.domain.model.InboxEvent;
 import com.example.producr_service.domain.model.ProductStatus;
+import com.example.producr_service.domain.model.UserProductBehavior;
 import com.example.producr_service.domain.service.FlashSaleRules;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -58,6 +63,7 @@ public class CheckoutInventoryService {
     private final MapJsonToObjPort json;
     private final Clock clock;
     private final ShopAccessService shopAccessService;
+    private final ProductBehaviorRepositoryPort productBehaviorRepositoryPort;
 
     // Đơn đã tạo thành công nên lỗi tại đây chỉ rollback cập nhật lượt mua và truyền về Kafka để xử lý DLT.
     @Transactional
@@ -68,6 +74,29 @@ public class CheckoutInventoryService {
         if (!recordInboxEvent(event.eventId(), event.eventType(), event)) {
             return;
         }
+        Map<Long, Long> quantities = findPurchasedQuantitiesByProduct(event);
+        LocalDateTime now = LocalDateTime.now(clock);
+        for (Map.Entry<Long, Long> entry : quantities.entrySet()) {
+            if (productRepositoryPort.increaseTotalSold(entry.getKey(), entry.getValue()) != 1) {
+                throw new IllegalStateException("Không tìm thấy sản phẩm để tăng lượt mua: " + entry.getKey());
+            }
+            outbox.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
+                    entry.getKey().toString(), ProductUpdatedOutboxPayload.EVENT_TYPE,
+                    new ProductUpdatedOutboxPayload(entry.getKey()), now));
+        }
+        log.info("Đã tăng lượt mua: event_id={}, event_type={}, checkout_id={}, product_count={}",
+                event.eventId(), event.eventType(), event.checkoutId(), quantities.size());
+    }
+
+    // Xử lý event checkout thành công: tăng lượt mua rồi ghi hành vi mua, cùng một transaction.
+    @Transactional
+    public void processCheckoutSucceeded(CheckoutSucceededPayload event) {
+        increaseCheckoutTotalSold(event);
+        recordPurchaseBehaviors(event);
+    }
+
+    // Lấy số lượng mua theo sản phẩm từ kết quả trừ tồn đã lưu tại Product, không tin dữ liệu bên gửi.
+    private Map<Long, Long> findPurchasedQuantitiesByProduct(CheckoutSucceededPayload event) {
         OutboxEventDto saved = outbox.findByEventId(event.inventorySucceededEventId())
                 .orElseThrow(() -> new IllegalStateException("Không tìm thấy kết quả trừ tồn gốc"));
         CheckoutInventorySucceededPayload succeeded = json.readValue(saved.payload(), CheckoutInventorySucceededPayload.class);
@@ -84,17 +113,24 @@ public class CheckoutInventoryService {
             }
             quantities.merge(item.productId(), (long) item.quantity(), Math::addExact);
         }
-        LocalDateTime now = LocalDateTime.now(clock);
-        for (Map.Entry<Long, Long> entry : quantities.entrySet()) {
-            if (productRepositoryPort.increaseTotalSold(entry.getKey(), entry.getValue()) != 1) {
-                throw new IllegalStateException("Không tìm thấy sản phẩm để tăng lượt mua: " + entry.getKey());
-            }
-            outbox.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
-                    entry.getKey().toString(), ProductUpdatedOutboxPayload.EVENT_TYPE,
-                    new ProductUpdatedOutboxPayload(entry.getKey()), now));
+        return quantities;
+    }
+
+    // Ghi hành vi mua vào bảng hành vi người dùng; bản ghi trùng event_id bị bỏ qua nên retry an toàn.
+    private void recordPurchaseBehaviors(CheckoutSucceededPayload event) {
+        Instant createdAt = event.occurredAt().toInstant();
+        if (event.userId() == null || event.userId() <= 0
+                || !createdAt.isAfter(clock.instant().minus(UserProductBehavior.RETENTION))) {
+            log.warn("Bỏ qua ghi hành vi mua: event_id={}, checkout_id={}", event.eventId(), event.checkoutId());
+            return;
         }
-        log.info("Đã tăng lượt mua: event_id={}, event_type={}, checkout_id={}, product_count={}",
-                event.eventId(), event.eventType(), event.checkoutId(), quantities.size());
+        for (Long productId : findPurchasedQuantitiesByProduct(event).keySet()) {
+            // Mỗi sản phẩm cần event_id riêng; sinh cố định theo event gốc để retry không tạo bản ghi trùng.
+            String behaviorEventId = UUID.nameUUIDFromBytes(
+                    (event.eventId() + ":" + productId).getBytes(StandardCharsets.UTF_8)).toString();
+            productBehaviorRepositoryPort.saveIfAbsent(new UserProductBehavior(
+                    behaviorEventId, event.userId(), productId, BehaviorType.PURCHASE, createdAt));
+        }
     }
 
     // kiểm tra hàng giá tồn kho sản phẩm , sale v.v để tiến hành trừ tồn kho kho có event tử order

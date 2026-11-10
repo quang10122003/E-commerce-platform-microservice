@@ -47,6 +47,9 @@ public final class Constant {
     public static final int RECOMMENDATION_VECTOR_CANDIDATE_LIMIT = 500;
     public static final int RECOMMENDATION_RULE_CANDIDATE_LIMIT = 100;
 
+    // khoảng thời gian loại sản phẩm đã mua khỏi danh sách gợi ý
+    public static final Duration RECOMMENDATION_PURCHASED_EXCLUDE_DURATION = Duration.ofDays(7);
+
     public static final Duration RECOMMENDATION_CACHE_TTL =
             Duration.ofHours(1);
 

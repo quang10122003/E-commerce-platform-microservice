@@ -65,4 +65,13 @@ public interface ProductBehaviorJpa extends JpaRepository<UserProductBehaviorEnt
             @Param("userId") Long userId,
             @Param("cutoff") LocalDateTime cutoff,
             @Param("now") LocalDateTime now);
+
+    // lấy id sản phẩm user đã có hành vi theo loại kể từ thời điểm since
+    @Query("""
+            select distinct b.product.id from UserProductBehaviorEntity b
+            where b.userId = :userId and b.eventType = :eventType and b.createdAt > :since
+            """)
+    List<Long> findProductIdsByUserIdAndEventTypeSince(@Param("userId") Long userId,
+                                                       @Param("eventType") BehaviorType eventType,
+                                                       @Param("since") LocalDateTime since);
 }
