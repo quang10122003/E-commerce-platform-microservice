@@ -136,21 +136,21 @@ public class CheckoutService implements CreateCheckoutUseCase {
         if (checkout.getStatus() != CheckoutStatus.PROCESSING) {
             return;
         }
-        List<Order> created = buildOrders(checkout.getId(), event.items(), LocalDateTime.now(clock));
+        // Chỉ checkout VNPay có bản ghi payment từ bước tiếp nhận yêu cầu.
+        Optional<Payment> payment = payments.findByCheckoutIdForUpdate(checkout.getId());
+        CheckoutPaymentMethod paymentMethod = payment.isPresent() ? CheckoutPaymentMethod.VNPAY : CheckoutPaymentMethod.COD;
+        List<Order> created = buildOrders(checkout.getId(), paymentMethod, event.items(), LocalDateTime.now(clock));
         BigDecimal total = created.stream().map(Order::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         checkout.complete(total, LocalDateTime.now(clock));
         List<Long> orderIds = orders.saveAll(created);
         LocalDateTime now = LocalDateTime.now(clock);
-        Optional<Payment> payment = payments.findByCheckoutIdForUpdate(checkout.getId());
-        // Chỉ checkout VNPay có bản ghi payment từ bước tiếp nhận yêu cầu.
         String paymentUrl = payment.map((Payment value) -> vnpayPaymentService.startPayment(value, checkout, now)).orElse(null);
 
         checkoutRepoPort.save(checkout);
         UUID eventId = UUID.randomUUID();
         CheckoutSucceededPayload payload = new CheckoutSucceededPayload(eventId,
                 CheckoutSucceededPayload.EVENT_TYPE, checkout.getId(), checkout.getUserId(), checkout.getStatus(),
-                payment.isPresent() ? CheckoutPaymentMethod.VNPAY : CheckoutPaymentMethod.COD,
-                orderIds, checkout.getTotalAmount(),
+                paymentMethod, orderIds, checkout.getTotalAmount(),
                 now.atZone(clock.getZone()).toOffsetDateTime(),
                 checkout.getBuyerEmailSnapshot(), checkout.getBuyerFullNameSnapshot(), paymentUrl, event.eventId());
 
@@ -199,7 +199,8 @@ public class CheckoutService implements CreateCheckoutUseCase {
         return true;
     }
 
-    private List<Order> buildOrders(Long checkoutId, List<CheckoutItemSnapshotDto> snapshots, LocalDateTime now) {
+    private List<Order> buildOrders(Long checkoutId, CheckoutPaymentMethod paymentMethod,
+                                    List<CheckoutItemSnapshotDto> snapshots, LocalDateTime now) {
         if (snapshots == null || snapshots.isEmpty()) {
             throw new BusinessException(OrderDomainError.INVALID_DATA);
         }
@@ -223,7 +224,7 @@ public class CheckoutService implements CreateCheckoutUseCase {
                     .orElseThrow(() -> new BusinessException(OrderError.CHECKOUT_SHOP_NOT_FOUND));
             for (Map.Entry<PriceType, List<OrderItem>> group : shop.getValue().entrySet()) {
                 result.add(Order.create(checkoutId, shop.getKey(), snapshot.shopName(), snapshot.shopLogoUrl(),
-                        group.getKey(), group.getValue(), now));
+                        group.getKey(), paymentMethod, group.getValue(), now));
             }
         }
         return List.copyOf(result);

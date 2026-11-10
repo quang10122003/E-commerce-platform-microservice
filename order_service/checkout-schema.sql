@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS orders (
     shop_name_snapshot VARCHAR(255) NULL,
     shop_logo_url_snapshot TEXT NULL,
     price_type ENUM('NORMAL', 'SALE') NOT NULL,
+    payment_method ENUM('COD', 'VNPAY') NOT NULL,
     status ENUM('PENDING_CONFIRMATION', 'PENDING_PICKUP', 'SHIPPING', 'DONE', 'CANCEL')
         NOT NULL DEFAULT 'PENDING_CONFIRMATION',
     total_amount DECIMAL(19,0) NOT NULL,

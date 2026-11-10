@@ -21,6 +21,7 @@ public final class Order {
     private final String shopNameSnapshot;
     private final String shopLogoUrlSnapshot;
     private final PriceType priceType;
+    private final CheckoutPaymentMethod paymentMethod;
     private OrderStatus status;
     private final BigDecimal totalAmount;
     private String cancellationReason;
@@ -30,13 +31,14 @@ public final class Order {
     private final List<OrderItem> items;
 
     private Order(Long id, Long checkoutId, Long shopId, String shopNameSnapshot,
-                  String shopLogoUrlSnapshot, PriceType priceType, OrderStatus status,
-                  String cancellationReason, LocalDateTime cancelledAt, LocalDateTime createdAt,
+                  String shopLogoUrlSnapshot, PriceType priceType, CheckoutPaymentMethod paymentMethod,
+                  OrderStatus status, String cancellationReason, LocalDateTime cancelledAt, LocalDateTime createdAt,
                   LocalDateTime updatedAt, List<OrderItem> items) {
         if (items == null || items.isEmpty()) {
             throw new BusinessException(OrderDomainError.ITEMS_REQUIRED);
         }
         this.priceType = Objects.requireNonNull(priceType);
+        this.paymentMethod = Objects.requireNonNull(paymentMethod);
         this.items = List.copyOf(items);
         Set<Long> variantIds = new HashSet<>();
         BigDecimal total = BigDecimal.ZERO;
@@ -66,8 +68,8 @@ public final class Order {
     }
 
     public static Order create(Long checkoutId, Long shopId, String shopNameSnapshot,
-                               String shopLogoUrlSnapshot, PriceType priceType, List<OrderItem> items,
-                               LocalDateTime now) {
+                               String shopLogoUrlSnapshot, PriceType priceType,
+                               CheckoutPaymentMethod paymentMethod, List<OrderItem> items, LocalDateTime now) {
         requireId(shopId);
         requireText(shopNameSnapshot, 255);
         if (items != null && items.stream().anyMatch(item -> item == null
@@ -75,17 +77,17 @@ public final class Order {
             throw new BusinessException(OrderDomainError.INVALID_DATA);
         }
         return new Order(null, checkoutId, shopId, shopNameSnapshot, shopLogoUrlSnapshot,
-                priceType, OrderStatus.PENDING_CONFIRMATION, null, null, now, now, items);
+                priceType, paymentMethod, OrderStatus.PENDING_CONFIRMATION, null, null, now, now, items);
     }
 
     public static Order reconstitute(Long id, Long checkoutId, Long shopId, String shopNameSnapshot,
-                                    String shopLogoUrlSnapshot, PriceType priceType, OrderStatus status,
-                                    BigDecimal totalAmount, String cancellationReason,
+                                    String shopLogoUrlSnapshot, PriceType priceType,
+                                    CheckoutPaymentMethod paymentMethod, OrderStatus status, BigDecimal totalAmount, String cancellationReason,
                                     LocalDateTime cancelledAt, LocalDateTime createdAt,
                                     LocalDateTime updatedAt, List<OrderItem> items) {
         requireId(id);
         Order order = new Order(id, checkoutId, shopId, shopNameSnapshot, shopLogoUrlSnapshot,
-                priceType, status, cancellationReason, cancelledAt, createdAt, updatedAt, items);
+                priceType, paymentMethod, status, cancellationReason, cancelledAt, createdAt, updatedAt, items);
         if (order.totalAmount.compareTo(validateAmount(totalAmount)) != 0) {
             throw new BusinessException(OrderDomainError.TOTAL_MISMATCH);
         }
@@ -153,6 +155,10 @@ public final class Order {
 
     public PriceType getPriceType() {
         return priceType;
+    }
+
+    public CheckoutPaymentMethod getPaymentMethod() {
+        return paymentMethod;
     }
 
     public OrderStatus getStatus() {

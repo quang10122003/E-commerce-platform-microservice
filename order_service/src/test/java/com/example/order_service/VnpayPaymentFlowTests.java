@@ -22,6 +22,7 @@ import com.example.order_service.application.service.VnpayPaymentService;
 import com.example.order_service.domain.model.Checkout;
 import com.example.order_service.domain.model.CheckoutPaymentMethod;
 import com.example.order_service.domain.model.CheckoutStatus;
+import com.example.order_service.domain.model.Order;
 import com.example.order_service.domain.model.Payment;
 import com.example.order_service.domain.model.PaymentStatus;
 import com.example.order_service.infrastructure.config.VnpayProperties;
@@ -90,8 +91,8 @@ class VnpayPaymentFlowTests {
         service.processInventorySucceeded(inventoryEvent);
 
         InOrder sequence = inOrder(orders, payments, checkouts, outbox);
-        sequence.verify(orders).saveAll(anyList());
         sequence.verify(payments).findByCheckoutIdForUpdate(1L);
+        sequence.verify(orders).saveAll(anyList());
         sequence.verify(payments).save(payment);
         sequence.verify(checkouts).save(checkout);
         sequence.verify(outbox).save(any());
@@ -101,6 +102,7 @@ class VnpayPaymentFlowTests {
         verify(outbox).save(published.capture());
         CheckoutSucceededPayload payload = (CheckoutSucceededPayload) published.getValue().payload();
         assertEquals(CheckoutPaymentMethod.VNPAY, payload.paymentMethod());
+        assertOrdersPaymentMethod(CheckoutPaymentMethod.VNPAY);
         assertEquals(inventoryEvent.eventId(), payload.inventorySucceededEventId());
         assertEquals(payment.getPaymentUrl(), payload.urlPayment());
         service.processInventorySucceeded(event());
@@ -119,6 +121,7 @@ class VnpayPaymentFlowTests {
         verify(outbox).save(published.capture());
         CheckoutSucceededPayload payload = (CheckoutSucceededPayload) published.getValue().payload();
         assertEquals(CheckoutPaymentMethod.COD, payload.paymentMethod());
+        assertOrdersPaymentMethod(CheckoutPaymentMethod.COD);
         assertEquals(inventoryEvent.eventId(), payload.inventorySucceededEventId());
         assertNull(payload.urlPayment());
     }
@@ -202,6 +205,14 @@ class VnpayPaymentFlowTests {
 
         assertSame(recoveryFailure, assertThrows(IllegalStateException.class,
                 () -> new CheckoutInventorySucceededHandler(json, checkoutService).handle("event")));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void assertOrdersPaymentMethod(CheckoutPaymentMethod expected) {
+        ArgumentCaptor<List<Order>> saved = ArgumentCaptor.forClass(List.class);
+        verify(orders, atLeastOnce()).saveAll(saved.capture());
+        assertFalse(saved.getValue().isEmpty());
+        saved.getValue().forEach((Order order) -> assertEquals(expected, order.getPaymentMethod()));
     }
 
     private void prepare(Checkout checkout, Optional<Payment> payment) {

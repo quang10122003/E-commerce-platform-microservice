@@ -1,5 +1,6 @@
 package com.example.order_service.adapter.entity;
 
+import com.example.order_service.domain.model.CheckoutPaymentMethod;
 import com.example.order_service.domain.model.OrderStatus;
 import com.example.order_service.domain.model.PriceType;
 import jakarta.persistence.*;
@@ -43,6 +44,10 @@ public class OrderEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "price_type", nullable = false)
     private PriceType priceType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", nullable = false)
+    private CheckoutPaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
