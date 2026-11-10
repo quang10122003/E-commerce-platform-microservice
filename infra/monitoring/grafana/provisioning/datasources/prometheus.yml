@@ -1,0 +1,11 @@
+apiVersion: 1
+#khai báo nguồn lấy dữ liệu
+datasources:
+  - name: Prometheus
+    type: prometheus
+    # uid cố định để dashboard trong grafana/dashboards trỏ đúng datasource.
+    uid: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false

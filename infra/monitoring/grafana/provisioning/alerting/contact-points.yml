@@ -1,0 +1,14 @@
+# Contact point: NƠI nhận cảnh báo (ở đây là chat Telegram với bot).
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1                # Tổ chức mặc định của Grafana
+    name: Telegram          # Tên hiển thị; luật và policy gọi tới contact point bằng tên này
+    receivers:
+      - uid: telegram       # Mã cố định để Grafana nhận ra đây vẫn là contact point cũ sau mỗi lần nạp lại
+        type: telegram      # Kênh gửi
+        settings:
+          # Lấy từ biến môi trường (infra/monitoring/.env) để token không nằm trong git.
+          bottoken: ${TELEGRAM_BOT_TOKEN}
+          chatid: ${TELEGRAM_CHAT_ID}
+        disableResolveMessage: false   # Gửi cả tin "đã ổn định lại" (RESOLVED) khi service sống lại

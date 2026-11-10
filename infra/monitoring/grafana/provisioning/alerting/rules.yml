@@ -1,0 +1,73 @@
+# Alert rule: ĐIỀU KIỆN nào thì sinh cảnh báo
+# Muốn sửa luật: sửa file này rồi restart Grafana
+apiVersion: 1
+groups:
+  # Một nhóm luật dùng chung thư mục và chu kỳ kiểm tra.
+  - orgId: 1
+    name: services
+    folder: E-commerce        # Thư mục chứa luật, trùng thư mục dashboard
+    interval: 30s             # Cứ 30 giây Grafana chạy lại truy vấn của mọi luật trong nhóm
+    rules:
+      # uid cố định: đổi uid thì Grafana coi là luật mới (mất lịch sử trạng thái).
+      - uid: cg3rq7oujjfggd
+        title: Service DOWN
+        condition: C          # Bước quyết định có cảnh báo hay không là bước có refId C bên dưới
+        data:
+          # Bước A: truy vấn Prometheus. Mỗi dòng kết quả (giá trị 1) là một service đang lỗi:
+          # dòng đầu bắt service còn trong Eureka nhưng không trả lời (up == 0),
+          # các dòng absent() bắt service đã biến mất khỏi Eureka (tắt hẳn); thêm service mới phải thêm một dòng.
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus   # Phải trùng uid trong datasources/prometheus.yml
+            model:
+              editorMode: code
+              expr: "   (up{job=\"eureka-services\"} == 0) * 0 + 1\r\n   or absent(up{job=\"eureka-services\", application=\"getway\"})\r\n   or absent(up{job=\"eureka-services\", application=\"auth-service\"})\r\n   or absent(up{job=\"eureka-services\", application=\"producr-service\"})\r\n   or absent(up{job=\"eureka-services\", application=\"order-service\"})\r\n   or absent(up{job=\"eureka-services\", application=\"notification-service\"})"
+              instant: true     # Chỉ lấy giá trị hiện tại, không lấy cả chuỗi theo thời gian
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          # Bước C: ngưỡng. Kết quả của A lớn hơn 0 (tức có service lỗi) thì luật ở trạng thái cảnh báo.
+          - refId: C
+            queryType: expression
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: OK       # A không trả dòng nào nghĩa là mọi service ổn, không phải lỗi thiếu dữ liệu
+        execErrState: Error   # Truy vấn lỗi (Prometheus chết) thì luật chuyển trạng thái Error
+        for: 1m               # Phải lỗi liên tục 1 phút mới gửi, tránh báo nhầm khi service chỉ đang restart
+        # Nội dung tin nhắn; {{ $labels.application }} được thay bằng tên service lỗi.
+        annotations:
+          description: Kiểm tra service {{ $labels.application }} và log của nó.
+          summary: '{{ $labels.application }} đang DOWN hoặc đã mất khỏi Eureka'
+        # Nhãn gắn vào cảnh báo, dùng để lọc hoặc định tuyến theo mức độ sau này.
+        labels:
+          severity: critical
+        isPaused: false
+        # Gửi thẳng tới contact point Telegram (chọn ở mục Configure notifications trên giao diện).
+        notification_settings:
+          receiver: Telegram

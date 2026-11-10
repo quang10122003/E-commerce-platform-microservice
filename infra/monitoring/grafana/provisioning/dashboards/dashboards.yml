@@ -1,0 +1,10 @@
+apiVersion: 1
+#  file chỉ cho Grafana biết lấy dashboard ở đâu
+providers:
+  - name: ecommerce
+    folder: E-commerce
+    type: file
+    # Dashboard sửa trên giao diện sẽ bị ghi đè khi khởi động lại; muốn giữ thì xuất JSON vào grafana/dashboards.
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/dashboards
