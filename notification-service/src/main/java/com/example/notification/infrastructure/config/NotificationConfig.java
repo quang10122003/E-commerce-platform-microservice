@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import com.example.notification.application.registry.KafkaEventHandlerRegistry;
 import com.example.notification.application.dto.template.UserRegisteredEmailTemplate;
 import com.example.notification.application.dto.template.CheckoutSucceededEmailTemplate;
+import com.example.notification.application.dto.template.OrderCancelledByShopEmailTemplate;
+import com.example.notification.application.dto.template.OrderStatusChangedEmailTemplate;
 import com.example.notification.application.strategy.EventHandler;
 import com.example.notification.application.strategy.event.UserRegisteredEventHandler;
 import com.example.notification.application.service.NotificationApplicationService;
@@ -17,6 +19,8 @@ import com.example.notification.application.port.out.client.CheckoutAccessPort;
 import com.example.notification.application.service.CheckoutNotificationApplicationService;
 import com.example.notification.application.service.OrderEventApplicationService;
 import com.example.notification.application.strategy.event.CheckoutSucceededEventHandler;
+import com.example.notification.application.strategy.event.OrderCancelledByShopEventHandler;
+import com.example.notification.application.strategy.event.OrderStatusChangedEventHandler;
 import com.example.notification.application.strategy.event.CheckoutFailedEventHandler;
 import com.example.notification.application.port.out.mail.EmailSenderPort;
 import com.example.notification.application.port.out.objectMapper.ObjectMapperPort;
@@ -33,9 +37,12 @@ public class NotificationConfig {
     NotificationApplicationService sendEmailUserRegisteredUseCase(
             EmailSenderPort emailSenderPort,
             UserRegisteredEmailTemplate template,
-            CheckoutSucceededEmailTemplate checkoutTemplate
+            CheckoutSucceededEmailTemplate checkoutTemplate,
+            OrderCancelledByShopEmailTemplate orderCancelledByShopTemplate,
+            OrderStatusChangedEmailTemplate orderStatusChangedTemplate
     ) {
-        return new NotificationApplicationService(emailSenderPort, template, checkoutTemplate);
+        return new NotificationApplicationService(emailSenderPort, template, checkoutTemplate, orderCancelledByShopTemplate,
+                orderStatusChangedTemplate);
     }
 
     @Bean
@@ -83,6 +90,30 @@ public class NotificationConfig {
     @Bean
     CheckoutSucceededEmailTemplate checkoutSucceededEmailTemplate(MailSenderProperties mailSenderProperties, Clock clock) {
         return new CheckoutSucceededEmailTemplate(mailSenderProperties.orderSender(), clock.getZone());
+    }
+
+    @Bean
+    OrderCancelledByShopEmailTemplate orderCancelledByShopEmailTemplate(MailSenderProperties mailSenderProperties, Clock clock) {
+        return new OrderCancelledByShopEmailTemplate(mailSenderProperties.orderSender(), clock.getZone());
+    }
+
+    // Gửi mail cho người mua khi Order Service phát event shop hủy đơn.
+    @Bean
+    OrderCancelledByShopEventHandler orderCancelledByShopEventHandler(
+            ObjectMapperPort objectMapperPort, NotificationApplicationService emailService) {
+        return new OrderCancelledByShopEventHandler(objectMapperPort, emailService);
+    }
+
+    @Bean
+    OrderStatusChangedEmailTemplate orderStatusChangedEmailTemplate(MailSenderProperties mailSenderProperties, Clock clock) {
+        return new OrderStatusChangedEmailTemplate(mailSenderProperties.orderSender(), clock.getZone());
+    }
+
+    // Gửi mail cho người mua khi shop xác nhận đơn hoặc giao cho đơn vị vận chuyển.
+    @Bean
+    OrderStatusChangedEventHandler orderStatusChangedEventHandler(
+            ObjectMapperPort objectMapperPort, NotificationApplicationService emailService) {
+        return new OrderStatusChangedEventHandler(objectMapperPort, emailService);
     }
 
     @Bean
