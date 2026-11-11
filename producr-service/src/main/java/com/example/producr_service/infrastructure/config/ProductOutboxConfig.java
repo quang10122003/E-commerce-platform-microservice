@@ -17,7 +17,7 @@ import com.example.producr_service.application.port.out.kafka.ProductEventPublis
 import com.example.producr_service.application.strategy.outbox.ProductCreatedOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.ProductEmbeddingSyncOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.ProductUpdatedOutboxHandler;
-import com.example.producr_service.application.strategy.outbox.ProductImagesDeleteOutboxHandler;
+import com.example.producr_service.application.strategy.outbox.StoredFilesDeleteOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.ProductvariantImagesDeleteOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.ProductDeletedOutboxHandler;
 import com.example.producr_service.application.strategy.outbox.ProductvariantDeleteOutboxHandler;
@@ -83,11 +83,11 @@ public class ProductOutboxConfig {
 
     // Đăng ký handler dọn ảnh sản phẩm sau khi event xóa được xử lý.
     @Bean
-    EventHandler<OutboxEventDto> productImagesDeleteOutboxHandler(
+    EventHandler<OutboxEventDto> storedFilesDeleteOutboxHandler(
             MapJsonToObjPort mapJsonToObjPort,
             StoredFileCleaner storedFileCleaner
     ) {
-        return new ProductImagesDeleteOutboxHandler(mapJsonToObjPort, storedFileCleaner);
+        return new StoredFilesDeleteOutboxHandler(mapJsonToObjPort, storedFileCleaner);
     }
 
     // Đăng ký handler dọn ảnh phân loại sau khi transaction xóa commit.

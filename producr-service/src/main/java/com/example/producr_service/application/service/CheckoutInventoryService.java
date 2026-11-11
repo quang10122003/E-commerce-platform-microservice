@@ -10,6 +10,7 @@ import com.example.producr_service.application.dto.saga.CheckoutInventoryRequest
 import com.example.producr_service.application.dto.saga.CheckoutInventorySucceededPayload;
 import com.example.producr_service.application.dto.saga.CheckoutInventoryFailedPayload;
 import com.example.producr_service.application.dto.saga.CheckoutInventoryRollbackRequestedPayload;
+import com.example.producr_service.application.dto.saga.OrderInventoryRollbackRequestedPayload;
 import com.example.producr_service.application.dto.saga.CheckoutInventoryRolledBackPayload;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.dto.outbox.ProductUpdatedOutboxPayload;
@@ -277,16 +278,59 @@ public class CheckoutInventoryService {
         if (!recordInboxEvent(event.eventId(), event.eventType(), event)) {
             return;
         }
-        OutboxEventDto saved = outbox.findByEventId(event.inventorySucceededEventId())
+        List<CheckoutItemSnapshotDto> items = loadDeductedItems(event.inventorySucceededEventId(), event.checkoutId());
+        restoreItems(event.eventId(), event.checkoutId(), items);
+        decreaseTotalSoldIfCounted(event, items);
+        publishRolledBack(event);
+        log.info("Đã rollback tồn kho checkout: event_id={}, event_type={}, checkout_id={}, item_count={}",
+                event.eventId(), event.eventType(), event.checkoutId(), items.size());
+    }
+
+    // Hoàn tồn kho, quota sale và lượt bán chỉ cho item của một order khi user hủy đơn.
+    @Transactional
+    public void rollbackOrderStock(OrderInventoryRollbackRequestedPayload event) {
+        validateMetadata(event.eventId(), event.checkoutId(), event.occurredAt(),
+                OrderInventoryRollbackRequestedPayload.EVENT_TYPE.equals(event.eventType())
+                        && event.orderId() != null && event.shopId() != null
+                        && event.inventorySucceededEventId() != null && event.checkoutSucceededEventId() != null);
+        if (!recordInboxEvent(event.eventId(), event.eventType(), event)) {
+            return;
+        }
+        // Order là nhóm shop + loại giá trong checkout, nên lọc đúng phần item từ kết quả trừ tồn đã commit.
+        List<CheckoutItemSnapshotDto> items = loadDeductedItems(event.inventorySucceededEventId(), event.checkoutId())
+                .stream().filter((CheckoutItemSnapshotDto item) -> event.shopId().equals(item.shopId())
+                        && item.sale() == event.sale()).toList();
+        if (items.isEmpty()) {
+            throw new IllegalArgumentException("Không tìm thấy item của order trong kết quả trừ tồn");
+        }
+        // Không ghi marker như rollback checkout vì marker sẽ chặn cộng lượt bán cho các order khác cùng checkout;
+        // ném lỗi để transaction hủy marker vừa chèn và Kafka thử lại sau khi CHECKOUT_SUCCEEDED được xử lý.
+        InboxEvent marker = InboxEvent.create(event.checkoutSucceededEventId(), CheckoutSucceededPayload.EVENT_TYPE,
+                json.writeValue(event), LocalDateTime.now(clock));
+        if (inbox.tryInsert(marker)) {
+            throw new IllegalStateException("CHECKOUT_SUCCEEDED chưa được xử lý, thử lại hoàn kho order sau");
+        }
+        restoreItems(event.eventId(), event.checkoutId(), items);
+        decreaseTotalSold(event.eventId(), event.checkoutId(), items);
+        log.info("Đã hoàn tồn kho order bị hủy: event_id={}, checkout_id={}, order_id={}, item_count={}",
+                event.eventId(), event.checkoutId(), event.orderId(), items.size());
+    }
+
+    // Chỉ hoàn số lượng từ kết quả đã commit tại Product, không tin dữ liệu bên gửi.
+    private List<CheckoutItemSnapshotDto> loadDeductedItems(UUID inventorySucceededEventId, Long checkoutId) {
+        OutboxEventDto saved = outbox.findByEventId(inventorySucceededEventId)
                 .orElseThrow(() -> new IllegalStateException("Không tìm thấy kết quả trừ tồn gốc"));
         CheckoutInventorySucceededPayload succeeded = json.readValue(saved.payload(), CheckoutInventorySucceededPayload.class);
         if (!CheckoutInventorySucceededPayload.EVENT_TYPE.equals(saved.eventType())
-                || !event.checkoutId().equals(succeeded.checkoutId())
+                || !checkoutId.equals(succeeded.checkoutId())
                 || succeeded.items() == null || succeeded.items().isEmpty()) {
             throw new IllegalArgumentException("Event rollback không khớp thao tác trừ tồn");
         }
-        // Chỉ hoàn số lượng từ kết quả đã commit tại Product, không tin dữ liệu bên gửi.
-        List<CheckoutItemSnapshotDto> items = succeeded.items();
+        return succeeded.items();
+    }
+
+    // Cộng lại tồn kho, quota sale và báo Product thay đổi để đồng bộ tìm kiếm.
+    private void restoreItems(UUID eventId, Long checkoutId, List<CheckoutItemSnapshotDto> items) {
         List<Long> saleIds = items.stream().filter(CheckoutItemSnapshotDto::sale)
                 .map(CheckoutItemSnapshotDto::saleItemId).distinct().toList();
         List<Long> campaignIds = flashSaleItemRepositoryPort.findCampaignIdsByItemIds(saleIds);
@@ -306,7 +350,7 @@ public class CheckoutInventoryService {
             CheckoutVariantDto variant = variants.get(entry.getKey());
             if (variant == null) {
                 log.info("Bỏ qua hoàn tồn phân loại đã xóa: event_id={}, checkout_id={}, variant_id={}",
-                        event.eventId(), event.checkoutId(), entry.getKey());
+                        eventId, checkoutId, entry.getKey());
                 continue;
             }
             if ((long) variant.variant().getStockQuantity() + entry.getValue() > Integer.MAX_VALUE) {
@@ -326,15 +370,11 @@ public class CheckoutInventoryService {
                 flashSaleItemRepositoryPort.updateSoldQuantity(sale.id(), sale.soldQuantity() - item.quantity(), LocalDateTime.now(clock));
             }
         }
-        decreaseTotalSoldIfCounted(event, items);
         LocalDateTime now = LocalDateTime.now(clock);
         for (Long productId : productIds.stream().distinct().toList()) {
             outbox.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT, productId.toString(),
                     ProductUpdatedOutboxPayload.EVENT_TYPE, new ProductUpdatedOutboxPayload(productId), now));
         }
-        publishRolledBack(event);
-        log.info("Đã rollback tồn kho checkout: event_id={}, event_type={}, checkout_id={}, item_count={}",
-                event.eventId(), event.eventType(), event.checkoutId(), items.size());
     }
 
     // CHECKOUT_SUCCEEDED tới muộn hơn rollback sẽ thấy inbox đã có và bỏ qua, nên không tăng lượt bán sai.
@@ -350,6 +390,11 @@ public class CheckoutInventoryService {
                     event.eventId(), event.checkoutId());
             return;
         }
+        decreaseTotalSold(event.eventId(), event.checkoutId(), items);
+    }
+
+    // Trừ lượt bán đã cộng khi CHECKOUT_SUCCEEDED được xử lý.
+    private void decreaseTotalSold(UUID eventId, Long checkoutId, List<CheckoutItemSnapshotDto> items) {
         Map<Long, Long> quantities = new TreeMap<>();
         for (CheckoutItemSnapshotDto item : items) {
             quantities.merge(item.productId(), (long) item.quantity(), Math::addExact);
@@ -357,7 +402,7 @@ public class CheckoutInventoryService {
         for (Map.Entry<Long, Long> entry : quantities.entrySet()) {
             if (productRepositoryPort.decreaseTotalSold(entry.getKey(), entry.getValue()) != 1) {
                 log.warn("Bỏ qua trừ lượt bán: event_id={}, checkout_id={}, product_id={}",
-                        event.eventId(), event.checkoutId(), entry.getKey());
+                        eventId, checkoutId, entry.getKey());
             }
         }
     }

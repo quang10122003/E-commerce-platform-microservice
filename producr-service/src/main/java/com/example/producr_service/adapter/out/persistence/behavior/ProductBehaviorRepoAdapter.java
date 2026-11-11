@@ -67,4 +67,9 @@ public class ProductBehaviorRepoAdapter implements ProductBehaviorRepositoryPort
                 entity.getProduct().getId(), entity.getEventType().name(), entity.getCreatedAt());
         return productBehaviorJpa.lastInsertedId() > 0;
     }
+
+    @Override
+    public int deleteByUserId(Long userId) {
+        return productBehaviorJpa.deleteByUserId(userId);
+    }
 }

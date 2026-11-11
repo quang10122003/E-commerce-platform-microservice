@@ -204,6 +204,16 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
         productJpa.deleteById(productId);
     }
 
+    @Override
+    public boolean existsByCategoryId(Long categoryId) {
+        return productJpa.existsByCategory_Id(categoryId);
+    }
+
+    @Override
+    public List<Long> findIdsByCategoryId(Long categoryId) {
+        return productJpa.findIdsByCategoryId(categoryId);
+    }
+
     // Lấy ảnh bìa của sản phẩm đã khóa mà không tải các quan hệ con.
     @Override
     public StoredFile findCoverFile(Long productId) {

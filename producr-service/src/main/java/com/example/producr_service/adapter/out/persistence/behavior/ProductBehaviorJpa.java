@@ -74,4 +74,8 @@ public interface ProductBehaviorJpa extends JpaRepository<UserProductBehaviorEnt
     List<Long> findProductIdsByUserIdAndEventTypeSince(@Param("userId") Long userId,
                                                        @Param("eventType") BehaviorType eventType,
                                                        @Param("since") LocalDateTime since);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("delete from UserProductBehaviorEntity e where e.userId = :userId")
+    int deleteByUserId(@Param("userId") Long userId);
 }

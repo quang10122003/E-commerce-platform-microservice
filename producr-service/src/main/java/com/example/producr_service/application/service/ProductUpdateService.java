@@ -8,7 +8,7 @@ import com.example.producr_service.application.dto.command.UpdateProductCommand;
 import com.example.producr_service.application.dto.command.VariantImageUploadCommand;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.dto.outbox.ProductEmbeddingSyncOutboxPayload;
-import com.example.producr_service.application.dto.outbox.ProductImagesDeleteOutboxPayload;
+import com.example.producr_service.application.dto.outbox.StoredFilesDeleteOutboxPayload;
 import com.example.producr_service.application.dto.outbox.ProductUpdatedOutboxPayload;
 import com.example.producr_service.application.dto.request.UpdateProductData;
 import com.example.producr_service.application.dto.response.ShopProductDetailResponse;
@@ -21,7 +21,7 @@ import com.example.producr_service.application.port.out.repo.BrandRepositoryPort
 import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
-import com.example.producr_service.application.port.out.storage.ProductImageRollbackPort;
+import com.example.producr_service.application.port.out.storage.StoredFileRollbackPort;
 import com.example.producr_service.application.port.out.storage.StorageBucket;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.application.strategy.upload.UploadPurpose;
@@ -45,7 +45,7 @@ public class ProductUpdateService {
     CurrentUserPort currentUserPort;
     ProductHelper productHelper;
     FileUploader fileUploader;
-    ProductImageRollbackPort productImageRollbackPort;
+    StoredFileRollbackPort storedFileRollbackPort;
     OutboxPort outboxPort;
     Clock clock;
     ShopAccessService shopAccessService;
@@ -80,7 +80,7 @@ public class ProductUpdateService {
                 .orElseThrow(() -> new BusinessException(ProductError.BRAND_NOT_FOUND));
 
         List<StoredFile> uploaded = new ArrayList<>();
-        productImageRollbackPort.deleteImageStore(uploaded);
+        storedFileRollbackPort.deleteImageStore(uploaded);
         StoredFile newCover = command.productImage() == null ? null
                 : fileUploader.upload(UploadPurpose.PRODUCT_IMAGE, command.productImage());
         if (newCover != null) uploaded.add(newCover);
@@ -109,8 +109,8 @@ public class ProductUpdateService {
         List<StoredFile> filesToDelete = productHelper.prepareFilesForDeletion(productId, deleteFiles);
         if (!filesToDelete.isEmpty()) {
             outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
-                    String.valueOf(productId), ProductImagesDeleteOutboxPayload.EVENT_TYPE,
-                    new ProductImagesDeleteOutboxPayload(filesToDelete), LocalDateTime.now(clock)));
+                    String.valueOf(productId), StoredFilesDeleteOutboxPayload.EVENT_TYPE,
+                    new StoredFilesDeleteOutboxPayload(filesToDelete), LocalDateTime.now(clock)));
         }
         outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT,
                 String.valueOf(productId), ProductUpdatedOutboxPayload.EVENT_TYPE,

@@ -15,9 +15,11 @@ public final class Constant {
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
     public static final String PRODUCT = "Product";
     public static final String VARIANT = "Variant";
+    public static final String CATEGORY = "Category";
     // toppic của producr service
     public static final String PRODUCT_EVENTS_TOPIC = "product-service.events";
     public static final String ORDER_EVENTS_TOPIC = "order-service.events";
+    public static final String AUTH_EVENTS_TOPIC = "auth-service.events";
     public static final String DEAD_LETTER_TOPIC = "product-service.DLT";
     // Giới hạn sinh SKU theo cột lưu trữ và số lần thử tránh trùng.
     public static final int MAX_SKU_LENGTH = 50;

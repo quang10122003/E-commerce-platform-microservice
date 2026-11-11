@@ -1,5 +1,9 @@
 package com.example.producr_service.infrastructure.config;
 
+import com.example.producr_service.application.port.in.ProcessAuthEventUseCase;
+import com.example.producr_service.application.service.AuthEventApplicationService;
+import com.example.producr_service.application.service.ProductRecommendationService;
+import com.example.producr_service.application.strategy.eventKafka.UserDeletedEventHandler;
 import com.example.producr_service.application.service.ShopAccessService;
 
 import com.example.producr_service.application.strategy.EventHandler;
@@ -12,6 +16,7 @@ import com.example.producr_service.application.strategy.eventKafka.CartItemAdded
 import com.example.producr_service.application.strategy.eventKafka.CheckoutInventoryRequestedHandler;
 import com.example.producr_service.application.strategy.eventKafka.CheckoutSucceededHandler;
 import com.example.producr_service.application.strategy.eventKafka.CheckoutInventoryRollbackRequestedHandler;
+import com.example.producr_service.application.strategy.eventKafka.OrderInventoryRollbackRequestedHandler;
 import com.example.producr_service.application.service.CheckoutInventoryService;
 import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRepositoryPort;
 import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
@@ -56,6 +61,11 @@ public class OrderEventConfig {
     }
 
     @Bean
+    EventHandler<String> orderInventoryRollbackRequestedHandler(MapJsonToObjPort json, CheckoutInventoryService service) {
+        return new OrderInventoryRollbackRequestedHandler(json, service);
+    }
+
+    @Bean
     CartItemAddedEventHandler cartItemAddedEventHandler(
             MapJsonToObjPort mapJsonToObjPort, ProductRecommendationService productRecommendationService) {
         return new CartItemAddedEventHandler(mapJsonToObjPort, productRecommendationService);
@@ -69,5 +79,16 @@ public class OrderEventConfig {
     @Bean
     ProcessOrderEventUseCase processOrderEventUseCase(KafkaEventHandlerRegistry registry) {
         return new OrderEventApplicationService(registry);
+    }
+
+    @Bean
+    ProcessAuthEventUseCase processAuthEventUseCase(KafkaEventHandlerRegistry registry) {
+        return new AuthEventApplicationService(registry);
+    }
+
+    @Bean
+    UserDeletedEventHandler userDeletedEventHandler(MapJsonToObjPort mapJsonToObjPort,
+                                                    ProductRecommendationService productRecommendationService) {
+        return new UserDeletedEventHandler(mapJsonToObjPort, productRecommendationService);
     }
 }

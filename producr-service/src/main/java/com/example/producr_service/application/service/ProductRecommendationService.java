@@ -271,4 +271,14 @@ public class ProductRecommendationService implements RecordProductViewUseCase, G
                 .toList();
         return loadPageItems(selectedIds);
     }
+
+    // Chạy lại khi nhận trùng event không đổi thêm dữ liệu.
+    @Transactional
+    public void clearDeletedUserData(Long userId) {
+        int behaviors = productBehaviorRepositoryPort.deleteByUserId(userId);
+        int viewStates = productViewStateRepositoryPort.deleteByUserId(userId);
+        cachePort.delete(ProductCacheKeys.recommendations(userId));
+        log.info("Dọn dữ liệu gợi ý của tài khoản đã xóa: user_id={}, behaviors={}, view_states={}",
+                userId, behaviors, viewStates);
+    }
 }

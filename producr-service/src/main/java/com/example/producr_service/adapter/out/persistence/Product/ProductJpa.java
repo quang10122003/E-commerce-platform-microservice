@@ -22,6 +22,11 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
+    boolean existsByCategory_Id(Long categoryId);
+
+    @Query("select p.id from ProductEntity p where p.category.id = :categoryId")
+    List<Long> findIdsByCategoryId(@Param("categoryId") Long categoryId);
+
     @Modifying
     @Query("update ProductEntity p set p.totalSold = p.totalSold + :quantity where p.id = :id")
     int increaseTotalSold(@Param("id") Long id, @Param("quantity") long quantity);

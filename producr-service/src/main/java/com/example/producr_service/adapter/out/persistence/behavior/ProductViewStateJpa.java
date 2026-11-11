@@ -31,4 +31,8 @@ public interface ProductViewStateJpa extends JpaRepository<UserProductViewStateE
             """)
     void updateNextAllowedAt(@Param("userId") Long userId, @Param("productId") Long productId,
                              @Param("nextAllowedAt") LocalDateTime nextAllowedAt);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("delete from UserProductViewStateEntity e where e.userId = :userId")
+    int deleteByUserId(@Param("userId") Long userId);
 }

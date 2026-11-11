@@ -23,7 +23,7 @@ import com.example.producr_service.application.port.out.repo.CategoryRepoPort;
 import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
-import com.example.producr_service.application.port.out.storage.ProductImageRollbackPort;
+import com.example.producr_service.application.port.out.storage.StoredFileRollbackPort;
 import com.example.producr_service.application.service.FileUploader;
 import com.example.producr_service.application.service.ProductCreationService;
 import com.example.producr_service.application.service.ProductHelper;
@@ -141,19 +141,19 @@ public class ProductConfig {
             CurrentUserPort currentUserPort,
             ProductHelper productHelper,
             FileUploader fileUploader,
-            ProductImageRollbackPort productImageRollbackPort,
+            StoredFileRollbackPort storedFileRollbackPort,
             OutboxPort outboxPort,
             Clock clock, ShopAccessService shopAccessService
     ) {
         return new ProductUpdateService(productRepositoryPort, productVariantRepoPort,
                 categoryRepoPort, brandRepositoryPort, currentUserPort, productHelper,
-                fileUploader, productImageRollbackPort, outboxPort, clock, shopAccessService);
+                fileUploader, storedFileRollbackPort, outboxPort, clock, shopAccessService);
     }
 
     // Đăng ký application service triển khai các use case thuộc phạm vi product.
     @Bean
     ProductService productService(
-        ProductImageRollbackPort productImageRollbackPort,
+        StoredFileRollbackPort storedFileRollbackPort,
         ProductImageUploadService productImageUploadService,
         ProductCreationService productCreationService,
         CurrentUserPort currentUserPort,
@@ -175,7 +175,7 @@ public class ProductConfig {
         ShopAccessService shopAccessService
     ) {
         return new ProductService(
-                productImageRollbackPort,
+                storedFileRollbackPort,
                 productImageUploadService,
                 productCreationService,
                 currentUserPort,

@@ -158,7 +158,7 @@ public class ProductMultipartCommandMapper {
     }
 
     // Đọc multipart file thành command upload dùng chung cho application layer.
-    private UploadFileCommand toUploadFileCommand(MultipartFile file) throws IOException {
+    public UploadFileCommand toUploadFileCommand(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new BusinessException(ProductError.INVALID_IMAGE_FILE,
                     "File anh khong duoc de trong");

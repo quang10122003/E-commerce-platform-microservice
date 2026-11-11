@@ -31,4 +31,9 @@ public class ProductViewStateRepoAdapter implements ProductViewStateRepositoryPo
         productViewStateJpa.updateNextAllowedAt(state.getUserId(), state.getProductId(),
                 LocalDateTime.ofInstant(state.getNextAllowedAt(), clock.getZone()));
     }
+
+    @Override
+    public int deleteByUserId(Long userId) {
+        return productViewStateJpa.deleteByUserId(userId);
+    }
 }

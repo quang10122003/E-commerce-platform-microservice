@@ -42,7 +42,7 @@ import com.example.producr_service.application.port.out.repo.ProductRepositoryPo
 import com.example.producr_service.application.port.out.repo.BrandRepositoryPort;
 import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
-import com.example.producr_service.application.port.out.storage.ProductImageRollbackPort;
+import com.example.producr_service.application.port.out.storage.StoredFileRollbackPort;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 import com.example.producr_service.domain.model.Brand;
 import com.example.producr_service.domain.model.Product;
@@ -67,7 +67,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class ProductService implements CreateProductUseCase, GetProductsCatalogUseCase , GetSellerProductsUseCase, DeleteProductUseCase, DeleteProductvariantUseCase, GetShopProductDetailUseCase, UpdateProductUseCase, UpdateProductStatusUseCase, GetShopFlashSaleProductsUseCase, GetUserProductDetailUseCase, GetProductPriceRangeUseCase, GetTopSellingProductsUseCase {
-    ProductImageRollbackPort productImageRollbackPort;
+    StoredFileRollbackPort storedFileRollbackPort;
     ProductImageUploadService productImageUploadService;
     ProductCreationService productCreationService;
     CurrentUserPort currentUserPort;
@@ -240,7 +240,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
 
             List<StoredFile> storedFiles = new ArrayList<>();
             // Đăng ký trước khi upload để cả lỗi upload dở dang cũng được dọn sau rollback.
-            productImageRollbackPort.deleteImageStore(storedFiles);
+            storedFileRollbackPort.deleteImageStore(storedFiles);
 
             // Validate, upload ảnh và gắn metadata vào request trước khi tạo product.
             productImageUploadService.uploadAndApplyImageUrls(
@@ -410,6 +410,8 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
                     Stream.concat(Stream.of(coverFile), variantFiles.stream()).toList()
             );
             saveProductDeletionOutboxEvents(productId, variantIds, filesToDelete);
+            // Mỗi variant có event riêng để service khác dọn tham chiếu variant theo đúng một luồng xóa variant.
+            variantIds.forEach(variantId -> saveVariantDeletedOutboxEvent(productId, variantId));
 
             // Xóa aggregate và các bản ghi liên quan bằng cascade trong cùng transaction với outbox.
             productRepositoryPort.deleteById(productId);
@@ -424,12 +426,12 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     private void saveProductDeletionOutboxEvents(Long productId, List<Long> variantIds,
                                                 List<StoredFile> filesToDelete) {
         String aggregateId = String.valueOf(productId);
-        ProductImagesDeleteOutboxPayload imagesPayload = new ProductImagesDeleteOutboxPayload(filesToDelete);
+        StoredFilesDeleteOutboxPayload imagesPayload = new StoredFilesDeleteOutboxPayload(filesToDelete);
         outboxPort.save(new OutboxEventDto(
                 UUID.randomUUID(),
                 Constant.PRODUCT,
                 aggregateId,
-                ProductImagesDeleteOutboxPayload.EVENT_TYPE,
+                StoredFilesDeleteOutboxPayload.EVENT_TYPE,
                 imagesPayload,
                 LocalDateTime.now(clock)
         ));
@@ -485,31 +487,29 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
 
     // Lưu tác vụ dọn ảnh và event xóa variant với metadata khớp payload tương ứng.
     private void saveProductvariantDeletionOutboxEvents(Long variantId, List<StoredFile> filesToDelete, Long productId) {
-        String aggregateId = String.valueOf(variantId);
-        UUID eventId = UUID.randomUUID();
-        LocalDateTime now = LocalDateTime.now(clock);
         ProductvariantImagesDeleteOutboxPayload productvariantImagesDeleteOutboxPayload = new ProductvariantImagesDeleteOutboxPayload(filesToDelete);
-        ProductvariantDeleteOutboxPayload productvariantDeleteOutboxPayload = new ProductvariantDeleteOutboxPayload(
-                eventId, ProductvariantDeleteOutboxPayload.EVENT_TYPE,
-                productId, variantId, now
-        );
         outboxPort.save(new OutboxEventDto(
                 UUID.randomUUID(),
                 Constant.VARIANT,
-                aggregateId,
+                String.valueOf(variantId),
                 ProductvariantImagesDeleteOutboxPayload.EVENT_TYPE,
                 productvariantImagesDeleteOutboxPayload,
-                now
+                LocalDateTime.now(clock)
         ));
+        saveVariantDeletedOutboxEvent(productId, variantId);
+    }
 
+    private void saveVariantDeletedOutboxEvent(Long productId, Long variantId) {
+        UUID eventId = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.now(clock);
         outboxPort.save(new OutboxEventDto(
                 eventId,
                 Constant.VARIANT,
-                aggregateId,
+                String.valueOf(variantId),
                 ProductvariantDeleteOutboxPayload.EVENT_TYPE,
-                productvariantDeleteOutboxPayload,
+                new ProductvariantDeleteOutboxPayload(eventId, ProductvariantDeleteOutboxPayload.EVENT_TYPE,
+                        productId, variantId, now),
                 now
         ));
-
     }
 }

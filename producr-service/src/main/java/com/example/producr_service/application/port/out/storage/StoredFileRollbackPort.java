@@ -2,7 +2,7 @@ package com.example.producr_service.application.port.out.storage;
 
 import java.util.List;
 
-public interface ProductImageRollbackPort {
-    // Đăng ký dọn các ảnh đã upload nếu transaction tạo sản phẩm rollback.
+public interface StoredFileRollbackPort {
+    // Đăng ký dọn các file đã upload nếu transaction rollback.
     void deleteImageStore(List<StoredFile> storedFiles);
 }

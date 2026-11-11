@@ -8,4 +8,6 @@ public interface ProductViewStateRepositoryPort {
     ProductViewState lockOrCreate(Long userId, Long productId, Instant initialAllowedAt);
 
     void save(ProductViewState state);
+
+    int deleteByUserId(Long userId);
 }

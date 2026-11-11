@@ -15,7 +15,11 @@ CREATE TABLE categories (
     id                      INT AUTO_INCREMENT PRIMARY KEY,
     name                    VARCHAR(255) NOT NULL,
     image_url VARCHAR(500) NULL,
-    created_at              DATETIME DEFAULT CURRENT_TIMESTAMP
+    object_path             VARCHAR(500) NULL,  -- đường dẫn ảnh trong bucket để dọn khi rollback/xóa; danh mục cũ có thể chưa có
+    storage_bucket          VARCHAR(50) NULL,
+    created_at              DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at              DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_categories_name (name)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS outbox_event (

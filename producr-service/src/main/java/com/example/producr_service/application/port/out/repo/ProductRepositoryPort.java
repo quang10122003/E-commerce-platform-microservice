@@ -61,6 +61,10 @@ public interface ProductRepositoryPort {
     Optional<Long> findOwnerIdByIdForUpdate(Long productId);
     void deleteById(Long productId);
 
+    boolean existsByCategoryId(Long categoryId);
+
+    List<Long> findIdsByCategoryId(Long categoryId);
+
     // Lấy thông tin ảnh bìa của sản phẩm trước khi xóa.
     StoredFile findCoverFile(Long productId);
 

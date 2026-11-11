@@ -10,14 +10,16 @@ public class Category {
     private final Long id;
     private String name;
     private  String imageUrl;
+    private String objectPath;
 
-    public Category(Long id, String name,String imageUrl) {
+    public Category(Long id, String name, String imageUrl, String objectPath) {
         if (name == null || name.isBlank()) {
             throw new BusinessException(DomainProductError.CATEGORY_NAME_REQUIRED);
         }
         this.id = id;
         this.name = name;
         this.imageUrl = imageUrl;
+        this.objectPath = objectPath;
     }
 
     public Long getId() {
@@ -30,6 +32,15 @@ public class Category {
 
     public String getImageUrl() {
         return imageUrl;
+    }
+
+    public String getObjectPath() {
+        return objectPath;
+    }
+
+    public void replaceImage(String imageUrl, String objectPath) {
+        this.imageUrl = imageUrl;
+        this.objectPath = objectPath;
     }
 
     public void rename(String newName) {

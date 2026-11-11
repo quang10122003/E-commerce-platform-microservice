@@ -22,4 +22,6 @@ public interface ProductBehaviorRepositoryPort {
 
     // lấy id sản phẩm user đã có hành vi theo loại kể từ thời điểm since
     Set<Long> findProductIdsByUserIdAndTypeSince(Long userId, BehaviorType eventType, Instant since);
+
+    int deleteByUserId(Long userId);
 }
