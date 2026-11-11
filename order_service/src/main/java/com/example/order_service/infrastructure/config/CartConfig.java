@@ -18,7 +18,16 @@ import com.example.order_service.application.port.in.ProcessProductEventUseCase;
 import com.example.order_service.application.port.out.serialization.ObjectMapperPort;
 import com.example.order_service.application.registry.KafkaEventHandlerRegistry;
 import com.example.order_service.application.service.ProductEventApplicationService;
+import com.example.order_service.application.port.out.repo.OrderRepoPort;
+import com.example.order_service.application.service.OrderItemReferenceService;
 import com.example.order_service.application.strategy.eventKafka.ProductDeleteEventHandler;
+import com.example.order_service.application.strategy.eventKafka.UserDeletedEventHandler;
+import com.example.order_service.application.service.UserAccountService;
+import com.example.order_service.application.service.AuthEventApplicationService;
+import com.example.order_service.application.port.in.ProcessAuthEventUseCase;
+import com.example.order_service.application.port.in.CheckUserActiveOrdersUseCase;
+import com.example.order_service.application.port.out.repo.CartRepoPort;
+import com.example.order_service.application.port.out.repo.CheckoutRepoPort;
 import com.example.order_service.application.strategy.eventKafka.ProductvariantDeleteEventHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,13 +48,41 @@ public class CartConfig {
     }
 
     @Bean
-    ProductDeleteEventHandler productDeleteEventHandler(ObjectMapperPort objectMapperPort, CartService cartService) {
-        return new ProductDeleteEventHandler(objectMapperPort, cartService);
+    ProductDeleteEventHandler productDeleteEventHandler(ObjectMapperPort objectMapperPort, CartService cartService,
+                                                        OrderItemReferenceService orderItemReferenceService) {
+        return new ProductDeleteEventHandler(objectMapperPort, cartService, orderItemReferenceService);
     }
 
     @Bean
-    ProductvariantDeleteEventHandler productvariantDeleteEventHandler(ObjectMapperPort objectMapperPort, CartService cartService) {
-        return new ProductvariantDeleteEventHandler(objectMapperPort, cartService);
+    ProductvariantDeleteEventHandler productvariantDeleteEventHandler(ObjectMapperPort objectMapperPort, CartService cartService,
+                                                                      OrderItemReferenceService orderItemReferenceService) {
+        return new ProductvariantDeleteEventHandler(objectMapperPort, cartService, orderItemReferenceService);
+    }
+
+    @Bean
+    UserAccountService userAccountService(OrderRepoPort orderRepoPort, CheckoutRepoPort checkoutRepoPort,
+                                          CartRepoPort cartRepoPort) {
+        return new UserAccountService(orderRepoPort, checkoutRepoPort, cartRepoPort);
+    }
+
+    @Bean
+    CheckUserActiveOrdersUseCase checkUserActiveOrdersUseCase(UserAccountService userAccountService) {
+        return userAccountService;
+    }
+
+    @Bean
+    UserDeletedEventHandler userDeletedEventHandler(ObjectMapperPort objectMapperPort, UserAccountService userAccountService) {
+        return new UserDeletedEventHandler(objectMapperPort, userAccountService);
+    }
+
+    @Bean
+    ProcessAuthEventUseCase processAuthEventUseCase(KafkaEventHandlerRegistry eventHandlerRegistry) {
+        return new AuthEventApplicationService(eventHandlerRegistry);
+    }
+
+    @Bean
+    OrderItemReferenceService orderItemReferenceService(OrderRepoPort orderRepoPort) {
+        return new OrderItemReferenceService(orderRepoPort);
     }
 
     @Bean

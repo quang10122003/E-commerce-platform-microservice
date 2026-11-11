@@ -33,6 +33,9 @@ import com.example.order_service.application.port.out.client.VnpayPaymentPort;
 import com.example.order_service.application.port.out.client.VnpaySignaturePort;
 import com.example.order_service.application.service.VnpayIpnService;
 import com.example.order_service.application.port.in.ReconcileExpiredPaymentUseCase;
+import com.example.order_service.application.port.in.AutoCompleteOrderUseCase;
+import com.example.order_service.application.service.AutoCompleteOrderService;
+import com.example.order_service.application.service.UserOrderService;
 import com.example.order_service.application.port.out.client.VnpayQueryPort;
 import com.example.order_service.application.service.PaymentReconciliationService;
 import com.example.order_service.application.service.PaymentOutcomeService;
@@ -42,6 +45,9 @@ import org.springframework.web.client.RestClient;
 import com.example.order_service.application.strategy.outbox.CheckoutRequestedOutboxHandler;
 import com.example.order_service.application.strategy.outbox.CheckoutInventoryRequestedOutboxHandler;
 import com.example.order_service.application.strategy.outbox.CheckoutInventoryRollbackRequestedOutboxHandler;
+import com.example.order_service.application.strategy.outbox.OrderInventoryRollbackRequestedOutboxHandler;
+import com.example.order_service.application.strategy.outbox.OrderCancelledByShopOutboxHandler;
+import com.example.order_service.application.strategy.outbox.OrderStatusChangedOutboxHandler;
 import com.example.order_service.application.strategy.outbox.CheckoutSucceededOutboxHandler;
 import com.example.order_service.application.strategy.outbox.CheckoutFailedOutboxHandler;
 import com.example.order_service.application.strategy.eventKafka.CheckoutInventorySucceededHandler;
@@ -53,6 +59,7 @@ import com.example.order_service.application.port.out.repo.OrderRepoPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import org.springframework.beans.factory.annotation.Value;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
@@ -124,6 +131,15 @@ public class CheckoutConfig {
         return new VnpayPaymentAdapter(properties, RestClient.builder().requestFactory(requestFactory).build());
     }
 
+    // Thời gian chờ đọc từ cấu hình để môi trường test có thể rút ngắn.
+    @Bean
+    AutoCompleteOrderUseCase autoCompleteOrderUseCase(OrderRepoPort orderRepoPort, CheckoutRepoPort checkoutRepoPort,
+            OutboxPort outboxPort, Clock clock,
+            @Value("${app.order.auto-complete-after-hours:24}") long completeAfterHours) {
+        return new AutoCompleteOrderService(orderRepoPort, checkoutRepoPort, outboxPort, clock,
+                Duration.ofHours(completeAfterHours));
+    }
+
     @Bean
     ReconcileExpiredPaymentUseCase reconcileExpiredPaymentUseCase(PaymentRepoPort paymentRepoPort,
             VnpayQueryPort vnpayQueryPort, Clock clock, VnpayProperties properties,
@@ -141,6 +157,14 @@ public class CheckoutConfig {
     @Bean
     VnpayPaymentService vnpayPaymentService(VnpayPaymentPort vnpayPaymentPort, PaymentRepoPort paymentRepoPort) {
         return new VnpayPaymentService(vnpayPaymentPort, paymentRepoPort);
+    }
+
+    @Bean
+    UserOrderService userOrderService(CurrentUserPort currentUserPort, OrderRepoPort orderRepoPort,
+                                      CheckoutRepoPort checkoutRepoPort, ShopAvailabilityService shopAvailabilityService,
+                                      OutboxPort outboxPort, Clock clock) {
+        return new UserOrderService(currentUserPort, orderRepoPort, checkoutRepoPort, shopAvailabilityService,
+                outboxPort, clock);
     }
 
     @Bean
@@ -201,6 +225,24 @@ public class CheckoutConfig {
     @Bean
     EventHandler<OutboxEventDto> checkoutInventoryRollbackRequestedOutboxHandler(OrderEventPublisherPort publisher) {
         return new CheckoutInventoryRollbackRequestedOutboxHandler(publisher);
+    }
+
+    // Phát yêu cầu hoàn tồn kho của order do user hủy sang Product.
+    @Bean
+    EventHandler<OutboxEventDto> orderInventoryRollbackRequestedOutboxHandler(OrderEventPublisherPort publisher) {
+        return new OrderInventoryRollbackRequestedOutboxHandler(publisher);
+    }
+
+    // Phát event shop hủy đơn để Notification gửi mail cho người mua.
+    @Bean
+    EventHandler<OutboxEventDto> orderCancelledByShopOutboxHandler(OrderEventPublisherPort publisher) {
+        return new OrderCancelledByShopOutboxHandler(publisher);
+    }
+
+    // Phát event shop chuyển trạng thái đơn để Notification gửi mail cho người mua.
+    @Bean
+    EventHandler<OutboxEventDto> orderStatusChangedOutboxHandler(OrderEventPublisherPort publisher) {
+        return new OrderStatusChangedOutboxHandler(publisher);
     }
 
     @Bean

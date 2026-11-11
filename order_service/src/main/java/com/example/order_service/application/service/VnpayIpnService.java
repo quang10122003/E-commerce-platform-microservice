@@ -4,6 +4,7 @@ import com.example.order_service.application.dto.response.VnpayIpnResponse;
 import com.example.order_service.application.port.in.HandleVnpayIpnUseCase;
 import com.example.order_service.application.port.out.client.VnpaySignaturePort;
 import com.example.order_service.application.port.out.repo.PaymentRepoPort;
+import com.example.order_service.domain.model.OrderCancelledBy;
 import com.example.order_service.domain.model.Payment;
 import com.example.order_service.domain.model.PaymentStatus;
 import lombok.RequiredArgsConstructor;
@@ -83,7 +84,7 @@ public class VnpayIpnService implements HandleVnpayIpnUseCase {
             log.info("IPN VNPay thanh toán không thành công: vnp_TxnRef={}, vnp_ResponseCode={}, "
                     + "vnp_TransactionStatus={}", transactionReference, responseCode, transactionStatus);
             paymentOutcomeService.cancelPaymentAndOrders(payment,
-                    "Thanh toán VNPay không thành công, mã " + responseCode, LocalDateTime.now(clock));
+                    "Thanh toán VNPay không thành công, mã " + responseCode, OrderCancelledBy.USER, LocalDateTime.now(clock));
             return new VnpayIpnResponse("00", "Confirm Success");
         }
 

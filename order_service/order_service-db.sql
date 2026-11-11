@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS checkout (
     updated_at DATETIME(6) NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT uk_checkout_idempotency_key UNIQUE (idempotency_key),
+    INDEX idx_checkout_user (user_id),
     CONSTRAINT chk_checkout_amount CHECK (total_amount > 0),
     CONSTRAINT chk_checkout_address CHECK (CHAR_LENGTH(TRIM(shipping_address_snapshot)) > 0)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -88,16 +89,27 @@ CREATE TABLE IF NOT EXISTS orders (
     status ENUM('PENDING_CONFIRMATION', 'PENDING_PICKUP', 'SHIPPING', 'DONE', 'CANCEL')
         NOT NULL DEFAULT 'PENDING_CONFIRMATION',
     total_amount DECIMAL(19,0) NOT NULL,
-    cancellation_reason VARCHAR(500) NULL,
+    -- Tác nhân hủy đơn; lý do lỗi thanh toán/checkout xem ở bảng payment/checkout.
+    cancelled_by ENUM('USER', 'SHOP', 'SYSTEM') NULL,
+    -- Lý do do user/shop chọn khi hủy qua API; NULL khi hệ thống tự hủy.
+    cancel_reason ENUM('CHANGE_MIND', 'WRONG_ADDRESS', 'FOUND_CHEAPER', 'DUPLICATE_ORDER',
+        'OUT_OF_STOCK', 'CANNOT_DELIVER', 'BUYER_UNREACHABLE', 'PRODUCT_INFO_ERROR', 'OTHER') NULL,
     cancelled_at DATETIME(6) NULL,
+    -- Mốc shop (hoặc hệ thống với VNPay) xác nhận và mốc giao cho đơn vị vận chuyển, dùng cho dòng thời gian đơn.
+    confirmed_at DATETIME(6) NULL,
+    shipped_at DATETIME(6) NULL,
+    -- Mốc đơn tự chuyển sang hoàn thành bởi job sau khi đang giao đủ thời gian.
+    delivered_at DATETIME(6) NULL,
     created_at DATETIME(6) NOT NULL,
     updated_at DATETIME(6) NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT uk_orders_checkout_shop_price_type UNIQUE (checkout_id, shop_id, price_type),
+    -- Job tự hoàn thành đơn quét theo trạng thái và mốc giao cho đơn vị vận chuyển.
+    INDEX idx_orders_status_shipped_at (status, shipped_at),
     CONSTRAINT fk_orders_checkout FOREIGN KEY (checkout_id)
         REFERENCES checkout (id) ON DELETE RESTRICT,
     CONSTRAINT chk_orders_amount CHECK (total_amount > 0),
-    CONSTRAINT chk_orders_cancelled_at CHECK (status <> 'CANCEL' OR cancelled_at IS NOT NULL)
+    CONSTRAINT chk_orders_cancelled CHECK (status <> 'CANCEL' OR (cancelled_at IS NOT NULL AND cancelled_by IS NOT NULL))
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Không FK sang Product Service để việc xóa sản phẩm không làm mất lịch sử đơn.

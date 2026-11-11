@@ -4,6 +4,7 @@ import com.example.order_service.application.dto.response.VnpayQueryResult;
 import com.example.order_service.application.port.in.ReconcileExpiredPaymentUseCase;
 import com.example.order_service.application.port.out.client.VnpayQueryPort;
 import com.example.order_service.application.port.out.repo.PaymentRepoPort;
+import com.example.order_service.domain.model.OrderCancelledBy;
 import com.example.order_service.domain.model.Payment;
 import com.example.order_service.domain.model.PaymentStatus;
 import lombok.RequiredArgsConstructor;
@@ -73,7 +74,8 @@ public class PaymentReconciliationService implements ReconcileExpiredPaymentUseC
     }
 
     private void cancel(Payment payment, VnpayQueryResult result, LocalDateTime now) {
-        paymentOutcomeService.cancelPaymentAndOrders(payment, "VNPay không ghi nhận thanh toán thành công", now);
+        paymentOutcomeService.cancelPaymentAndOrders(payment, "VNPay không ghi nhận thanh toán thành công",
+                OrderCancelledBy.SYSTEM, now);
         log.info("Đối soát VNPay hủy payment hết hạn: vnp_TxnRef={}, vnp_ResponseCode={}, vnp_TransactionStatus={}",
                 payment.getTransactionReference(), result.responseCode(), result.transactionStatus());
     }

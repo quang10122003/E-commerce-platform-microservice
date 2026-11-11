@@ -105,6 +105,10 @@ app:
     # Chờ thêm sau expires_at vì IPN có thể về trễ trước khi tự hỏi QueryDR.
     reconcile-grace-minutes: ${VNPAY_RECONCILE_GRACE_MINUTES:15}
     reconcile-fixed-delay-ms: 60000
+  order:
+    # Đơn đang giao quá số giờ này kể từ lúc giao cho đơn vị vận chuyển thì job tự chuyển sang hoàn thành.
+    auto-complete-after-hours: ${ORDER_AUTO_COMPLETE_AFTER_HOURS:24}
+    auto-complete-fixed-delay-ms: 300000
   kafka:
     consumer:
       retry-interval-ms: 60000

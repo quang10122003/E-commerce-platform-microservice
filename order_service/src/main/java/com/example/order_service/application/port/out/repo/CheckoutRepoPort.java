@@ -9,4 +9,6 @@ public interface CheckoutRepoPort {
     Optional<Checkout> findByIdForUpdate(Long checkoutId);
     Optional<Checkout> findByIdempotencyKey(String idempotencyKey);
     Checkout save(Checkout checkout);
+
+    boolean existsProcessingByUserId(Long userId);
 }

@@ -12,4 +12,6 @@ public interface CartRepoPort {
     Cart save(Cart cart);
 
     int removeItemsByVariantIds(List<Long> variantIds, LocalDateTime now);
+
+    int deleteByUserId(Long userId);
 }

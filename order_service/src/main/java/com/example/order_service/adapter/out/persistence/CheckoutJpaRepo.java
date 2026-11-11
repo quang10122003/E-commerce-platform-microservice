@@ -10,6 +10,8 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 public interface CheckoutJpaRepo extends JpaRepository<CheckoutEntity, Long> {
+    boolean existsByUserIdAndStatus(Long userId, com.example.order_service.domain.model.CheckoutStatus status);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from CheckoutEntity c where c.id = :checkoutId")
     Optional<CheckoutEntity> findByIdForUpdate(@Param("checkoutId") Long checkoutId);

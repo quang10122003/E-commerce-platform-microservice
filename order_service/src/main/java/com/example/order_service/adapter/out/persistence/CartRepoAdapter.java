@@ -38,4 +38,9 @@ public class CartRepoAdapter implements CartRepoPort {
         cartJpaRepo.updateCartsContainingVariants(variantIds, now);
         return cartJpaRepo.deleteItemsByVariantIds(variantIds);
     }
+
+    @Override
+    public int deleteByUserId(Long userId) {
+        return cartJpaRepo.deleteByUserId(userId);
+    }
 }

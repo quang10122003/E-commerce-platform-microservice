@@ -11,7 +11,11 @@ public enum OrderDomainError implements ErrorCode {
     ITEMS_REQUIRED("ORDER_ITEMS_REQUIRED", "Đơn hàng phải có ít nhất một sản phẩm", 400),
     DUPLICATE_ITEM("ORDER_DUPLICATE_ITEM", "Biến thể đã tồn tại trong đơn hàng", 409),
     PRICE_TYPE_MISMATCH("ORDER_PRICE_TYPE_MISMATCH", "Loại giá của sản phẩm không khớp đơn hàng", 400),
-    INVALID_STATE("ORDER_INVALID_STATE", "Trạng thái hiện tại không cho phép thao tác", 409);
+    INVALID_STATE("ORDER_INVALID_STATE", "Trạng thái hiện tại không cho phép thao tác", 409),
+    ONLINE_PAYMENT_NOT_CANCELLABLE("ORDER_ONLINE_PAYMENT_NOT_CANCELLABLE", "Đơn thanh toán online chưa hỗ trợ hủy", 409),
+    CANCEL_REASON_NOT_ALLOWED("ORDER_CANCEL_REASON_NOT_ALLOWED", "Lý do hủy không phù hợp với người hủy", 400),
+    STATUS_CHANGED("ORDER_STATUS_CHANGED", "Đơn hàng đã được cập nhật, vui lòng tải lại", 409),
+    AUTO_CONFIRMED_BY_PAYMENT("ORDER_AUTO_CONFIRMED_BY_PAYMENT", "Đơn thanh toán online được hệ thống tự xác nhận sau khi thanh toán", 409);
 
     private final String code;
     private final String message;

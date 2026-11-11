@@ -51,4 +51,9 @@ public class CheckoutRepoAdapter implements CheckoutRepoPort {
             throw exception;
         }
     }
+
+    @Override
+    public boolean existsProcessingByUserId(Long userId) {
+        return checkoutJpaRepo.existsByUserIdAndStatus(userId, com.example.order_service.domain.model.CheckoutStatus.PROCESSING);
+    }
 }

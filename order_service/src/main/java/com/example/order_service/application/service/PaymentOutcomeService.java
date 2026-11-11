@@ -8,6 +8,7 @@ import com.example.order_service.application.port.out.outbox.OutboxPort;
 import com.example.order_service.application.port.out.repo.OrderRepoPort;
 import com.example.order_service.application.port.out.repo.PaymentRepoPort;
 import com.example.order_service.domain.model.Order;
+import com.example.order_service.domain.model.OrderCancelledBy;
 import com.example.order_service.domain.model.Payment;
 import com.example.order_service.domain.model.PaymentStatus;
 import lombok.RequiredArgsConstructor;
@@ -43,11 +44,11 @@ public class PaymentOutcomeService {
     }
 
     @Transactional
-    public void cancelPaymentAndOrders(Payment payment, String reason, LocalDateTime now) {
+    public void cancelPaymentAndOrders(Payment payment, String reason, OrderCancelledBy cancelledBy, LocalDateTime now) {
         payment.cancelPending(reason, now);
         paymentRepoPort.save(payment);
         List<Order> orders = orderRepoPort.findByCheckoutIdForUpdate(payment.getCheckoutId());
-        orders.forEach((Order order) -> order.cancel(reason, now));
+        orders.forEach((Order order) -> order.cancel(cancelledBy, null, now));
         orderRepoPort.saveStatus(orders);
         UUID rollbackEventId = requestInventoryRollback(payment.getCheckoutId(), reason, now);
         log.info("Đã hủy payment, order và yêu cầu hoàn tồn kho: payment_id={}, checkout_id={}, order_count={}, "

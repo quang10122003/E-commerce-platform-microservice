@@ -24,15 +24,21 @@ public final class Order {
     private final CheckoutPaymentMethod paymentMethod;
     private OrderStatus status;
     private final BigDecimal totalAmount;
-    private String cancellationReason;
+    private OrderCancelledBy cancelledBy;
+    private OrderCancelReason cancelReason;
     private LocalDateTime cancelledAt;
+    private LocalDateTime confirmedAt;
+    private LocalDateTime shippedAt;
+    private LocalDateTime deliveredAt;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private final List<OrderItem> items;
 
     private Order(Long id, Long checkoutId, Long shopId, String shopNameSnapshot,
                   String shopLogoUrlSnapshot, PriceType priceType, CheckoutPaymentMethod paymentMethod,
-                  OrderStatus status, String cancellationReason, LocalDateTime cancelledAt, LocalDateTime createdAt,
+                  OrderStatus status, OrderCancelledBy cancelledBy, OrderCancelReason cancelReason,
+                  LocalDateTime cancelledAt, LocalDateTime confirmedAt, LocalDateTime shippedAt, LocalDateTime deliveredAt,
+                  LocalDateTime createdAt,
                   LocalDateTime updatedAt, List<OrderItem> items) {
         if (items == null || items.isEmpty()) {
             throw new BusinessException(OrderDomainError.ITEMS_REQUIRED);
@@ -58,11 +64,15 @@ public final class Order {
         this.shopNameSnapshot = validateOptionalText(shopNameSnapshot, 255);
         this.shopLogoUrlSnapshot = shopLogoUrlSnapshot;
         this.status = Objects.requireNonNull(status);
-        this.cancellationReason = validateOptionalText(cancellationReason, 500);
+        this.cancelledBy = cancelledBy;
+        this.cancelReason = cancelReason;
         this.createdAt = validateTime(createdAt, null);
         this.updatedAt = validateTime(updatedAt, createdAt);
         this.cancelledAt = cancelledAt == null ? null : validateTime(cancelledAt, createdAt);
-        if (status == OrderStatus.CANCEL && cancelledAt == null) {
+        this.confirmedAt = confirmedAt == null ? null : validateTime(confirmedAt, createdAt);
+        this.shippedAt = shippedAt == null ? null : validateTime(shippedAt, createdAt);
+        this.deliveredAt = deliveredAt == null ? null : validateTime(deliveredAt, createdAt);
+        if (status == OrderStatus.CANCEL && (cancelledAt == null || cancelledBy == null)) {
             throw new BusinessException(OrderDomainError.INVALID_DATA);
         }
     }
@@ -77,53 +87,116 @@ public final class Order {
             throw new BusinessException(OrderDomainError.INVALID_DATA);
         }
         return new Order(null, checkoutId, shopId, shopNameSnapshot, shopLogoUrlSnapshot,
-                priceType, paymentMethod, OrderStatus.PENDING_CONFIRMATION, null, null, now, now, items);
+                priceType, paymentMethod, OrderStatus.PENDING_CONFIRMATION, null, null, null, null, null, null, now, now, items);
     }
 
     public static Order reconstitute(Long id, Long checkoutId, Long shopId, String shopNameSnapshot,
                                     String shopLogoUrlSnapshot, PriceType priceType,
-                                    CheckoutPaymentMethod paymentMethod, OrderStatus status, BigDecimal totalAmount, String cancellationReason,
-                                    LocalDateTime cancelledAt, LocalDateTime createdAt,
+                                    CheckoutPaymentMethod paymentMethod, OrderStatus status, BigDecimal totalAmount, OrderCancelledBy cancelledBy,
+                                    OrderCancelReason cancelReason, LocalDateTime cancelledAt, LocalDateTime confirmedAt,
+                                    LocalDateTime shippedAt, LocalDateTime deliveredAt, LocalDateTime createdAt,
                                     LocalDateTime updatedAt, List<OrderItem> items) {
         requireId(id);
         Order order = new Order(id, checkoutId, shopId, shopNameSnapshot, shopLogoUrlSnapshot,
-                priceType, paymentMethod, status, cancellationReason, cancelledAt, createdAt, updatedAt, items);
+                priceType, paymentMethod, status, cancelledBy, cancelReason, cancelledAt, confirmedAt, shippedAt, deliveredAt,
+                createdAt, updatedAt, items);
         if (order.totalAmount.compareTo(validateAmount(totalAmount)) != 0) {
             throw new BusinessException(OrderDomainError.TOTAL_MISMATCH);
         }
         return order;
     }
 
+    // Ghi mốc xác nhận cho cả shop xác nhận COD lẫn hệ thống tự xác nhận khi VNPay thanh toán xong.
     public void confirm(LocalDateTime now) {
-        transition(OrderStatus.PENDING_CONFIRMATION, OrderStatus.PENDING_PICKUP, now);
+        if (transition(OrderStatus.PENDING_CONFIRMATION, OrderStatus.PENDING_PICKUP, now)) {
+            confirmedAt = updatedAt;
+        }
     }
 
     public void startShipping(LocalDateTime now) {
-        transition(OrderStatus.PENDING_PICKUP, OrderStatus.SHIPPING, now);
+        if (transition(OrderStatus.PENDING_PICKUP, OrderStatus.SHIPPING, now)) {
+            shippedAt = updatedAt;
+        }
     }
 
+    // Shop chuyển đơn sang bước kế tiếp do domain quyết định; currentStatus là trạng thái UI đang thấy.
+    public void advanceByShop(OrderStatus currentStatus, LocalDateTime now) {
+        if (currentStatus == null) {
+            throw new BusinessException(OrderDomainError.INVALID_DATA);
+        }
+        if (status != currentStatus) {
+            throw new BusinessException(OrderDomainError.STATUS_CHANGED);
+        }
+        switch (status) {
+            case PENDING_CONFIRMATION -> {
+                // Đơn VNPay được hệ thống tự xác nhận khi thanh toán xong, shop không xác nhận tay.
+                if (paymentMethod != CheckoutPaymentMethod.COD) {
+                    throw new BusinessException(OrderDomainError.AUTO_CONFIRMED_BY_PAYMENT);
+                }
+                confirm(now);
+            }
+            case PENDING_PICKUP -> startShipping(now);
+            // SHIPPING sang DONE do job tự động; DONE và CANCEL không còn bước kế tiếp.
+            default -> throw new BusinessException(OrderDomainError.INVALID_STATE);
+        }
+    }
+
+    // Job gọi khi đơn đang giao đủ thời gian; ghi mốc giao thành công cho dòng thời gian.
     public void complete(LocalDateTime now) {
-        transition(OrderStatus.SHIPPING, OrderStatus.DONE, now);
+        if (transition(OrderStatus.SHIPPING, OrderStatus.DONE, now)) {
+            deliveredAt = updatedAt;
+        }
     }
 
-    public void cancel(String reason, LocalDateTime now) {
+    // Hủy được khi shop chưa giao cho đơn vị vận chuyển; reason null khi hệ thống tự hủy.
+    public void cancel(OrderCancelledBy actor, OrderCancelReason reason, LocalDateTime now) {
         if (status == OrderStatus.CANCEL) {
             return;
         }
-        if (status != OrderStatus.PENDING_CONFIRMATION) {
+        if (status != OrderStatus.PENDING_CONFIRMATION && status != OrderStatus.PENDING_PICKUP) {
             throw new BusinessException(OrderDomainError.INVALID_STATE);
         }
-        String validReason = requireText(reason, 500);
+        OrderCancelledBy validActor = Objects.requireNonNull(actor);
         LocalDateTime cancellationTime = validateTime(now, updatedAt);
         status = OrderStatus.CANCEL;
-        cancellationReason = validReason;
+        cancelledBy = validActor;
+        cancelReason = reason;
         cancelledAt = cancellationTime;
         updatedAt = cancellationTime;
     }
 
-    private void transition(OrderStatus expected, OrderStatus next, LocalDateTime now) {
-        if (status == next) {
+    public void cancelByUser(OrderCancelReason reason, LocalDateTime now) {
+        cancelByParticipant(OrderCancelledBy.USER, reason, now);
+    }
+
+    public void cancelByShop(OrderCancelReason reason, LocalDateTime now) {
+        cancelByParticipant(OrderCancelledBy.SHOP, reason, now);
+    }
+
+    // User và shop chỉ hủy đơn COD: đơn VNPay đã trả tiền cần luồng hoàn tiền chưa hỗ trợ.
+    private void cancelByParticipant(OrderCancelledBy actor, OrderCancelReason reason, LocalDateTime now) {
+        if (status == OrderStatus.CANCEL) {
             return;
+        }
+        if (status != OrderStatus.PENDING_CONFIRMATION && status != OrderStatus.PENDING_PICKUP) {
+            throw new BusinessException(OrderDomainError.INVALID_STATE);
+        }
+        if (paymentMethod != CheckoutPaymentMethod.COD) {
+            throw new BusinessException(OrderDomainError.ONLINE_PAYMENT_NOT_CANCELLABLE);
+        }
+        if (reason == null) {
+            throw new BusinessException(OrderDomainError.INVALID_DATA);
+        }
+        if (!reason.allowedFor(actor)) {
+            throw new BusinessException(OrderDomainError.CANCEL_REASON_NOT_ALLOWED);
+        }
+        cancel(actor, reason, now);
+    }
+
+    // Trả về true khi trạng thái thực sự thay đổi để caller ghi mốc thời gian của bước.
+    private boolean transition(OrderStatus expected, OrderStatus next, LocalDateTime now) {
+        if (status == next) {
+            return false;
         }
         if (status != expected) {
             throw new BusinessException(OrderDomainError.INVALID_STATE);
@@ -131,6 +204,7 @@ public final class Order {
         LocalDateTime transitionTime = validateTime(now, updatedAt);
         status = next;
         updatedAt = transitionTime;
+        return true;
     }
 
     public Long getId() {
@@ -169,12 +243,28 @@ public final class Order {
         return totalAmount;
     }
 
-    public String getCancellationReason() {
-        return cancellationReason;
+    public OrderCancelledBy getCancelledBy() {
+        return cancelledBy;
+    }
+
+    public OrderCancelReason getCancelReason() {
+        return cancelReason;
     }
 
     public LocalDateTime getCancelledAt() {
         return cancelledAt;
+    }
+
+    public LocalDateTime getConfirmedAt() {
+        return confirmedAt;
+    }
+
+    public LocalDateTime getShippedAt() {
+        return shippedAt;
+    }
+
+    public LocalDateTime getDeliveredAt() {
+        return deliveredAt;
     }
 
     public LocalDateTime getCreatedAt() {

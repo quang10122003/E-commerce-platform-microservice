@@ -2,6 +2,8 @@ package com.example.order_service.adapter.entity;
 
 import com.example.order_service.domain.model.CheckoutPaymentMethod;
 import com.example.order_service.domain.model.OrderStatus;
+import com.example.order_service.domain.model.OrderCancelledBy;
+import com.example.order_service.domain.model.OrderCancelReason;
 import com.example.order_service.domain.model.PriceType;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -56,11 +58,25 @@ public class OrderEntity {
     @Column(name = "total_amount", nullable = false, precision = 19, scale = 0)
     private BigDecimal totalAmount;
 
-    @Column(name = "cancellation_reason", length = 500)
-    private String cancellationReason;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cancelled_by")
+    private OrderCancelledBy cancelledBy;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cancel_reason")
+    private OrderCancelReason cancelReason;
 
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
+
+    @Column(name = "confirmed_at")
+    private LocalDateTime confirmedAt;
+
+    @Column(name = "shipped_at")
+    private LocalDateTime shippedAt;
+
+    @Column(name = "delivered_at")
+    private LocalDateTime deliveredAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
