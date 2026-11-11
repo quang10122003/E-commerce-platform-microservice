@@ -1,9 +1,17 @@
 package com.example.auth_service.application.service;
 
+import com.example.auth_service.application.port.out.storage.StorageBucket;
+import com.example.auth_service.application.port.out.storage.StoredFile;
 import com.example.auth_service.application.DTO.repone.UserLockResponse;
 import com.example.auth_service.application.DTO.repone.UserOverviewResponse;
 import com.example.auth_service.application.DTO.repone.UserListResponse;
+import com.example.auth_service.application.DTO.event.UserDeletedEventDto;
+import com.example.auth_service.application.constant.Constant;
+import com.example.auth_service.application.port.in.DeleteUserUseCase;
 import com.example.auth_service.application.port.in.GetUsersUseCase;
+import com.example.auth_service.application.port.out.OrderActivityPort;
+import com.example.auth_service.application.port.out.OutboxEventPort;
+import com.example.auth_service.domain.model.OutboxEvent;
 import com.example.auth_service.application.port.in.GetUserOverviewUseCase;
 import com.example.auth_service.application.port.in.ToggleUserLockUseCase;
 import com.example.auth_service.application.port.in.ToggleShopLockUseCase;
@@ -21,11 +29,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @RequiredArgsConstructor
 @Slf4j
-public class UserService implements GetUsersUseCase, GetUserOverviewUseCase, ToggleUserLockUseCase, ToggleShopLockUseCase {
+public class UserService implements GetUsersUseCase, GetUserOverviewUseCase, ToggleUserLockUseCase, ToggleShopLockUseCase,
+        DeleteUserUseCase {
     private final UserRepositoryPort userRepositoryPort;
     private final CachePort cachePort;
+    private final OrderActivityPort orderActivityPort;
+    private final OutboxEventPort outboxEventPort;
+    private final Clock clock;
 
     @Override
     @Transactional
@@ -70,4 +86,31 @@ public class UserService implements GetUsersUseCase, GetUserOverviewUseCase, Tog
                 locked, shopLocked, pageQuery);
     }
 
+    @Override
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = userRepositoryPort.findByIdForUpdate(userId)
+                .orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND));
+        // Giữ vị trí logo trước khi ẩn danh để dọn file sau commit.
+        String logoObjectPath = user.getShopLogoObjectPath();
+        String logoUrl = user.getShopLogoUrl();
+        // Domain chặn admin và tài khoản đã xóa trước khi gọi sang order-service.
+        user.anonymize(clock.instant());
+        if (orderActivityPort.hasActiveOrders(userId)) {
+            throw new BusinessException(AuthError.USER_HAS_ACTIVE_ORDERS);
+        }
+        userRepositoryPort.save(user);
+        // Gateway đọc key này để chặn ngay access token còn hạn của tài khoản đã xóa.
+        cachePort.set(AccessControlCacheKeys.userLocked(userId.toString()), "1");
+        if (logoObjectPath != null) {
+            ShopProfileService.saveDeleteFilesEvent(userId,
+                    new StoredFile(StorageBucket.SHOP_LOGO, logoObjectPath, logoUrl), outboxEventPort, clock);
+        }
+        UUID eventId = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.now(clock);
+        outboxEventPort.save(new OutboxEvent(eventId, Constant.USER, String.valueOf(userId),
+                UserDeletedEventDto.EVENT_TYPE,
+                new UserDeletedEventDto(eventId, UserDeletedEventDto.EVENT_TYPE, userId, now), now));
+        log.info("Xóa mềm tài khoản: user_id={}", userId);
+    }
 }

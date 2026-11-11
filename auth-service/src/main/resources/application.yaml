@@ -98,3 +98,7 @@ app:
   kafka:
     publisher:
       fixed-delay-ms: 10000
+
+supabase:
+  url: ${SUPABASE_URL}
+  service-role-key: ${SUPABASE_SERVICE_ROLE_SECRET_KEY}

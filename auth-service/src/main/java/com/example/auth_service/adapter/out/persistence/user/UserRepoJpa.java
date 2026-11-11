@@ -44,7 +44,7 @@ public interface UserRepoJpa extends JpaRepository<UserEntity, Long> {
                    u.shopName as shopName, u.shopLogoUrl as shopLogoUrl,
                    u.shopDescription as shopDescription, u.shopPhone as shopPhone,
                    u.shopAddress as shopAddress, u.shopCreatedAt as shopCreatedAt,
-                   u.isShopLock as shopLocked
+                   u.isShopLock as shopLocked, u.deletedAt as deletedAt
             from UserEntity u
             where (:role is null or exists (select r.id from u.roles r where r.name = :role))
               and (:keyword is null or lower(u.fullName) like :keyword escape '!'

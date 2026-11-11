@@ -1,5 +1,6 @@
 package com.example.auth_service.adapter.mapper;
 
+import com.example.auth_service.application.port.out.storage.StorageBucket;
 import com.example.auth_service.adapter.out.persistence.projection.ShopStatusProjection;
 import com.example.auth_service.application.DTO.repone.ShopStatusResponse;
 
@@ -22,7 +23,7 @@ import com.example.auth_service.application.DTO.repone.ShopAddressView;
 import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
 import com.example.auth_service.application.DTO.repone.UserDisplayInfoResponse;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", imports = StorageBucket.class)
 public interface UserMapper {
     ShopStatusResponse toShopStatus(
             ShopStatusProjection projection);
@@ -36,6 +37,9 @@ public interface UserMapper {
 
     @Mapping(target = "isShopLock", source = "shopLock")
     @Mapping(target = "isLocked", source = "locked")
+    // Bucket suy ra từ object_path để mọi lần lưu user không làm mất thông tin bucket.
+    @Mapping(target = "shopLogoStorageBucket",
+            expression = "java(user.getShopLogoObjectPath() == null ? null : StorageBucket.SHOP_LOGO)")
     UserEntity toEntity(User user);
 
     UserDisplayInfoResponse toUserDisplayInfo(UserDisplayInfoProjection projection);

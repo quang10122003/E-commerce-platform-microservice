@@ -15,4 +15,5 @@ public interface UserListProjection {
     String getShopAddress();
     Instant getShopCreatedAt();
     boolean getShopLocked();
+    Instant getDeletedAt();
 }

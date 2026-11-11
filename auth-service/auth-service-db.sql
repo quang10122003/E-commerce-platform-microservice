@@ -11,12 +11,17 @@ create table users(
 	full_name varchar(255) not null,
 	shop_name varchar(255) null,
 	shop_logo_url text null,
+	-- Vị trí logo trong storage để dọn file khi đổi logo, rollback hoặc xóa tài khoản.
+	shop_logo_object_path varchar(500) null,
+	shop_logo_storage_bucket varchar(50) null,
 	shop_description text null,
 	shop_phone varchar(32) null,
 	shop_address text null,
 	shop_created_at TIMESTAMP NULL DEFAULT NULL,
 	is_shop_lock boolean not null default false,
 	is_locked boolean not null default false,
+	-- Xóa mềm: giữ dòng để đơn hàng/chat ở service khác vẫn tham chiếu được, thông tin cá nhân đã bị xóa.
+	deleted_at TIMESTAMP NULL DEFAULT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

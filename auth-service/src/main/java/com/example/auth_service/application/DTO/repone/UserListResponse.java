@@ -9,5 +9,5 @@ public record UserListResponse(Long id, String email, String fullName, boolean l
                                Instant createdAt, List<RoleEnum> roles,
                                String shopName, String shopLogoUrl, String shopDescription,
                                String shopPhone, String shopAddress, Instant shopCreatedAt,
-                               boolean shopLocked) {
+                               boolean shopLocked, Instant deletedAt) {
 }

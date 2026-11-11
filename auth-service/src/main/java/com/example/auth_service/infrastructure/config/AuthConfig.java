@@ -1,5 +1,14 @@
 package com.example.auth_service.infrastructure.config;
 
+import com.example.auth_service.application.port.in.DeleteStoredFilesUseCase;
+import com.example.auth_service.application.port.out.PayloadMapperPort;
+import com.example.auth_service.application.port.out.storage.FileStoragePort;
+import com.example.auth_service.application.port.out.storage.StoredFileRollbackPort;
+import com.example.auth_service.application.service.DeleteStoredFilesService;
+import com.example.auth_service.application.service.ShopProfileService;
+import com.example.auth_service.application.strategy.outbox.StoredFilesDeleteOutboxHandler;
+import com.example.auth_service.application.port.out.OrderActivityPort;
+import com.example.auth_service.application.strategy.outbox.UserDeletedOutboxHandler;
 import com.example.auth_service.application.port.in.ChecktokenUseCase;
 import com.example.auth_service.application.port.in.LoginUseCase;
 import com.example.auth_service.application.port.in.LogoutUserCase;
@@ -55,9 +64,16 @@ public class AuthConfig {
                 userRepositoryPort, outboxEventPort, cachePort, clock);
     }
 
-    @Bean(name = {"userService", "getUsersUseCase", "getUserOverviewUseCase", "toggleUserLockUseCase", "toggleShopLockUseCase"})
-    UserService userService(UserRepositoryPort userRepositoryPort, CachePort cachePort) {
-        return new UserService(userRepositoryPort, cachePort);
+    @Bean(name = {"userService", "getUsersUseCase", "getUserOverviewUseCase", "toggleUserLockUseCase", "toggleShopLockUseCase",
+            "deleteUserUseCase"})
+    UserService userService(UserRepositoryPort userRepositoryPort, CachePort cachePort,
+                            OrderActivityPort orderActivityPort, OutboxEventPort outboxEventPort, Clock clock) {
+        return new UserService(userRepositoryPort, cachePort, orderActivityPort, outboxEventPort, clock);
+    }
+
+    @Bean
+    EventHandler<OutboxEventDto> userDeletedOutboxHandler(AuthEventPublisherPort authEventPublisherPort) {
+        return new UserDeletedOutboxHandler(authEventPublisherPort);
     }
 
     @Bean(name = {"authServiceInternal", "getPublicShopInfoUseCase", "internalGetUserInfoUseCase"})
@@ -93,4 +109,29 @@ public class AuthConfig {
         return authApplicationService;
     }
 
+
+    @Bean
+    DeleteStoredFilesService deleteStoredFilesService(FileStoragePort fileStoragePort) {
+        return new DeleteStoredFilesService(fileStoragePort);
+    }
+
+    @Bean
+    DeleteStoredFilesUseCase deleteStoredFilesUseCase(DeleteStoredFilesService deleteStoredFilesService) {
+        return deleteStoredFilesService;
+    }
+
+    @Bean
+    EventHandler<OutboxEventDto> storedFilesDeleteOutboxHandler(PayloadMapperPort payloadMapperPort,
+                                                                DeleteStoredFilesService deleteStoredFilesService) {
+        return new StoredFilesDeleteOutboxHandler(payloadMapperPort, deleteStoredFilesService);
+    }
+
+    @Bean(name = {"shopProfileService", "uploadShopLogoUseCase"})
+    ShopProfileService shopProfileService(UserRepositoryPort userRepositoryPort, TokenServicePort tokenServicePort,
+                                          FileStoragePort fileStoragePort, StoredFileRollbackPort storedFileRollbackPort,
+                                          OutboxEventPort outboxEventPort, Clock clock,
+                                          AuthServiceInternal authServiceInternal) {
+        return new ShopProfileService(userRepositoryPort, tokenServicePort, fileStoragePort, storedFileRollbackPort,
+                outboxEventPort, clock, authServiceInternal);
+    }
 }

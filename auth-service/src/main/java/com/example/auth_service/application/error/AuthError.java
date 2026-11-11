@@ -4,6 +4,9 @@ import com.example.common.error.ErrorCode;
 
 public enum AuthError implements ErrorCode {
     USER_NOT_FOUND("USER_NOT_FOUND", "User not found", 404),
+    INVALID_IMAGE_FILE("INVALID_IMAGE_FILE", "File ảnh không hợp lệ", 400),
+    USER_HAS_ACTIVE_ORDERS("USER_HAS_ACTIVE_ORDERS", "Tài khoản còn đơn hàng hoặc thanh toán đang xử lý nên chưa thể xóa", 409),
+    ORDER_SERVICE_UNAVAILABLE("ORDER_SERVICE_UNAVAILABLE", "Tạm thời không kiểm tra được đơn hàng của tài khoản", 503),
     SHOP_NOT_FOUND("SHOP_NOT_FOUND", "Không tìm thấy shop", 404),
     ROLE_NOT_FOUND("ROLE_NOT_FOUND", "Role not found", 404),
     EMAIL_ALREADY_REGISTERED("EMAIL_ALREADY_REGISTERED", "The email has already been registered.", 409),

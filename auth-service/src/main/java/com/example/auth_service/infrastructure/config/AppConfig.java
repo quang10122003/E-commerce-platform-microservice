@@ -1,5 +1,6 @@
 package com.example.auth_service.infrastructure.config;
 
+import org.springframework.web.client.RestClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -11,5 +12,10 @@ public class AppConfig {
     @Bean
     Clock clock() {
         return Clock.system(ZoneId.of("Asia/Ho_Chi_Minh"));
+    }
+
+    @Bean
+    RestClient restClient() {
+        return RestClient.builder().build();
     }
 }

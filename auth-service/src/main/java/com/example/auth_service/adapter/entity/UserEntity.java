@@ -1,5 +1,8 @@
 package com.example.auth_service.adapter.entity;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import com.example.auth_service.application.port.out.storage.StorageBucket;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Set;
@@ -86,6 +89,13 @@ public class UserEntity implements UserDetails {
     @Column(name = "is_locked")
     boolean isLocked;
 
+    @Column(name = "deleted_at", columnDefinition = "TIMESTAMP")
+    Instant deletedAt;
+    @Column(name = "shop_logo_object_path", length = 500)
+    String shopLogoObjectPath;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "shop_logo_storage_bucket", length = 50)
+    StorageBucket shopLogoStorageBucket;
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     Instant createdAt;

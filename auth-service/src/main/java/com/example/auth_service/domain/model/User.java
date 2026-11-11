@@ -23,11 +23,13 @@ public class User {
     private boolean locked;
     private Instant createdAt;
     private Instant updatedAt;
+    private Instant deletedAt;
+    private String shopLogoObjectPath;
 
     public User(Long id, String email, String password, String fullName, String shopName,
                 String shopLogoUrl, String shopDescription, String shopPhone, String shopAddress,
                 Instant shopCreatedAt, boolean shopLock, Set<Role> roles, boolean locked,
-                Instant createdAt, Instant updatedAt) {
+                Instant createdAt, Instant updatedAt, Instant deletedAt, String shopLogoObjectPath) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -43,6 +45,8 @@ public class User {
         this.locked = locked;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.deletedAt = deletedAt;
+        this.shopLogoObjectPath = shopLogoObjectPath;
     }
 
     // ID và thời gian do persistence sinh, không tự gán khi đăng ký.
@@ -52,7 +56,7 @@ public class User {
             String fullName,
             Set<Role> roles) {
         return new User(null, email, password, fullName, null, null, null, null, null,
-                null, false, roles, false, null, null);
+                null, false, roles, false, null, null, null, null);
     }
 
     public Long getId() {
@@ -115,11 +119,41 @@ public class User {
         return updatedAt;
     }
 
+    public Instant getDeletedAt() {
+        return deletedAt;
+    }
+
+    public String getShopLogoObjectPath() {
+        return shopLogoObjectPath;
+    }
+
+    // Chỉ shop còn hoạt động mới được sửa hồ sơ shop.
+    public void assertCanEditShop() {
+        assertNotDeleted();
+        if (roles.stream().noneMatch(role -> role.getName() == RoleEnum.ROLE_SHOP)) {
+            throw new BusinessException(DomainAuthError.SHOP_NOT_FOUND);
+        }
+        if (shopLock) {
+            throw new BusinessException(DomainAuthError.SHOP_LOCKED);
+        }
+    }
+
+    public void changeShopLogo(String shopLogoUrl, String shopLogoObjectPath) {
+        assertCanEditShop();
+        this.shopLogoUrl = shopLogoUrl;
+        this.shopLogoObjectPath = shopLogoObjectPath;
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
+
     public boolean canLogin() {
         return !locked;
     }
 
     public void toggleUserLock() {
+        assertNotDeleted();
         if (!locked && roles.stream().anyMatch(role -> role.getName() == RoleEnum.ROLE_ADMIN)) {
             throw new BusinessException(DomainAuthError.ADMIN_LOCK_FORBIDDEN);
         }
@@ -127,10 +161,38 @@ public class User {
     }
 
     public void toggleShopLock() {
+        assertNotDeleted();
         if (roles.stream().noneMatch(role -> role.getName() == RoleEnum.ROLE_SHOP)) {
             throw new BusinessException(DomainAuthError.SHOP_NOT_FOUND);
         }
         shopLock = !shopLock;
+    }
+
+    // Xóa thông tin cá nhân nhưng giữ ID để dữ liệu ở service khác vẫn tham chiếu được.
+    public void anonymize(Instant now) {
+        assertNotDeleted();
+        if (roles.stream().anyMatch(role -> role.getName() == RoleEnum.ROLE_ADMIN)) {
+            throw new BusinessException(DomainAuthError.ADMIN_DELETE_FORBIDDEN);
+        }
+        boolean shop = roles.stream().anyMatch(role -> role.getName() == RoleEnum.ROLE_SHOP);
+        email = "deleted-" + id + "@deleted.local";
+        password = null;
+        fullName = "Người dùng đã xóa";
+        shopName = shop ? "Shop đã ngừng hoạt động" : null;
+        shopLogoUrl = null;
+        shopLogoObjectPath = null;
+        shopDescription = null;
+        shopPhone = null;
+        shopAddress = null;
+        locked = true;
+        shopLock = shop || shopLock;
+        deletedAt = now;
+    }
+
+    private void assertNotDeleted() {
+        if (isDeleted()) {
+            throw new BusinessException(DomainAuthError.USER_DELETED);
+        }
     }
 
     public void assertUserNotLocked() {
