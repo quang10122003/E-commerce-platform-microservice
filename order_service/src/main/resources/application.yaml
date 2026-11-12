@@ -2,9 +2,13 @@
   config:
     import:
       - optional:file:.env[.properties]
-      - optional:file:../.env[.properties]
   application:
     name: order-service
+  servlet:
+    multipart:
+      # Tối đa 5 ảnh đánh giá, mỗi ảnh 15MB, cộng phần dữ liệu form.
+      max-file-size: 15MB
+      max-request-size: 76MB
   cloud:
     loadbalancer:
       cache:
@@ -120,3 +124,7 @@ app:
     fixed-delay-ms: 2000
   jwt:
     public-key: ${JWT_PUBLIC_KEY}
+
+supabase:
+  url: ${SUPABASE_URL}
+  service-role-key: ${SUPABASE_SERVICE_ROLE_SECRET_KEY}

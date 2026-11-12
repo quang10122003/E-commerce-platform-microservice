@@ -12,6 +12,10 @@ public final class Constant {
     public static final String DEAD_LETTER_TOPIC = "order-service.DLT";
     public static final String CHECKOUT = "Checkout";
     public static final String ORDER = "Order";
+    public static final String REVIEW = "ProductReview";
+    public static final String REVIEW_BUCKET = "reviews";
+    public static final String STORAGE_OBJECT_PATH = "/storage/v1/object/";
+    public static final String STORAGE_PUBLIC_OBJECT_PATH = STORAGE_OBJECT_PATH + "public/";
     public static final String CHECKOUT_INVALID_REQUEST = "CHECKOUT_INVALID_REQUEST";
     public static final String CHECKOUT_ORDER_CREATION_FAILED = "CHECKOUT_ORDER_CREATION_FAILED";
     public static final String CHECKOUT_PAYMENT_FAILED = "CHECKOUT_PAYMENT_FAILED";

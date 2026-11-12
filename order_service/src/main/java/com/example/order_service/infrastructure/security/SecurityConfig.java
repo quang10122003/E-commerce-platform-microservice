@@ -17,7 +17,8 @@ public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/error",
-            "/api/payments/vnpay/ipn"
+            "/api/payments/vnpay/ipn",
+            "/api/reviews/products/*"
     };
 
     private final JwtAuthFilter jwtAuthFilter;

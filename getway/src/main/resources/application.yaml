@@ -5,7 +5,6 @@ spring:
   config:
     import:
       - optional:file:.env[.properties]
-      - optional:file:../.env[.properties]
 
   application:
     name: getway
@@ -77,7 +76,7 @@ spring:
             - id: order-service
               uri: lb://order-service
               predicates:
-                - Path=/api/cart,/api/cart/**,/api/checkouts,/api/checkouts/**,/api/orders,/api/orders/**,/api/admin/orders,/api/admin/orders/**
+                - Path=/api/cart,/api/cart/**,/api/checkouts,/api/checkouts/**,/api/orders,/api/orders/**,/api/admin/orders,/api/admin/orders/**,/api/reviews,/api/reviews/**
               filters:
                 - name: ApiResponse
   data:

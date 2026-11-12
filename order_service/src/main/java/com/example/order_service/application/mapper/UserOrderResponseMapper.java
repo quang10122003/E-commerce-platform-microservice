@@ -5,6 +5,7 @@ import com.example.order_service.application.dto.order.ShopOrderView;
 import com.example.order_service.application.dto.response.ShopOrderResponse;
 import com.example.order_service.application.dto.response.UserOrderResponse;
 import com.example.order_service.domain.model.PaymentStatus;
+import com.example.order_service.domain.model.ProductReview;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -36,7 +37,8 @@ public final class UserOrderResponseMapper {
                 new UserOrderResponse.Shop(order.shopId(), order.shopName(), order.shopLogoUrl()),
                 order.priceType(), order.totalAmount(), toPayment(order, now, zone, exposePaymentUrl), items,
                 order.cancelledBy(), order.cancelReason(), toOffset(order.cancelledAt(), zone), toOffset(order.confirmedAt(), zone),
-                toOffset(order.shippedAt(), zone), toOffset(order.deliveredAt(), zone), toOffset(order.createdAt(), zone));
+                toOffset(order.shippedAt(), zone), toOffset(order.deliveredAt(), zone), toOffset(order.createdAt(), zone),
+                ProductReview.isWithinReviewPeriod(order.status(), order.deliveredAt(), now));
     }
 
     // Link VNPay chỉ trả khi khách còn thanh toán được để FE không mở link đã hết hạn.

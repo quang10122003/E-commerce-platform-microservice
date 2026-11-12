@@ -14,4 +14,5 @@ public interface UserOrderItemProjection {
     BigDecimal getOriginalUnitPrice();
     BigDecimal getUnitPrice();
     BigDecimal getTotalAmount();
+    boolean getReviewed();
 }

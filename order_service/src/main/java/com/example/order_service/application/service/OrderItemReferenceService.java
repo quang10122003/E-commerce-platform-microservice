@@ -1,6 +1,7 @@
 package com.example.order_service.application.service;
 
 import com.example.order_service.application.port.out.repo.OrderRepoPort;
+import com.example.order_service.application.port.out.repo.ProductReviewRepoPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,12 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OrderItemReferenceService {
     private final OrderRepoPort orderRepoPort;
+    private final ProductReviewRepoPort productReviewRepoPort;
 
     // Chạy lại khi nhận trùng event không đổi thêm dữ liệu.
     @Transactional
     public void clearDeletedProduct(Long productId) {
         int updated = orderRepoPort.clearDeletedProduct(productId);
-        log.info("Ngắt tham chiếu sản phẩm đã xóa trong order_items: product_id={}, updated={}", productId, updated);
+        int reviews = productReviewRepoPort.clearDeletedProduct(productId);
+        log.info("Ngắt tham chiếu sản phẩm đã xóa trong order_items và đánh giá: product_id={}, updated={}, reviews={}",
+                productId, updated, reviews);
     }
 
     @Transactional

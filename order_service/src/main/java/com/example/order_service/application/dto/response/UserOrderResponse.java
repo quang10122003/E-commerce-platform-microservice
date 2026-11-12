@@ -14,7 +14,9 @@ import java.util.List;
 public record UserOrderResponse(
         Long orderId, Long checkoutId, OrderStatus status, Shop shop, PriceType priceType,
         BigDecimal totalAmount, Payment payment, List<Item> items, OrderCancelledBy cancelledBy, OrderCancelReason cancelReason,
-        OffsetDateTime cancelledAt, OffsetDateTime confirmedAt, OffsetDateTime shippedAt, OffsetDateTime deliveredAt, OffsetDateTime createdAt) {
+        OffsetDateTime cancelledAt, OffsetDateTime confirmedAt, OffsetDateTime shippedAt, OffsetDateTime deliveredAt, OffsetDateTime createdAt,
+        // Đơn còn trong hạn  ngày để người mua đánh giá các món chưa đánh giá.
+        boolean reviewable) {
 
     public record Shop(Long shopId, String shopName, String shopLogoUrl) {
     }
@@ -26,6 +28,6 @@ public record UserOrderResponse(
 
     public record Item(Long orderItemId, Long productId, Long variantId, String productName,
                        String variantAttributes, String imageUrl, int quantity, BigDecimal originalUnitPrice,
-                       BigDecimal unitPrice, BigDecimal totalAmount) {
+                       BigDecimal unitPrice, BigDecimal totalAmount, boolean reviewed) {
     }
 }

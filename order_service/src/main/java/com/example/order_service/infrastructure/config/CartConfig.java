@@ -19,6 +19,7 @@ import com.example.order_service.application.port.out.serialization.ObjectMapper
 import com.example.order_service.application.registry.KafkaEventHandlerRegistry;
 import com.example.order_service.application.service.ProductEventApplicationService;
 import com.example.order_service.application.port.out.repo.OrderRepoPort;
+import com.example.order_service.application.port.out.repo.ProductReviewRepoPort;
 import com.example.order_service.application.service.OrderItemReferenceService;
 import com.example.order_service.application.strategy.eventKafka.ProductDeleteEventHandler;
 import com.example.order_service.application.strategy.eventKafka.UserDeletedEventHandler;
@@ -81,8 +82,9 @@ public class CartConfig {
     }
 
     @Bean
-    OrderItemReferenceService orderItemReferenceService(OrderRepoPort orderRepoPort) {
-        return new OrderItemReferenceService(orderRepoPort);
+    OrderItemReferenceService orderItemReferenceService(OrderRepoPort orderRepoPort,
+                                                        ProductReviewRepoPort productReviewRepoPort) {
+        return new OrderItemReferenceService(orderRepoPort, productReviewRepoPort);
     }
 
     @Bean

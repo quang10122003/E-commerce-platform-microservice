@@ -23,9 +23,10 @@ public class UserAccountService implements CheckUserActiveOrdersUseCase {
     }
 
     // Chạy lại khi nhận trùng event không đổi thêm dữ liệu.
+    // Đánh giá giữ nguyên user_id và shop_id vì tài khoản chỉ bị xóa mềm.
     @Transactional
     public void removeDeletedUserData(Long userId) {
         int removed = cartRepoPort.deleteByUserId(userId);
-        log.info("Dọn giỏ hàng của tài khoản đã xóa: user_id={}, removed_carts={}", userId, removed);
+        log.info("Dọn dữ liệu của tài khoản đã xóa: user_id={}, removed_carts={}", userId, removed);
     }
 }

@@ -204,3 +204,52 @@ CREATE TABLE IF NOT EXISTS inbox_events (
     PRIMARY KEY (id),
     CONSTRAINT uk_inbox_event_id UNIQUE (event_id)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Mỗi món đã mua chỉ được đánh giá một lần; thông tin sản phẩm lấy từ snapshot của order_items, không gọi Product Service.
+CREATE TABLE IF NOT EXISTS product_reviews (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    order_item_id BIGINT NOT NULL,
+    order_id BIGINT NOT NULL,
+    -- Về NULL khi sản phẩm bị xóa, giống order_items.product_id.
+    product_id BIGINT NULL,
+    -- shop_id là userId của chủ shop; giữ nguyên khi tài khoản bị xóa mềm.
+    shop_id BIGINT NULL,
+    -- Về NULL khi người mua xóa tài khoản; tên vẫn giữ qua snapshot bên dưới.
+    user_id BIGINT NULL,
+    reviewer_name_snapshot VARCHAR(255) NOT NULL,
+    -- Chép từ order_items.variant_attributes để biết đánh giá cho phân loại nào.
+    variant_attributes JSON NOT NULL,
+    rating TINYINT NOT NULL,
+    content VARCHAR(2000) NULL,
+    created_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_product_reviews_order_item UNIQUE (order_item_id),
+    CONSTRAINT fk_product_reviews_order_item FOREIGN KEY (order_item_id)
+        REFERENCES order_items (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_product_reviews_order FOREIGN KEY (order_id)
+        REFERENCES orders (id) ON DELETE RESTRICT,
+    CONSTRAINT chk_product_reviews_rating CHECK (rating BETWEEN 1 AND 5),
+    CONSTRAINT chk_product_reviews_attributes CHECK (JSON_TYPE(variant_attributes) = 'ARRAY'),
+    -- Danh sách đánh giá của sản phẩm, mới nhất trước.
+    INDEX idx_product_reviews_product_created (product_id, created_at),
+    -- Lọc theo số sao và tính lại điểm trung bình của sản phẩm.
+    INDEX idx_product_reviews_product_rating (product_id, rating),
+    INDEX idx_product_reviews_user (user_id),
+    INDEX idx_product_reviews_shop (shop_id)
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Lưu ảnh như variant_images: object_path và bucket để xóa file trên Storage khi cần.
+CREATE TABLE IF NOT EXISTS product_review_images (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    review_id BIGINT NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+    object_path VARCHAR(500) NOT NULL,
+    storage_bucket VARCHAR(50) NOT NULL,
+    -- Giữ thứ tự ảnh người mua đã chọn; tối đa 5 ảnh, kiểm tra ở tầng application.
+    sort_order TINYINT NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_product_review_images_order UNIQUE (review_id, sort_order),
+    CONSTRAINT fk_product_review_images_review FOREIGN KEY (review_id)
+        REFERENCES product_reviews (id) ON DELETE CASCADE,
+    CONSTRAINT chk_product_review_images_order CHECK (sort_order BETWEEN 0 AND 4)
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

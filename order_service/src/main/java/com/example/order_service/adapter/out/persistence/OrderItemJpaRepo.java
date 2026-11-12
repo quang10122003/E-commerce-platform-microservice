@@ -29,7 +29,8 @@ public interface OrderItemJpaRepo extends JpaRepository<OrderItemEntity, Long> {
             select i.order.id as orderId, i.id as orderItemId, i.productId as productId,
                    i.productVariantId as variantId, i.productName as productName,
                    i.variantAttributes as variantAttributes, i.imageUrl as imageUrl, i.quantity as quantity,
-                   i.originalUnitPrice as originalUnitPrice, i.unitPrice as unitPrice, i.totalAmount as totalAmount
+                   i.originalUnitPrice as originalUnitPrice, i.unitPrice as unitPrice, i.totalAmount as totalAmount,
+                   exists (select 1 from ProductReviewEntity r where r.orderItemId = i.id) as reviewed
             from OrderItemEntity i where i.order.id in :orderIds order by i.id
             """)
     List<UserOrderItemProjection> findUserOrderItems(@Param("orderIds") Collection<Long> orderIds);
