@@ -1,6 +1,8 @@
 package com.example.auth_service.adapter.in;
 
+import com.example.auth_service.application.port.in.UploadAvatarUseCase;
 import com.example.auth_service.application.port.in.UploadShopLogoUseCase;
+import com.example.auth_service.application.DTO.repone.AvatarResponse;
 import com.example.auth_service.application.port.in.GetMyShopInfoUseCase;
 import com.example.auth_service.application.DTO.repone.PublicShopInfoResponse;
 import com.example.auth_service.application.DTO.command.UploadFileCommand;
@@ -49,6 +51,7 @@ public class UserController {
     private final ToggleShopLockUseCase toggleShopLockUseCase;
     private final DeleteUserUseCase deleteUserUseCase;
     private final UploadShopLogoUseCase uploadShopLogoUseCase;
+    private final UploadAvatarUseCase uploadAvatarUseCase;
     private final GetMyShopInfoUseCase getMyShopInfoUseCase;
 
     // Hồ sơ shop của tài khoản đang đăng nhập cho Kênh Người Bán.
@@ -63,6 +66,15 @@ public class UserController {
     public ShopLogoResponse uploadShopLogo(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
                                            @RequestPart("image") MultipartFile image) throws IOException {
         return uploadShopLogoUseCase.uploadShopLogo(authorizationHeader,
+                new UploadFileCommand(image.getOriginalFilename(), image.getContentType(), image.getBytes()));
+    }
+
+    // Mọi tài khoản đăng nhập đều đổi được ảnh đại diện của chính mình.
+    @PutMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public AvatarResponse uploadAvatar(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+                                       @RequestPart("image") MultipartFile image) throws IOException {
+        return uploadAvatarUseCase.uploadAvatar(authorizationHeader,
                 new UploadFileCommand(image.getOriginalFilename(), image.getContentType(), image.getBytes()));
     }
 

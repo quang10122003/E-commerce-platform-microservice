@@ -14,6 +14,10 @@ create table users(
 	-- Vị trí logo trong storage để dọn file khi đổi logo, rollback hoặc xóa tài khoản.
 	shop_logo_object_path varchar(500) null,
 	shop_logo_storage_bucket varchar(50) null,
+	avatar_url text null,
+	-- Vị trí avatar trong storage (dùng chung bucket logo) để dọn file khi đổi avatar, rollback hoặc xóa tài khoản.
+	avatar_object_path varchar(500) null,
+	avatar_storage_bucket varchar(50) null,
 	shop_description text null,
 	shop_phone varchar(32) null,
 	shop_address text null,

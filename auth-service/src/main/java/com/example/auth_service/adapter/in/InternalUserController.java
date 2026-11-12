@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.auth_service.application.DTO.repone.PublicShopInfoResponse;
 import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
+import com.example.auth_service.application.DTO.repone.UserAvatarResponse;
 import com.example.auth_service.application.DTO.repone.UserDisplayInfoResponse;
 import com.example.auth_service.application.DTO.repone.UserInternaInfoRespone;
 import com.example.auth_service.application.port.in.GetPublicShopInfoUseCase;
@@ -48,6 +49,12 @@ public class InternalUserController {
     List<UserDisplayInfoResponse> getUserDisplayInfosByIds(
             @RequestBody @Size(max = 50) List<@NotNull @Positive Long> userIds) {
         return internalGetUserInfoUseCase.getUserDisplayInfosByIds(userIds);
+    }
+
+    // Public cho service nội bộ gọi từ API công khai (vd. danh sách đánh giá); chỉ trả ID và URL avatar.
+    @PostMapping("user-avatars")
+    List<UserAvatarResponse> getUserAvatars(@RequestBody @Size(max = 50) List<@NotNull @Positive Long> userIds) {
+        return internalGetUserInfoUseCase.getUserAvatars(userIds);
     }
 
     // Public, không cần đăng nhập; tách API một shop để trả đủ hồ sơ công khai và báo 404 khi không tồn tại.

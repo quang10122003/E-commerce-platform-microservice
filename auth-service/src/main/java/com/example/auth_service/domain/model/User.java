@@ -25,11 +25,14 @@ public class User {
     private Instant updatedAt;
     private Instant deletedAt;
     private String shopLogoObjectPath;
+    private String avatarUrl;
+    private String avatarObjectPath;
 
     public User(Long id, String email, String password, String fullName, String shopName,
                 String shopLogoUrl, String shopDescription, String shopPhone, String shopAddress,
                 Instant shopCreatedAt, boolean shopLock, Set<Role> roles, boolean locked,
-                Instant createdAt, Instant updatedAt, Instant deletedAt, String shopLogoObjectPath) {
+                Instant createdAt, Instant updatedAt, Instant deletedAt, String shopLogoObjectPath,
+                String avatarUrl, String avatarObjectPath) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -47,6 +50,8 @@ public class User {
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
         this.shopLogoObjectPath = shopLogoObjectPath;
+        this.avatarUrl = avatarUrl;
+        this.avatarObjectPath = avatarObjectPath;
     }
 
     // ID và thời gian do persistence sinh, không tự gán khi đăng ký.
@@ -56,7 +61,7 @@ public class User {
             String fullName,
             Set<Role> roles) {
         return new User(null, email, password, fullName, null, null, null, null, null,
-                null, false, roles, false, null, null, null, null);
+                null, false, roles, false, null, null, null, null, null, null);
     }
 
     public Long getId() {
@@ -127,6 +132,14 @@ public class User {
         return shopLogoObjectPath;
     }
 
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public String getAvatarObjectPath() {
+        return avatarObjectPath;
+    }
+
     // Chỉ shop còn hoạt động mới được sửa hồ sơ shop.
     public void assertCanEditShop() {
         assertNotDeleted();
@@ -142,6 +155,13 @@ public class User {
         assertCanEditShop();
         this.shopLogoUrl = shopLogoUrl;
         this.shopLogoObjectPath = shopLogoObjectPath;
+    }
+
+    // Đổi ảnh đại diện sang file mới đã upload; tài khoản đã xóa thì không được đổi.
+    public void changeAvatar(String avatarUrl, String avatarObjectPath) {
+        assertNotDeleted();
+        this.avatarUrl = avatarUrl;
+        this.avatarObjectPath = avatarObjectPath;
     }
 
     public boolean isDeleted() {
@@ -181,6 +201,8 @@ public class User {
         shopName = shop ? "Shop đã ngừng hoạt động" : null;
         shopLogoUrl = null;
         shopLogoObjectPath = null;
+        avatarUrl = null;
+        avatarObjectPath = null;
         shopDescription = null;
         shopPhone = null;
         shopAddress = null;

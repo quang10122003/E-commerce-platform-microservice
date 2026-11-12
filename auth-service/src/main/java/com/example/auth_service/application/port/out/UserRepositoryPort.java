@@ -6,6 +6,7 @@ import com.example.auth_service.domain.model.RoleEnum;
 
 import com.example.auth_service.application.DTO.repone.ShopAddressView;
 import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
+import com.example.auth_service.application.DTO.repone.UserAvatarResponse;
 import com.example.auth_service.application.DTO.repone.UserDisplayInfoResponse;
 import com.example.auth_service.domain.model.User;
 import com.example.auth_service.application.DTO.repone.UserListResponse;
@@ -20,6 +21,8 @@ import java.util.Optional;
 public interface UserRepositoryPort {
     Optional<User> findByIdForUpdate(Long userId);
 
+    Optional<User> findById(Long userId);
+
     List<ShopStatusResponse> findShopStatuses(
             List<Long> shopIds, Boolean locked);
 
@@ -28,6 +31,8 @@ public interface UserRepositoryPort {
     PageResponse<UserListResponse> findUsers(RoleEnum role, String keyword, Boolean locked, Boolean shopLocked, PageQuery pageQuery);
 
     List<UserDisplayInfoResponse> findUserDisplayInfosByIds(Collection<Long> userIds);
+
+    List<UserAvatarResponse> findUserAvatarsByIds(Collection<Long> userIds);
     Optional<ShopAddressView> findShopAddressById(Long shopId);
 
     Optional<User> findByEmail(String email);

@@ -5,6 +5,7 @@ import com.example.auth_service.application.DTO.repone.ShopStatusResponse;
 import com.example.auth_service.adapter.mapper.UserMapper;
 import com.example.auth_service.application.DTO.repone.ShopAddressView;
 import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
+import com.example.auth_service.application.DTO.repone.UserAvatarResponse;
 import com.example.auth_service.application.DTO.repone.UserDisplayInfoResponse;
 import com.example.auth_service.application.port.out.UserRepositoryPort;
 import com.example.auth_service.domain.model.User;
@@ -41,6 +42,11 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     @Override
     public Optional<User> findByIdForUpdate(Long userId) {
         return userRepoJpa.findByIdForUpdate(userId).map(userMapper::toDomain);
+    }
+
+    @Override
+    public Optional<User> findById(Long userId) {
+        return userRepoJpa.findById(userId).map(userMapper::toDomain);
     }
 
     @Override
@@ -81,6 +87,12 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     public List<UserDisplayInfoResponse> findUserDisplayInfosByIds(Collection<Long> userIds) {
         return userIds.isEmpty() ? List.of() : userRepoJpa.findUserDisplayInfosByIds(userIds).stream()
                 .map(userMapper::toUserDisplayInfo).toList();
+    }
+
+    @Override
+    public List<UserAvatarResponse> findUserAvatarsByIds(Collection<Long> userIds) {
+        return userIds.isEmpty() ? List.of() : userRepoJpa.findUserAvatarsByIds(userIds).stream()
+                .map(userMapper::toUserAvatar).toList();
     }
 
     // Dùng vai trò shop hiện có để tránh công khai thông tin tài khoản thường.

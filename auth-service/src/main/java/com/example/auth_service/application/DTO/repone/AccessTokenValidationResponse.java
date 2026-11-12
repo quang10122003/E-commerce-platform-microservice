@@ -11,6 +11,7 @@ public record AccessTokenValidationResponse(
         Long userId,
         String email,
         String fullName,
+        String avatarUrl,
         Set<RoleEnum> role
 ) {
 }

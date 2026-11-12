@@ -94,6 +94,8 @@ public class UserService implements GetUsersUseCase, GetUserOverviewUseCase, Tog
         // Giữ vị trí logo trước khi ẩn danh để dọn file sau commit.
         String logoObjectPath = user.getShopLogoObjectPath();
         String logoUrl = user.getShopLogoUrl();
+        String avatarObjectPath = user.getAvatarObjectPath();
+        String avatarUrl = user.getAvatarUrl();
         // Domain chặn admin và tài khoản đã xóa trước khi gọi sang order-service.
         user.anonymize(clock.instant());
         if (orderActivityPort.hasActiveOrders(userId)) {
@@ -105,6 +107,10 @@ public class UserService implements GetUsersUseCase, GetUserOverviewUseCase, Tog
         if (logoObjectPath != null) {
             ShopProfileService.saveDeleteFilesEvent(userId,
                     new StoredFile(StorageBucket.SHOP_LOGO, logoObjectPath, logoUrl), outboxEventPort, clock);
+        }
+        if (avatarObjectPath != null) {
+            ShopProfileService.saveDeleteFilesEvent(userId,
+                    new StoredFile(StorageBucket.USER_AVATAR, avatarObjectPath, avatarUrl), outboxEventPort, clock);
         }
         UUID eventId = UUID.randomUUID();
         LocalDateTime now = LocalDateTime.now(clock);

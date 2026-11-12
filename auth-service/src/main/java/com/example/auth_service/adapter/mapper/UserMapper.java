@@ -18,7 +18,9 @@ import com.example.auth_service.adapter.entity.UserEntity;
 import com.example.auth_service.domain.model.User;
 import com.example.auth_service.adapter.out.persistence.projection.ShopAddressProjection;
 import com.example.auth_service.adapter.out.persistence.projection.ShopInfoProjection;
+import com.example.auth_service.adapter.out.persistence.projection.UserAvatarProjection;
 import com.example.auth_service.adapter.out.persistence.projection.UserDisplayInfoProjection;
+import com.example.auth_service.application.DTO.repone.UserAvatarResponse;
 import com.example.auth_service.application.DTO.repone.ShopAddressView;
 import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
 import com.example.auth_service.application.DTO.repone.UserDisplayInfoResponse;
@@ -40,9 +42,13 @@ public interface UserMapper {
     // Bucket suy ra từ object_path để mọi lần lưu user không làm mất thông tin bucket.
     @Mapping(target = "shopLogoStorageBucket",
             expression = "java(user.getShopLogoObjectPath() == null ? null : StorageBucket.SHOP_LOGO)")
+    @Mapping(target = "avatarStorageBucket",
+            expression = "java(user.getAvatarObjectPath() == null ? null : StorageBucket.USER_AVATAR)")
     UserEntity toEntity(User user);
 
     UserDisplayInfoResponse toUserDisplayInfo(UserDisplayInfoProjection projection);
+
+    UserAvatarResponse toUserAvatar(UserAvatarProjection projection);
 
     ShopAddressView toShopAddress(ShopAddressProjection projection);
 

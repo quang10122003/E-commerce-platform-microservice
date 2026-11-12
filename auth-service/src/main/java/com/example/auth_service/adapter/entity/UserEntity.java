@@ -96,6 +96,13 @@ public class UserEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(name = "shop_logo_storage_bucket", length = 50)
     StorageBucket shopLogoStorageBucket;
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
+    String avatarUrl;
+    @Column(name = "avatar_object_path", length = 500)
+    String avatarObjectPath;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "avatar_storage_bucket", length = 50)
+    StorageBucket avatarStorageBucket;
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     Instant createdAt;

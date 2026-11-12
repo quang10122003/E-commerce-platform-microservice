@@ -126,7 +126,7 @@ public class AuthConfig {
         return new StoredFilesDeleteOutboxHandler(payloadMapperPort, deleteStoredFilesService);
     }
 
-    @Bean(name = {"shopProfileService", "uploadShopLogoUseCase"})
+    @Bean(name = {"shopProfileService", "uploadShopLogoUseCase", "uploadAvatarUseCase"})
     ShopProfileService shopProfileService(UserRepositoryPort userRepositoryPort, TokenServicePort tokenServicePort,
                                           FileStoragePort fileStoragePort, StoredFileRollbackPort storedFileRollbackPort,
                                           OutboxEventPort outboxEventPort, Clock clock,

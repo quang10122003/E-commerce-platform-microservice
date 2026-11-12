@@ -2,11 +2,13 @@ package com.example.auth_service.application.service;
 
 import com.example.auth_service.application.DTO.command.UploadFileCommand;
 import com.example.auth_service.application.DTO.event.StoredFilesDeleteOutboxPayload;
+import com.example.auth_service.application.DTO.repone.AvatarResponse;
 import com.example.auth_service.application.DTO.repone.ShopLogoResponse;
 import com.example.auth_service.application.constant.Constant;
 import com.example.auth_service.application.error.AuthError;
 import com.example.auth_service.application.DTO.repone.PublicShopInfoResponse;
 import com.example.auth_service.application.port.in.GetMyShopInfoUseCase;
+import com.example.auth_service.application.port.in.UploadAvatarUseCase;
 import com.example.auth_service.application.port.in.UploadShopLogoUseCase;
 import com.example.auth_service.application.port.out.OutboxEventPort;
 import com.example.auth_service.application.port.out.TokenServicePort;
@@ -30,11 +32,10 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.example.common.untill.FileUntils.getExtension;
-import static com.example.common.untill.FileUntils.validateImage;
 
 @Slf4j
 @RequiredArgsConstructor
-public class ShopProfileService implements UploadShopLogoUseCase, GetMyShopInfoUseCase {
+public class ShopProfileService implements UploadShopLogoUseCase, UploadAvatarUseCase, GetMyShopInfoUseCase {
     private final UserRepositoryPort userRepositoryPort;
     private final TokenServicePort tokenServicePort;
     private final FileStoragePort fileStoragePort;
@@ -58,23 +59,12 @@ public class ShopProfileService implements UploadShopLogoUseCase, GetMyShopInfoU
         User user = userRepositoryPort.findByIdForUpdate(userId)
                 .orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND));
         user.assertCanEditShop();
-        validateImage(image.contentType());
-        if (image.content() == null || image.content().length == 0) {
-            throw new BusinessException(AuthError.INVALID_IMAGE_FILE);
-        }
-
         String oldObjectPath = user.getShopLogoObjectPath();
         String oldUrl = user.getShopLogoUrl();
-        List<StoredFile> storedFiles = new ArrayList<>();
-        // Đăng ký trước khi upload để logo mới được dọn nếu transaction rollback, kể cả lỗi lúc commit.
-        storedFileRollbackPort.deleteImageStore(storedFiles);
-        PreparedUpload upload = new PreparedUpload(StorageBucket.SHOP_LOGO,
-                Constant.SHOP_LOGO_PREFIX + UUID.randomUUID() + getExtension(image.fileName()),
-                image.contentType(), image.content());
-        String publicUrl = fileStoragePort.upload(upload);
-        storedFiles.add(new StoredFile(upload.bucket(), upload.objectPath(), publicUrl));
+        StoredFile uploaded = uploadImage(StorageBucket.SHOP_LOGO, Constant.SHOP_LOGO_PREFIX, image);
+        String publicUrl = uploaded.publicUrl();
 
-        user.changeShopLogo(publicUrl, upload.objectPath());
+        user.changeShopLogo(publicUrl, uploaded.objectPath());
         userRepositoryPort.save(user);
         // Logo cũ chỉ bị xóa sau commit qua outbox; logo cũ chưa có object_path thì không dọn được.
         if (oldObjectPath != null) {
@@ -82,6 +72,43 @@ public class ShopProfileService implements UploadShopLogoUseCase, GetMyShopInfoU
         }
         log.info("Cập nhật logo shop thành công: shop_id={}", userId);
         return new ShopLogoResponse(publicUrl);
+    }
+
+    // Không khóa dòng: hai lần đổi avatar cùng lúc rất hiếm, chấp nhận có thể sót một file avatar cũ trên storage.
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public AvatarResponse uploadAvatar(String authorizationHeader, UploadFileCommand image) {
+        Long userId = tokenServicePort.getIdFromToken(tokenServicePort.extractBearerToken(authorizationHeader));
+        User user = userRepositoryPort.findById(userId)
+                .orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND));
+        String oldObjectPath = user.getAvatarObjectPath();
+        String oldUrl = user.getAvatarUrl();
+        StoredFile uploaded = uploadImage(StorageBucket.USER_AVATAR, Constant.USER_AVATAR_PREFIX, image);
+
+        user.changeAvatar(uploaded.publicUrl(), uploaded.objectPath());
+        userRepositoryPort.save(user);
+        // Avatar cũ chỉ bị xóa sau commit qua outbox.
+        if (oldObjectPath != null) {
+            saveDeleteFilesEvent(userId, new StoredFile(StorageBucket.USER_AVATAR, oldObjectPath, oldUrl), outboxEventPort, clock);
+        }
+        log.info("Cập nhật avatar thành công: user_id={}", userId);
+        return new AvatarResponse(uploaded.publicUrl());
+    }
+
+    // Kiểm tra ảnh rồi upload; đăng ký rollback trước khi upload để file mới được dọn nếu transaction rollback, kể cả lỗi lúc commit.
+    private StoredFile uploadImage(StorageBucket bucket, String prefix, UploadFileCommand image) {
+        // Tự kiểm tra loại file để trả INVALID_IMAGE_FILE (400) thay vì IllegalArgumentException của common bị trả 500.
+        if (image.contentType() == null || !image.contentType().startsWith("image/")
+                || image.content() == null || image.content().length == 0) {
+            throw new BusinessException(AuthError.INVALID_IMAGE_FILE);
+        }
+        List<StoredFile> storedFiles = new ArrayList<>();
+        storedFileRollbackPort.deleteImageStore(storedFiles);
+        PreparedUpload upload = new PreparedUpload(bucket, prefix + UUID.randomUUID() + getExtension(image.fileName()),
+                image.contentType(), image.content());
+        StoredFile uploaded = new StoredFile(bucket, upload.objectPath(), fileStoragePort.upload(upload));
+        storedFiles.add(uploaded);
+        return uploaded;
     }
 
     static void saveDeleteFilesEvent(Long userId, StoredFile file, OutboxEventPort outboxEventPort, Clock clock) {

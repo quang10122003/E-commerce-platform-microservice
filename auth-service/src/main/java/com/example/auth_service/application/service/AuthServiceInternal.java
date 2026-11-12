@@ -5,6 +5,7 @@ import com.example.auth_service.application.port.in.GetShopStatusesUseCase;
 import com.example.auth_service.application.DTO.repone.ShopAddressView;
 import com.example.auth_service.application.DTO.repone.PublicShopInfoResponse;
 import com.example.auth_service.application.DTO.repone.ShopInfoResponse;
+import com.example.auth_service.application.DTO.repone.UserAvatarResponse;
 import com.example.auth_service.application.DTO.repone.UserDisplayInfoResponse;
 import com.example.auth_service.application.DTO.repone.UserInternaInfoRespone;
 import com.example.auth_service.application.error.AuthError;
@@ -35,6 +36,16 @@ public class AuthServiceInternal implements InternalGetUserInfoUseCase, GetPubli
     public List<ShopStatusResponse> getShopStatuses(
             List<Long> shopIds, Boolean locked) {
         return userRepositoryPort.findShopStatuses(shopIds == null ? null : shopIds.stream().distinct().toList(), locked);
+    }
+
+    // Avatar theo lô cho service khác (vd. danh sách đánh giá); user chưa có avatar thì không có trong kết quả.
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserAvatarResponse> getUserAvatars(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+        return userRepositoryPort.findUserAvatarsByIds(userIds.stream().filter(Objects::nonNull).distinct().toList());
     }
 
     @Override

@@ -74,6 +74,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
                 .refreshToken(refreshToken)
                 .email(user.getEmail())
                 .fullName(user.getFullName())
+                .avatarUrl(user.getAvatarUrl())
                 .role(user.getRoles().stream().map(Role::getName).collect(
                         Collectors.toSet()))
                 .build();
@@ -97,6 +98,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
                 .refreshToken(refreshToken)
                 .email(user.getEmail())
                 .fullName(user.getFullName())
+                .avatarUrl(user.getAvatarUrl())
                 .role(user.getRoles().stream().map(Role::getName).collect(
                         Collectors.toSet()))
                 .build();
@@ -143,6 +145,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
                 .userId(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
+                .avatarUrl(user.getAvatarUrl())
                 .role(user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()))
                 .build();
 

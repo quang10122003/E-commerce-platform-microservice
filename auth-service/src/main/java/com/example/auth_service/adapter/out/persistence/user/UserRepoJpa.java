@@ -7,6 +7,7 @@ import com.example.auth_service.domain.model.RoleEnum;
 import com.example.auth_service.adapter.entity.UserEntity;
 import com.example.auth_service.adapter.out.persistence.projection.ShopAddressProjection;
 import com.example.auth_service.adapter.out.persistence.projection.ShopInfoProjection;
+import com.example.auth_service.adapter.out.persistence.projection.UserAvatarProjection;
 import com.example.auth_service.adapter.out.persistence.projection.UserDisplayInfoProjection;
 import com.example.auth_service.adapter.out.persistence.projection.UserListProjection;
 import com.example.auth_service.adapter.out.persistence.projection.UserRoleProjection;
@@ -72,6 +73,10 @@ public interface UserRepoJpa extends JpaRepository<UserEntity, Long> {
     // Danh sách chat không được làm lộ email hoặc thông tin liên hệ.
     @Query("select u.id as userId, u.fullName as fullName from UserEntity u where u.id in :userIds")
     List<UserDisplayInfoProjection> findUserDisplayInfosByIds(@Param("userIds") Collection<Long> userIds);
+
+    // Chỉ trả user đã có avatar, không kèm tên hay email vì API được gọi từ trang công khai.
+    @Query("select u.id as userId, u.avatarUrl as avatarUrl from UserEntity u where u.id in :userIds and u.avatarUrl is not null")
+    List<UserAvatarProjection> findUserAvatarsByIds(@Param("userIds") Collection<Long> userIds);
     @Query("""
             select u.id as shopId, u.shopName as shopName, u.shopAddress as shopAddress,
                    u.shopLogoUrl as shopLogoUrl, u.shopDescription as shopDescription,
