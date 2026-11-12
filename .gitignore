@@ -16,6 +16,7 @@ target/
 .vscode/
 .idea/
 .playwright-mcp/
+.claude/
 
 # Bỏ qua tài liệu Markdown, ngoại trừ README; file hướng dẫn AI chỉ dùng cục bộ nên không đưa lên git.
 *.[mM][dD]

@@ -3,6 +3,8 @@ package com.example.order_service.adapter.out.persistence;
 import com.example.order_service.adapter.entity.OrderEntity;
 import com.example.order_service.adapter.out.persistence.projection.UserOrderProjection;
 import com.example.order_service.adapter.out.persistence.projection.ShopOrderProjection;
+import com.example.order_service.adapter.out.persistence.projection.ShopAnalyticsOrderProjection;
+import com.example.order_service.adapter.out.persistence.projection.TopShopProjection;
 import com.example.order_service.domain.model.OrderStatus;
 import com.example.order_service.domain.model.CheckoutPaymentMethod;
 import jakarta.persistence.LockModeType;
@@ -90,4 +92,32 @@ public interface OrderJpaRepo extends JpaRepository<OrderEntity, Long> {
                                              @Param("paymentMethod") CheckoutPaymentMethod paymentMethod,
                                              @Param("keyword") String keyword, @Param("orderId") Long orderId,
                                              @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("""
+            select o.status as status, o.paymentMethod as paymentMethod, o.priceType as priceType,
+                   o.totalAmount as totalAmount, o.cancelledBy as cancelledBy, o.cancelReason as cancelReason,
+                   o.createdAt as createdAt, o.confirmedAt as confirmedAt, o.shippedAt as shippedAt,
+                   o.deliveredAt as deliveredAt, o.cancelledAt as cancelledAt, p.paidAt as paidAt, c.userId as buyerId
+            from OrderEntity o join o.checkout c left join PaymentEntity p on p.checkout = c
+            where (:shopId is null or o.shopId = :shopId)
+              and (o.createdAt between :from and :to or o.deliveredAt between :from and :to
+                   or o.cancelledAt between :from and :to or p.paidAt between :from and :to)
+            """)
+    List<ShopAnalyticsOrderProjection> findShopAnalyticsOrders(@Param("shopId") Long shopId,
+                                                               @Param("from") LocalDateTime from,
+                                                               @Param("to") LocalDateTime to);
+
+    @Query("""
+            select o.shopId as shopId, max(o.shopNameSnapshot) as shopName, count(o) as orderCount,
+                   sum(o.totalAmount) as revenue
+            from OrderEntity o
+            where o.createdAt between :from and :to and o.status <> :excluded
+            group by o.shopId
+            order by sum(o.totalAmount) desc
+            """)
+    List<TopShopProjection> findTopShops(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to,
+                                         @Param("excluded") OrderStatus excluded, Pageable pageable);
+
+    @Query("select count(distinct o.shopId) from OrderEntity o where o.createdAt between :from and :to")
+    long countActiveShops(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

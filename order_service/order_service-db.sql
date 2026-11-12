@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS orders (
     CONSTRAINT uk_orders_checkout_shop_price_type UNIQUE (checkout_id, shop_id, price_type),
     -- Job tự hoàn thành đơn quét theo trạng thái và mốc giao cho đơn vị vận chuyển.
     INDEX idx_orders_status_shipped_at (status, shipped_at),
+    INDEX idx_orders_shop_created_at (shop_id, created_at),
     CONSTRAINT fk_orders_checkout FOREIGN KEY (checkout_id)
         REFERENCES checkout (id) ON DELETE RESTRICT,
     CONSTRAINT chk_orders_amount CHECK (total_amount > 0),

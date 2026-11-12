@@ -63,7 +63,7 @@ spring:
             - id: product-service
               uri: lb://producr-service
               predicates:
-                - Path=/api/products/**,/api/categories/**,/api/brands/**,/api/internal/**,/api/admin/flash-sales,/api/admin/flash-sales/**,/api/admin/categories,/api/admin/categories/**,/api/shop/flash-sales,/api/shop/flash-sales/**,/api/user/flash-sales,/api/user/flash-sales/**
+                - Path=/api/products/**,/api/categories/**,/api/brands/**,/api/internal/**,/api/admin/flash-sales,/api/admin/flash-sales/**,/api/admin/categories,/api/admin/categories/**,/api/admin/brands,/api/admin/brands/**,/api/shop/flash-sales,/api/shop/flash-sales/**,/api/user/flash-sales,/api/user/flash-sales/**
               filters:
                 - name: ApiResponse
 
@@ -77,7 +77,7 @@ spring:
             - id: order-service
               uri: lb://order-service
               predicates:
-                - Path=/api/cart,/api/cart/**,/api/checkouts,/api/checkouts/**,/api/orders,/api/orders/**
+                - Path=/api/cart,/api/cart/**,/api/checkouts,/api/checkouts/**,/api/orders,/api/orders/**,/api/admin/orders,/api/admin/orders/**
               filters:
                 - name: ApiResponse
   data:

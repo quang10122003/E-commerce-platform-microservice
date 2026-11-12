@@ -36,6 +36,8 @@ import com.example.order_service.application.port.in.ReconcileExpiredPaymentUseC
 import com.example.order_service.application.port.in.AutoCompleteOrderUseCase;
 import com.example.order_service.application.service.AutoCompleteOrderService;
 import com.example.order_service.application.service.UserOrderService;
+import com.example.order_service.application.service.ShopAnalyticsService;
+import com.example.order_service.application.port.out.repo.ShopAnalyticsQueryPort;
 import com.example.order_service.application.port.out.client.VnpayQueryPort;
 import com.example.order_service.application.service.PaymentReconciliationService;
 import com.example.order_service.application.service.PaymentOutcomeService;
@@ -157,6 +159,12 @@ public class CheckoutConfig {
     @Bean
     VnpayPaymentService vnpayPaymentService(VnpayPaymentPort vnpayPaymentPort, PaymentRepoPort paymentRepoPort) {
         return new VnpayPaymentService(vnpayPaymentPort, paymentRepoPort);
+    }
+
+    @Bean
+    ShopAnalyticsService shopAnalyticsService(CurrentUserPort currentUserPort,
+                                              ShopAnalyticsQueryPort shopAnalyticsQueryPort, Clock clock) {
+        return new ShopAnalyticsService(currentUserPort, shopAnalyticsQueryPort, clock);
     }
 
     @Bean

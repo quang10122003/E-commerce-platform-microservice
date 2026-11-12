@@ -8,7 +8,11 @@ import com.example.order_service.application.dto.order.UserOrderItemView;
 import com.example.order_service.application.dto.order.UserOrderView;
 import com.example.order_service.application.dto.order.ShopOrderView;
 import com.example.order_service.application.dto.order.ShopOrderSearch;
+import com.example.order_service.application.dto.order.ShopAnalyticsOrderView;
+import com.example.order_service.application.dto.response.AdminAnalyticsResponse;
+import com.example.order_service.application.dto.response.ShopAnalyticsResponse;
 import com.example.order_service.application.port.out.repo.OrderRepoPort;
+import com.example.order_service.application.port.out.repo.ShopAnalyticsQueryPort;
 import com.example.order_service.domain.model.Order;
 import com.example.order_service.domain.model.OrderItem;
 import com.example.order_service.domain.model.OrderStatus;
@@ -16,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,7 +29,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class OrderRepoAdapter implements OrderRepoPort {
+public class OrderRepoAdapter implements OrderRepoPort, ShopAnalyticsQueryPort {
     private final OrderJpaRepo orders;
     private final OrderItemJpaRepo items;
     private final CheckoutJpaRepo checkouts;
@@ -43,6 +48,34 @@ public class OrderRepoAdapter implements OrderRepoPort {
         return orders.findShopOrders(search.shopId(), search.status(), search.paymentMethod(), keyword,
                         search.orderId(), search.from(), search.to())
                 .stream().map(mapper::toShopOrderView).toList();
+    }
+
+    @Override
+    public List<ShopAnalyticsOrderView> findOrdersTouching(Long shopId, LocalDateTime from, LocalDateTime to) {
+        return orders.findShopAnalyticsOrders(shopId, from, to).stream().map(mapper::toShopAnalyticsOrderView).toList();
+    }
+
+    @Override
+    public List<ShopAnalyticsResponse.TopProduct> findTopProducts(Long shopId, LocalDateTime from, LocalDateTime to,
+                                                                  int limit) {
+        return items.findShopTopProducts(shopId, from, to, OrderStatus.CANCEL, PageRequest.of(0, limit)).stream()
+                .map(mapper::toShopTopProduct).toList();
+    }
+
+    @Override
+    public BigDecimal sumSaleDiscount(Long shopId, LocalDateTime from, LocalDateTime to) {
+        return items.sumShopSaleDiscount(shopId, from, to, OrderStatus.CANCEL);
+    }
+
+    @Override
+    public List<AdminAnalyticsResponse.TopShop> findTopShops(LocalDateTime from, LocalDateTime to, int limit) {
+        return orders.findTopShops(from, to, OrderStatus.CANCEL, PageRequest.of(0, limit)).stream()
+                .map(mapper::toTopShop).toList();
+    }
+
+    @Override
+    public long countActiveShops(LocalDateTime from, LocalDateTime to) {
+        return orders.countActiveShops(from, to);
     }
 
     @Override

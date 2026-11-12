@@ -3,9 +3,11 @@ package com.example.order_service.adapter.in.rest;
 import com.example.order_service.application.dto.request.AdvanceOrderRequest;
 import com.example.order_service.application.dto.request.CancelOrderRequest;
 import com.example.order_service.application.dto.request.ShopOrderFilter;
+import com.example.order_service.application.dto.response.ShopAnalyticsResponse;
 import com.example.order_service.application.dto.response.ShopOrderResponse;
 import com.example.order_service.application.port.in.AdvanceShopOrderUseCase;
 import com.example.order_service.application.port.in.CancelShopOrderUseCase;
+import com.example.order_service.application.port.in.GetShopAnalyticsUseCase;
 import com.example.order_service.application.port.in.GetShopOrdersUseCase;
 import com.example.order_service.domain.model.CheckoutPaymentMethod;
 import com.example.order_service.domain.model.OrderStatus;
@@ -37,6 +39,7 @@ public class ShopOrderController {
     private final GetShopOrdersUseCase getShopOrdersUseCase;
     private final CancelShopOrderUseCase cancelShopOrderUseCase;
     private final AdvanceShopOrderUseCase advanceShopOrderUseCase;
+    private final GetShopAnalyticsUseCase getShopAnalyticsUseCase;
 
     @GetMapping
     public ResponseEntity<List<ShopOrderResponse>> getShopOrders(
@@ -46,6 +49,13 @@ public class ShopOrderController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
         return ResponseEntity.ok(getShopOrdersUseCase.getShopOrders(new ShopOrderFilter(status, paymentMethod, keyword, from, to)));
+    }
+
+    @GetMapping("/analytics")
+    public ResponseEntity<ShopAnalyticsResponse> getShopAnalytics(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
+        return ResponseEntity.ok(getShopAnalyticsUseCase.getShopAnalytics(from, to));
     }
 
     @PostMapping("/{orderId}/advance")

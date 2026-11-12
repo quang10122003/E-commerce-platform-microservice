@@ -8,6 +8,12 @@ import com.example.order_service.application.dto.order.UserOrderView;
 import com.example.order_service.application.dto.order.ShopOrderView;
 import com.example.order_service.application.dto.response.ShopOrderResponse;
 import com.example.order_service.adapter.out.persistence.projection.ShopOrderProjection;
+import com.example.order_service.adapter.out.persistence.projection.ShopAnalyticsOrderProjection;
+import com.example.order_service.adapter.out.persistence.projection.ShopTopProductProjection;
+import com.example.order_service.adapter.out.persistence.projection.TopShopProjection;
+import com.example.order_service.application.dto.response.AdminAnalyticsResponse;
+import com.example.order_service.application.dto.order.ShopAnalyticsOrderView;
+import com.example.order_service.application.dto.response.ShopAnalyticsResponse;
 import com.example.order_service.application.dto.response.UserOrderResponse;
 import com.example.order_service.domain.model.Order;
 import com.example.order_service.domain.model.OrderItem;
@@ -39,6 +45,12 @@ public interface OrderMapper {
     }
 
     UserOrderResponse.Item toUserOrderItem(UserOrderItemProjection item);
+
+    ShopAnalyticsOrderView toShopAnalyticsOrderView(ShopAnalyticsOrderProjection order);
+
+    ShopAnalyticsResponse.TopProduct toShopTopProduct(ShopTopProductProjection product);
+
+    AdminAnalyticsResponse.TopShop toTopShop(TopShopProjection shop);
 
     default OrderItem toDomain(OrderItemEntity entity) {
         return OrderItem.reconstitute(entity.getId(), entity.getProductId(), entity.getProductVariantId(),
