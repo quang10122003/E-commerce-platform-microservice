@@ -3,9 +3,7 @@ server:
 spring:
   config:
     import:
-      # Nạp biến môi trường từ .env ở cả root project và thư mục cha của module
       - optional:file:.env[.properties]
-      - optional:file:../.env[.properties]
   datasource:
     url: jdbc:mysql://localhost:3306/notifiservice_db
     username: ${USERNAME_DATABASE}

@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Env ###
+# Biến môi trường chứa secret, chỉ commit file mẫu.
+.env
+.env.*
+!.env.example
