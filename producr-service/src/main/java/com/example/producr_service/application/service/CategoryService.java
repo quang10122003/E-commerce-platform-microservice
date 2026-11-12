@@ -7,8 +7,6 @@ import com.example.common.response.PageResponse;
 import com.example.producr_service.application.constant.Constant;
 import com.example.producr_service.application.dto.command.UploadFileCommand;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
-import com.example.producr_service.application.dto.outbox.ProductEmbeddingSyncOutboxPayload;
-import com.example.producr_service.application.dto.outbox.ProductUpdatedOutboxPayload;
 import com.example.producr_service.application.dto.outbox.StoredFilesDeleteOutboxPayload;
 import com.example.producr_service.application.dto.response.AdminCategoryResponse;
 import com.example.producr_service.application.dto.response.AdminCategoryView;
@@ -61,7 +59,7 @@ public class CategoryService implements GetCategoriesUseCase, CreateCategoryUseC
     @Override
     public PageResponse<AdminCategoryResponse> getAdminCategories(int page, int size, String keyword) {
         if (page < 1 || size < 1 || size > 100) {
-            throw new BusinessException(ProductError.INVALID_CATEGORY_PAGINATION);
+            throw new BusinessException(ProductError.INVALID_PAGINATION);
         }
         PageResponse<AdminCategoryView> categories = categoryRepoPort.findAdminCategories(
                 new PageQuery(page, size), keyword == null || keyword.isBlank() ? null : keyword.trim());
@@ -126,9 +124,9 @@ public class CategoryService implements GetCategoriesUseCase, CreateCategoryUseC
         }
 
         Category saved = categoryRepoPort.update(category);
-        // Document tìm kiếm và embedding của sản phẩm lưu tên danh mục nên phải đồng bộ lại khi đổi tên.
         if (renamed) {
-            productRepositoryPort.findIdsByCategoryId(categoryId).forEach(this::saveProductSyncEvents);
+            productRepositoryPort.findIdsByCategoryId(categoryId)
+                    .forEach(productId -> ProductSyncEvents.save(outboxPort, clock, productId));
         }
         log.info("Cập nhật danh mục thành công categoryId={}, renamed={}, imageChanged={}",
                 categoryId, renamed, image != null);
@@ -158,13 +156,4 @@ public class CategoryService implements GetCategoriesUseCase, CreateCategoryUseC
                 LocalDateTime.now(clock)));
     }
 
-    private void saveProductSyncEvents(Long productId) {
-        String aggregateId = String.valueOf(productId);
-        outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT, aggregateId,
-                ProductUpdatedOutboxPayload.EVENT_TYPE, new ProductUpdatedOutboxPayload(productId),
-                LocalDateTime.now(clock)));
-        outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT, aggregateId,
-                ProductEmbeddingSyncOutboxPayload.EVENT_TYPE, new ProductEmbeddingSyncOutboxPayload(productId),
-                LocalDateTime.now(clock)));
-    }
 }

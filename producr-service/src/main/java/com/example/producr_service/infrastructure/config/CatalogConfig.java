@@ -1,5 +1,7 @@
 package com.example.producr_service.infrastructure.config;
 
+import com.example.producr_service.application.port.in.DeleteBrandUseCase;
+import com.example.producr_service.application.port.in.GetAdminBrandsUseCase;
 import com.example.producr_service.application.port.in.CreateCategoryUseCase;
 import com.example.producr_service.application.port.in.DeleteCategoryUseCase;
 import com.example.producr_service.application.port.in.UpdateCategoryUseCase;
@@ -56,7 +58,23 @@ public class CatalogConfig {
     }
 
     @Bean
-    GetBrandsUseCase getBrandsUseCase(BrandRepositoryPort brandRepositoryPort) {
-        return new BrandService(brandRepositoryPort);
+    BrandService brandService(BrandRepositoryPort brandRepositoryPort, ProductRepositoryPort productRepositoryPort,
+                              OutboxPort outboxPort, Clock clock) {
+        return new BrandService(brandRepositoryPort, productRepositoryPort, outboxPort, clock);
+    }
+
+    @Bean
+    DeleteBrandUseCase deleteBrandUseCase(BrandService brandService) {
+        return brandService;
+    }
+
+    @Bean
+    GetBrandsUseCase getBrandsUseCase(BrandService brandService) {
+        return brandService;
+    }
+
+    @Bean
+    GetAdminBrandsUseCase getAdminBrandsUseCase(BrandService brandService) {
+        return brandService;
     }
 }

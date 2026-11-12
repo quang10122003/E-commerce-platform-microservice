@@ -27,6 +27,9 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
     @Query("select p.id from ProductEntity p where p.category.id = :categoryId")
     List<Long> findIdsByCategoryId(@Param("categoryId") Long categoryId);
 
+    @Query("select p.id from ProductEntity p where p.brand.id = :brandId")
+    List<Long> findIdsByBrandId(@Param("brandId") Long brandId);
+
     @Modifying
     @Query("update ProductEntity p set p.totalSold = p.totalSold + :quantity where p.id = :id")
     int increaseTotalSold(@Param("id") Long id, @Param("quantity") long quantity);

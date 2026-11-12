@@ -214,6 +214,11 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
         return productJpa.findIdsByCategoryId(categoryId);
     }
 
+    @Override
+    public List<Long> findIdsByBrandId(Long brandId) {
+        return productJpa.findIdsByBrandId(brandId);
+    }
+
     // Lấy ảnh bìa của sản phẩm đã khóa mà không tải các quan hệ con.
     @Override
     public StoredFile findCoverFile(Long productId) {

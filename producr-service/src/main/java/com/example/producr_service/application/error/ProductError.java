@@ -13,7 +13,7 @@ public enum ProductError implements ErrorCode  {
     PRODUCT_SEARCH_PAGE_LIMIT_EXCEEDED("PRODUCT_SEARCH_PAGE_LIMIT_EXCEEDED",
             "Trang tìm kiếm vượt giới hạn 10000 sản phẩm", 400),
     SHOP_NOT_FOUND("SHOP_NOT_FOUND", "Không tìm thấy shop", 404),
-    INVALID_CATEGORY_PAGINATION("INVALID_CATEGORY_PAGINATION",
+    INVALID_PAGINATION("INVALID_PAGINATION",
             "Trang phải từ 1 trở lên và kích thước trang phải từ 1 đến 100", 400),
     CATEGORY_HAS_PRODUCTS("CATEGORY_HAS_PRODUCTS", "Danh mục đang có sản phẩm nên không thể xóa", 409),
     CATEGORY_NAME_DUPLICATED("CATEGORY_NAME_DUPLICATED", "Tên danh mục đã tồn tại", 409),

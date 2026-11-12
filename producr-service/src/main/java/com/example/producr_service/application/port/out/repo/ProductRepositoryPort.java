@@ -65,6 +65,8 @@ public interface ProductRepositoryPort {
 
     List<Long> findIdsByCategoryId(Long categoryId);
 
+    List<Long> findIdsByBrandId(Long brandId);
+
     // Lấy thông tin ảnh bìa của sản phẩm trước khi xóa.
     StoredFile findCoverFile(Long productId);
 
