@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -55,7 +56,7 @@ public class ProductMapper {
         return new ProductSearchResponse(projection.getId(), projection.getName(), projection.getLocationSnapshot(), projection.getUserId(),
                 projection.getDescription(), projection.getCategoryId(), projection.getCategoryName(),
                 projection.getBrandId(), projection.getBrandName(), projection.getStatus(), projection.getImageUrl(),
-                projection.getMaxPrice(), projection.getTotalSold(), null);
+                projection.getMaxPrice(), projection.getTotalSold(), projection.getRatingAverage(), null);
     }
 
     public ProductSummaryResponse toSummary(ProductSummaryProjection projection) {
@@ -245,6 +246,7 @@ public class ProductMapper {
                 productEntity.getCreatedAt(), productEntity.getTotalSold(),
                 productEntity.getObjectPath(), productEntity.getLocationSnapshot()
         );
+        product.restoreReviewSummary(productEntity.getReviewCount(), productEntity.getRatingAverage());
         // Đồng bộ trạng thái đã lưu từ persistence về domain aggregate.
         if (productEntity.getStatus() == ProductStatus.INACTIVE) {
             product.deactivate();
@@ -312,6 +314,7 @@ public class ProductMapper {
                 document.getImageUrl(),
                 document.getMaxPrice(),
                 document.getTotalSold(),
+                BigDecimal.valueOf(document.getRatingAverage()),
                 null
         );
 

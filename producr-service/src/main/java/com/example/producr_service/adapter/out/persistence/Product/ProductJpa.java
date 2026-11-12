@@ -31,6 +31,13 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
     List<Long> findIdsByBrandId(@Param("brandId") Long brandId);
 
     @Modifying
+    @Query("""
+            update ProductEntity p set p.reviewCount = p.reviewCount + 1, p.ratingAverage = :ratingAverage
+            where p.id = :id
+            """)
+    int applyReview(@Param("id") Long id, @Param("ratingAverage") java.math.BigDecimal ratingAverage);
+
+    @Modifying
     @Query("update ProductEntity p set p.totalSold = p.totalSold + :quantity where p.id = :id")
     int increaseTotalSold(@Param("id") Long id, @Param("quantity") long quantity);
 
@@ -77,7 +84,7 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
                    p.userId as userId, p.description as description,
                    c.id as categoryId, c.name as categoryName, b.id as brandId, b.name as brandName,
                    p.status as status, p.imageUrl as imageUrl, max(v.price) as maxPrice,
-                   p.totalSold as totalSold
+                   p.totalSold as totalSold, p.ratingAverage as ratingAverage
             from ProductEntity p
             join p.category c
             left join p.brand b
@@ -86,7 +93,7 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
               and exists (select available.id from ProductVariantEntity available
                           where available.product = p and available.stockQuantity > 0)
             group by p.id, p.name, p.locationSnapshot, p.userId, p.description,
-                     c.id, c.name, b.id, b.name, p.status, p.imageUrl, p.totalSold
+                     c.id, c.name, b.id, b.name, p.status, p.imageUrl, p.totalSold, p.ratingAverage
             """)
     List<TopSellingProductProjection> findAvailableSearchItemsByIds(
             @Param("productIds") Collection<Long> productIds, @Param("status") ProductStatus status);
@@ -95,18 +102,19 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
             SELECT p.id AS id, p.name AS name, p.locationSnapshot AS locationSnapshot, p.userId AS userId,
                    p.description AS description, c.id AS categoryId, c.name AS categoryName,
                    b.id AS brandId, b.name AS brandName, p.status AS status,
-                   p.imageUrl AS imageUrl, MAX(v.price) AS maxPrice, p.totalSold AS totalSold
+                   p.imageUrl AS imageUrl, MAX(v.price) AS maxPrice, p.totalSold AS totalSold,
+                   p.ratingAverage AS ratingAverage
             FROM ProductEntity p
             JOIN p.category c
             LEFT JOIN p.brand b
             LEFT JOIN p.variants v
-            WHERE p.status = :status
+            WHERE p.status = :status AND (:shopId IS NULL OR p.userId = :shopId)
             GROUP BY p.id, p.name, p.locationSnapshot, p.userId, p.description, c.id, c.name,
-                     b.id, b.name, p.status, p.imageUrl, p.totalSold
-            ORDER BY p.totalSold DESC, p.id DESC
+                     b.id, b.name, p.status, p.imageUrl, p.totalSold, p.ratingAverage, p.reviewCount
+            ORDER BY p.totalSold DESC, p.ratingAverage DESC, p.reviewCount DESC, p.id DESC
             """)
     List<TopSellingProductProjection> findTopSellingProducts(
-            @Param("status") ProductStatus status, Pageable pageable);
+            @Param("status") ProductStatus status, @Param("shopId") Long shopId, Pageable pageable);
 
     long countByUserIdAndStatus(Long userId, ProductStatus status);
 

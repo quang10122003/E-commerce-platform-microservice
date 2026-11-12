@@ -11,6 +11,8 @@ import com.example.producr_service.application.port.in.GetShopProductsUseCase;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
+import com.example.producr_service.application.port.in.GetShopTopProductsUseCase;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class ShopOverviewController {
     private final GetShopOverviewUseCase getShopOverviewUseCase;
     private final GetShopProductsUseCase getShopProductsUseCase;
+    private final GetShopTopProductsUseCase getShopTopProductsUseCase;
 
     @GetMapping("/shops/{shopId}/products")
     public ResponseEntity<PageResponse<ProductSearchResponse>> getShopProducts(
@@ -36,6 +39,12 @@ public class ShopOverviewController {
             @RequestParam(defaultValue = "RELEVANCE", name = "sort") ShopProductSortOption sort) {
         ShopProductFilter filter = new ShopProductFilter(new PageQuery(page, size), keyword, categoryId, sort);
         return ResponseEntity.ok(getShopProductsUseCase.getShopProducts(shopId, filter));
+    }
+
+    // 10 sản phẩm nổi bật của shop cho trang shop công khai.
+    @GetMapping("/shops/{shopId}/top-products")
+    public ResponseEntity<List<ProductSearchResponse>> getShopTopProducts(@PathVariable("shopId") @Positive Long shopId) {
+        return ResponseEntity.ok(getShopTopProductsUseCase.getShopTopProducts(shopId));
     }
 
     // Trang shop công khai chỉ tính product ACTIVE, không tính variant.

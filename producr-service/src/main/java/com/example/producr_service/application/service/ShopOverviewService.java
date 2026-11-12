@@ -13,13 +13,15 @@ import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.in.GetShopOverviewUseCase;
 import com.example.producr_service.application.port.out.client.ShopInfoClientPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
+import com.example.producr_service.application.port.in.GetShopTopProductsUseCase;
+import com.example.producr_service.application.constant.Constant;
 import lombok.RequiredArgsConstructor;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
 
 @RequiredArgsConstructor
-public class ShopOverviewService implements GetShopOverviewUseCase, GetShopProductsUseCase {
+public class ShopOverviewService implements GetShopOverviewUseCase, GetShopProductsUseCase, GetShopTopProductsUseCase {
     private final ShopInfoClientPort shopInfoClientPort;
     private final ProductRepositoryPort productRepositoryPort;
     private final Clock clock;
@@ -31,6 +33,13 @@ public class ShopOverviewService implements GetShopOverviewUseCase, GetShopProdu
     public PageResponse<ProductSearchResponse> getShopProducts(Long shopId, ShopProductFilter filter) {
         shopAccessService.requireAvailableShops(List.of(shopId));
         return productService.getShopProducts(shopId, filter);
+    }
+
+    // 10 sản phẩm nổi bật của shop: bán chạy nhất, cùng số bán thì điểm cao hơn, rồi nhiều đánh giá hơn.
+    @Override
+    public List<ProductSearchResponse> getShopTopProducts(Long shopId) {
+        shopAccessService.requireAvailableShops(List.of(shopId));
+        return productRepositoryPort.findTopSellingProducts(shopId, Constant.SHOP_TOP_PRODUCTS_LIMIT);
     }
 
     @Override

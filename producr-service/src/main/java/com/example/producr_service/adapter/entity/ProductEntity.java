@@ -71,6 +71,14 @@ public class ProductEntity {
     @Column(name = "total_sold", nullable = false)
     private long totalSold;
 
+    @Builder.Default
+    @Column(name = "review_count", nullable = false)
+    private int reviewCount = 0;
+
+    @Builder.Default
+    @Column(name = "rating_average", nullable = false, precision = 3, scale = 2)
+    private java.math.BigDecimal ratingAverage = java.math.BigDecimal.valueOf(500, 2);
+
     // Lưu trạng thái product vào cột is_active theo schema hiện có.
     @Enumerated(EnumType.STRING)
     @Column(name = "is_active", nullable = false)

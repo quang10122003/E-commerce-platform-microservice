@@ -28,6 +28,8 @@ public class ProductSearchDocumentMapper {
                 .status(product.getStatus())
                 .imageUrl(product.getImageUrl())
                 .totalSold(product.getTotalSold())
+                .ratingAverage(product.getRatingAverage().doubleValue())
+                .reviewCount(product.getReviewCount())
                 .minPrice(priceRange.getMin().getAmount())
                 .maxPrice(priceRange.getMax().getAmount())
                 .createdAt(product.getCreatedAt())

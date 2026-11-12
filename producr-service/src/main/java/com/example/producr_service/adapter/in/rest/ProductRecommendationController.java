@@ -27,7 +27,7 @@ public class ProductRecommendationController {
     private final GetTopSellingProductsUseCase getTopSellingProductsUseCase;
     private final GetRecommendedProductsUseCase getRecommendedProductsUseCase;
     private final GetSimilarProductsUseCase getSimilarProductsUseCase;
-
+//    Sản phẩm tương tự
     @GetMapping("/similar/{productId}")
     public ResponseEntity<List<ProductSearchResponse>> getSimilarProducts(
             @PathVariable("productId") @Positive Long productId,

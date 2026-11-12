@@ -15,6 +15,8 @@ import com.example.producr_service.application.service.ProductRecommendationServ
 import com.example.producr_service.application.strategy.eventKafka.CartItemAddedEventHandler;
 import com.example.producr_service.application.strategy.eventKafka.CheckoutInventoryRequestedHandler;
 import com.example.producr_service.application.strategy.eventKafka.CheckoutSucceededHandler;
+import com.example.producr_service.application.strategy.eventKafka.ProductReviewedHandler;
+import com.example.producr_service.application.service.ProductReviewEventService;
 import com.example.producr_service.application.strategy.eventKafka.CheckoutInventoryRollbackRequestedHandler;
 import com.example.producr_service.application.strategy.eventKafka.OrderInventoryRollbackRequestedHandler;
 import com.example.producr_service.application.service.CheckoutInventoryService;
@@ -33,6 +35,17 @@ import java.util.List;
 
 @Configuration
 public class OrderEventConfig {
+    @Bean
+    ProductReviewEventService productReviewEventService(InboxEventPort inbox, ProductRepositoryPort productRepositoryPort,
+                                                        OutboxPort outbox, MapJsonToObjPort json, Clock clock) {
+        return new ProductReviewEventService(inbox, productRepositoryPort, outbox, json, clock);
+    }
+
+    @Bean
+    EventHandler<String> productReviewedHandler(MapJsonToObjPort json, ProductReviewEventService service) {
+        return new ProductReviewedHandler(json, service);
+    }
+
     @Bean
     EventHandler<String> checkoutSucceededHandler(MapJsonToObjPort json, CheckoutInventoryService service) {
         return new CheckoutSucceededHandler(json, service);

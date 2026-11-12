@@ -18,4 +18,5 @@ public interface TopSellingProductProjection {
     String getImageUrl();
     BigDecimal getMaxPrice();
     long getTotalSold();
+    BigDecimal getRatingAverage();
 }

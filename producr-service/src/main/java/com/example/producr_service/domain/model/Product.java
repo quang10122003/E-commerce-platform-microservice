@@ -6,6 +6,7 @@ import com.example.producr_service.domain.model.ProductVariant;
 import com.example.common.exception.BusinessException;
 import com.example.producr_service.domain.error.DomainProductError;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,6 +41,9 @@ public class Product {
     private ProductStatus status;
     // Lưu tổng số lượng sản phẩm đã bán của toàn bộ variant.
     private long totalSold;
+    // Số đánh giá và điểm trung bình do Order Service tính rồi gửi qua event; chưa có đánh giá thì là 5 sao.
+    private int reviewCount;
+    private BigDecimal ratingAverage = BigDecimal.valueOf(500, 2);
     private final LocalDateTime createdAt;
 
     private final List<ProductAttribute> attributes = new ArrayList<>();
@@ -173,6 +177,24 @@ public class Product {
 
     public long getTotalSold() {
         return totalSold;
+    }
+
+    // Khôi phục điểm đánh giá đã lưu; chỉ persistence gọi khi dựng lại aggregate.
+    public void restoreReviewSummary(int reviewCount, BigDecimal ratingAverage) {
+        if (reviewCount < 0 || ratingAverage == null
+                || ratingAverage.compareTo(BigDecimal.ONE) < 0 || ratingAverage.compareTo(BigDecimal.valueOf(5)) > 0) {
+            throw new IllegalArgumentException("Điểm đánh giá của sản phẩm không hợp lệ");
+        }
+        this.reviewCount = reviewCount;
+        this.ratingAverage = ratingAverage;
+    }
+
+    public int getReviewCount() {
+        return reviewCount;
+    }
+
+    public BigDecimal getRatingAverage() {
+        return ratingAverage;
     }
 
     public LocalDateTime getCreatedAt() {

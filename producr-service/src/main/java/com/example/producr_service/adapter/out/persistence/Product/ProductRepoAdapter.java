@@ -47,6 +47,11 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     }
 
     @Override
+    public int applyReview(Long productId, java.math.BigDecimal ratingAverage) {
+        return productJpa.applyReview(productId, ratingAverage);
+    }
+
+    @Override
     public int decreaseTotalSold(Long productId, long quantity) {
         return productJpa.decreaseTotalSold(productId, quantity);
     }
@@ -84,8 +89,8 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     }
 
     @Override
-    public List<ProductSearchResponse> findTopSellingProducts(int limit) {
-        return productJpa.findTopSellingProducts(ProductStatus.ACTIVE, PageRequest.of(0, limit)).stream()
+    public List<ProductSearchResponse> findTopSellingProducts(Long shopId, int limit) {
+        return productJpa.findTopSellingProducts(ProductStatus.ACTIVE, shopId, PageRequest.of(0, limit)).stream()
                 .map(productMapper::toSearchResponse).toList();
     }
 

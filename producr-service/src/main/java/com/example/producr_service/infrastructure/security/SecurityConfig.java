@@ -29,6 +29,7 @@ public class SecurityConfig {
             "/api/products/recommendations/similar/{productId:-?[0-9]+}",
             "/api/products/{productId:-?[0-9]+}/shop/overview",
             "/api/products/shops/{shopId}/products",
+            "/api/products/shops/{shopId}/top-products",
             "/api/products/{productId:-?[0-9]+}",
             "/api/products/{productId:-?[0-9]+}/price-range",
             "/api/products/{productId:-?[0-9]+}/variants/{variantId:-?[0-9]+}/sale",

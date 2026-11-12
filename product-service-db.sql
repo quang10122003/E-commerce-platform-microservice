@@ -59,11 +59,16 @@ CREATE TABLE products (
     object_path             VARCHAR(500) NOT NULL,
     storage_bucket          VARCHAR(50) NOT NULL,
     total_sold              BIGINT NOT NULL DEFAULT 0,
+    -- Order Service tính lại điểm trung bình và gửi qua event; chưa có đánh giá thì hiển thị 5 sao.
+    review_count            INT NOT NULL DEFAULT 0,
+    rating_average          DECIMAL(3,2) NOT NULL DEFAULT 5.00,
     is_active               ENUM('ACTIVE', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',  -- shop ẩn/hiện sản phẩm
 
     created_at              DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at              DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
+    CONSTRAINT chk_products_review_count CHECK (review_count >= 0),
+    CONSTRAINT chk_products_rating_average CHECK (rating_average BETWEEN 1 AND 5),
     FOREIGN KEY (categories_id) REFERENCES categories(id) ON DELETE RESTRICT,
     FOREIGN KEY (brands_id) REFERENCES brands(id) ON DELETE SET NULL
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

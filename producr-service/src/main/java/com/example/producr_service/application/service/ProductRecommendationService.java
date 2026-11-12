@@ -179,7 +179,7 @@ public class ProductRecommendationService implements RecordProductViewUseCase, G
                 productEmbeddingRepositoryPort.findAllByProductIds(historyIds), now);
 
         // Cache giữ ứng viên để lỗi kiểm tra shop không làm mất gợi ý sau khi Auth phục hồi.
-        List<Long> topIds = productRepositoryPort.findTopSellingProducts(Constant.TOP_SELLING_PRODUCTS_LIMIT).stream()
+        List<Long> topIds = productRepositoryPort.findTopSellingProducts(null, Constant.TOP_SELLING_PRODUCTS_LIMIT).stream()
                 .map(ProductSearchResponse::id).toList();
 
         List<Long> recommendations;

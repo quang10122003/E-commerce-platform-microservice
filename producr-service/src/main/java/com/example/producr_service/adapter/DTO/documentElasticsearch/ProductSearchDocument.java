@@ -61,6 +61,12 @@ public class ProductSearchDocument {
     @Field(name = ProductSearchDocumentFields.TOTAL_SOLD, type = FieldType.Long)
     private long totalSold;
 
+    @Field(name = ProductSearchDocumentFields.RATING_AVERAGE, type = FieldType.Double)
+    private double ratingAverage;
+
+    @Field(name = ProductSearchDocumentFields.REVIEW_COUNT, type = FieldType.Integer)
+    private int reviewCount;
+
     @Field(name = ProductSearchDocumentFields.MIN_PRICE, type = FieldType.Double)
     private BigDecimal minPrice;
 

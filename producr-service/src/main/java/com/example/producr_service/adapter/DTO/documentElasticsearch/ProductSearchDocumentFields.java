@@ -13,6 +13,8 @@ public final class ProductSearchDocumentFields {
     public static final String STATUS = "status";
     public static final String IMAGE_URL = "imageUrl";
     public static final String TOTAL_SOLD = "totalSold";
+    public static final String RATING_AVERAGE = "ratingAverage";
+    public static final String REVIEW_COUNT = "reviewCount";
     public static final String MIN_PRICE = "minPrice";
     public static final String MAX_PRICE = "maxPrice";
     public static final String CREATED_AT = "createdAt";

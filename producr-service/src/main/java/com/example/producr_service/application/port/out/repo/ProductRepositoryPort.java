@@ -20,6 +20,9 @@ import java.util.Set;
 public interface ProductRepositoryPort {
     int increaseTotalSold(Long productId, long quantity);
 
+    // Tăng số đánh giá thêm 1 và ghi đè điểm trung bình; trả 0 khi sản phẩm không còn.
+    int applyReview(Long productId, java.math.BigDecimal ratingAverage);
+
     int decreaseTotalSold(Long productId, long quantity);
 
     void lockProductsForShare(Collection<Long> productIds);
@@ -32,7 +35,8 @@ public interface ProductRepositoryPort {
 
     List<ProductSearchResponse> findAvailableSearchItemsByIds(Collection<Long> productIds);
 
-    List<ProductSearchResponse> findTopSellingProducts(int limit);
+    // Bán chạy nhất trước, cùng số bán thì điểm cao hơn, rồi nhiều đánh giá hơn; shopId null là toàn sàn.
+    List<ProductSearchResponse> findTopSellingProducts(Long shopId, int limit);
 
     long countActiveByUserId(Long userId);
 

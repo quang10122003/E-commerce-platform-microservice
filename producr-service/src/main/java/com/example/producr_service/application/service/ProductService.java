@@ -137,7 +137,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
             }
         }
         List<ProductSearchResponse> products = productRepositoryPort
-                .findTopSellingProducts(Constant.TOP_SELLING_PRODUCTS_LIMIT);
+                .findTopSellingProducts(null, Constant.TOP_SELLING_PRODUCTS_LIMIT);
         try {
             cachePort.setIfAbsent(ProductCacheKeys.TOP_SELLING_PRODUCTS, products, topSellingProductsCacheTtl);
         } catch (CacheAccessException exception) {

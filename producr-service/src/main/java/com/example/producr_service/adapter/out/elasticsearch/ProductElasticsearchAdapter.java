@@ -70,6 +70,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
         productSearchRepository.deleteById(productId);
     }
 
+//    hàm tìm kiếm của trang tìm kiếm user
     @Override
     public ProductCatalogSearchResult search(ProductScrollFilter filter, Set<Long> excludedShopIds) {
         // Lấy dư một item để xác định còn batch kế tiếp hay không.
@@ -126,8 +127,13 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
             ));
         }
 
-        applySort(queryBuilder, filter.sortOption() == ProductSortOption.MOST_SOLD
-                ? ProductSearchDocumentFields.TOTAL_SOLD : "_score");
+        switch (filter.sortOption()) {
+            case RELEVANCE -> applySort(queryBuilder, "_score");
+            case MOST_SOLD -> applySort(queryBuilder, ProductSearchDocumentFields.TOTAL_SOLD);
+            // Điểm cao trước (sản phẩm chưa đánh giá tính theo điểm mặc định 5); cùng điểm thì nhiều đánh giá hơn lên trước.
+            case HIGHEST_RATED -> applySort(queryBuilder, ProductSearchDocumentFields.RATING_AVERAGE,
+                    ProductSearchDocumentFields.REVIEW_COUNT);
+        }
 
         // Lấy tối đa 50 brand có nhiều product khớp nhất, không phụ thuộc trang product hiện tại.
         queryBuilder.withAggregation(
@@ -182,6 +188,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
         );
     }
 
+    // hàm tìm kiếm của trong trang shop công khai
     @Override
     public PageResponse<ProductSearchResponse> searchShopProducts(Long shopId, ShopProductFilter filter) {
         BoolQuery.Builder bool = buildProductQuery(filter.keyword(), filter.categoryId());
@@ -224,8 +231,10 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
         return bool;
     }
 
-    private void applySort(NativeQueryBuilder queryBuilder, String sortField) {
-        queryBuilder.withSort(sort -> sort.field(field -> field.field(sortField).order(SortOrder.Desc)));
+    private void applySort(NativeQueryBuilder queryBuilder, String... sortFields) {
+        for (String sortField : sortFields) {
+            queryBuilder.withSort(sort -> sort.field(field -> field.field(sortField).order(SortOrder.Desc)));
+        }
         // Dùng productId làm khóa phụ ổn định cho cursor và phân trang ở mọi chế độ sort.
         queryBuilder.withSort(sort -> sort.field(field -> field
                 .field(ProductSearchDocumentFields.PRODUCT_ID).order(SortOrder.Desc)));

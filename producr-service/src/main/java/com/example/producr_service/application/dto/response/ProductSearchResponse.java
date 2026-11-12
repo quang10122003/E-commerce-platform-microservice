@@ -17,12 +17,14 @@ public record ProductSearchResponse(Long id,
                                     String imageUrl,
                                     BigDecimal maxPrice,
                                     long totalSold,
+                                    // Điểm đánh giá trung bình 1–5; sản phẩm chưa có đánh giá là 5.
+                                    BigDecimal ratingAverage,
                                     BigDecimal maxDiscountPercent) {
 
 
     public ProductSearchResponse withMaxDiscountPercent(BigDecimal discountPercent) {
         return new ProductSearchResponse(id, name, location, UserId, description,
                 categoryId, categoryName, brandId, brandName, status, imageUrl,
-                maxPrice, totalSold, discountPercent);
+                maxPrice, totalSold, ratingAverage, discountPercent);
     }
 }
