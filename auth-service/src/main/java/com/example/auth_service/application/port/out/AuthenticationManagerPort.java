@@ -6,5 +6,7 @@ public interface AuthenticationManagerPort {
 
     public AuthenticatedUser authenticate(String email,String password);
     String encodePassword(String password);
+
+    boolean matchesPassword(String rawPassword, String encodedPassword);
    
 }

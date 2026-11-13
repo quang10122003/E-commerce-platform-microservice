@@ -12,6 +12,7 @@ import com.example.auth_service.application.strategy.outbox.UserDeletedOutboxHan
 import com.example.auth_service.application.port.in.ChecktokenUseCase;
 import com.example.auth_service.application.port.in.LoginUseCase;
 import com.example.auth_service.application.port.in.LogoutUserCase;
+import com.example.auth_service.application.port.in.ChangePasswordUseCase;
 import com.example.auth_service.application.port.in.RefreshTokenUseCase;
 import com.example.auth_service.application.port.in.RegisterUseCase;
 import com.example.auth_service.application.port.in.ProcessAuthOutboxUseCase;
@@ -109,6 +110,11 @@ public class AuthConfig {
         return authApplicationService;
     }
 
+    @Bean
+    ChangePasswordUseCase changePasswordUseCase(AuthApplicationService authApplicationService) {
+        return authApplicationService;
+    }
+
 
     @Bean
     DeleteStoredFilesService deleteStoredFilesService(FileStoragePort fileStoragePort) {
@@ -126,7 +132,8 @@ public class AuthConfig {
         return new StoredFilesDeleteOutboxHandler(payloadMapperPort, deleteStoredFilesService);
     }
 
-    @Bean(name = {"shopProfileService", "uploadShopLogoUseCase", "uploadAvatarUseCase"})
+    @Bean(name = {"shopProfileService", "uploadShopLogoUseCase", "uploadAvatarUseCase", "getMyProfileUseCase",
+            "updateMyProfileUseCase", "updateMyShopProfileUseCase"})
     ShopProfileService shopProfileService(UserRepositoryPort userRepositoryPort, TokenServicePort tokenServicePort,
                                           FileStoragePort fileStoragePort, StoredFileRollbackPort storedFileRollbackPort,
                                           OutboxEventPort outboxEventPort, Clock clock,

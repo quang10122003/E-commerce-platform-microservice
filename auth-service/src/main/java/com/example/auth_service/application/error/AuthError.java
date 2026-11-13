@@ -11,7 +11,10 @@ public enum AuthError implements ErrorCode {
     ROLE_NOT_FOUND("ROLE_NOT_FOUND", "Role not found", 404),
     EMAIL_ALREADY_REGISTERED("EMAIL_ALREADY_REGISTERED", "The email has already been registered.", 409),
     INVALID_CREDENTIALS("INVALID_CREDENTIALS", "Email or password is incorrect", 401),
-    REFRESH_TOKEN_INVALID("REFRESH_TOKEN_INVALID","Invalid refresh token",401);
+    REFRESH_TOKEN_INVALID("REFRESH_TOKEN_INVALID","Invalid refresh token",401),
+    CURRENT_PASSWORD_INCORRECT("CURRENT_PASSWORD_INCORRECT", "Mật khẩu hiện tại không đúng", 400),
+    PASSWORD_CONFIRM_MISMATCH("PASSWORD_CONFIRM_MISMATCH", "Mật khẩu nhập lại không khớp", 400),
+    NEW_PASSWORD_SAME_AS_CURRENT("NEW_PASSWORD_SAME_AS_CURRENT", "Mật khẩu mới phải khác mật khẩu hiện tại", 400);
     private final String code;
     private final String message;
     private final int httpStatusCode;

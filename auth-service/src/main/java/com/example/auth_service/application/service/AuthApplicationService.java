@@ -19,6 +19,8 @@ import com.example.auth_service.application.DTO.event.UserRegisteredEventDto;
 import com.example.auth_service.application.DTO.request.LoginRequest;
 import com.example.auth_service.application.DTO.request.RegisterRquest;
 import com.example.auth_service.application.error.AuthError;
+import com.example.auth_service.application.DTO.request.ChangePasswordRequest;
+import com.example.auth_service.application.port.in.ChangePasswordUseCase;
 import com.example.auth_service.application.constant.Constant;
 import com.example.auth_service.application.port.out.*;
 import com.example.auth_service.application.port.out.cache.CachePort;
@@ -40,7 +42,8 @@ import org.springframework.transaction.annotation.Transactional;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
-public class AuthApplicationService implements LoginUseCase, RegisterUseCase , RefreshTokenUseCase, ChecktokenUseCase, LogoutUserCase {
+public class AuthApplicationService implements LoginUseCase, RegisterUseCase , RefreshTokenUseCase, ChecktokenUseCase, LogoutUserCase,
+        ChangePasswordUseCase {
     AuthenticationManagerPort authenticationManagerPort;
 
     TokenServicePort tokenServicePort;
@@ -161,6 +164,30 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
 
     }
 
+
+    // Xác minh mật khẩu hiện tại rồi lưu mật khẩu mới đã mã hóa; không ghi mật khẩu vào log.
+    // shortcut: chưa thu hồi phiên đăng nhập khác (cần passwordChangedAt + gateway kiểm tra iat), làm khi có yêu cầu đăng xuất mọi thiết bị.
+    @Override
+    @Transactional
+    public void changePassword(String authorizationHeader, ChangePasswordRequest request) {
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            throw new BusinessException(AuthError.PASSWORD_CONFIRM_MISMATCH);
+        }
+        Long userId = tokenServicePort.getIdFromToken(tokenServicePort.extractBearerToken(authorizationHeader));
+        User user = userRepositoryPort.findById(userId)
+                .orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND));
+        user.assertUserNotLocked();
+        if (!authenticationManagerPort.matchesPassword(request.currentPassword(), user.getPassword())) {
+            log.warn("Đổi mật khẩu thất bại do mật khẩu hiện tại không đúng: user_id={}", userId);
+            throw new BusinessException(AuthError.CURRENT_PASSWORD_INCORRECT);
+        }
+        if (authenticationManagerPort.matchesPassword(request.newPassword(), user.getPassword())) {
+            throw new BusinessException(AuthError.NEW_PASSWORD_SAME_AS_CURRENT);
+        }
+        user.changePassword(authenticationManagerPort.encodePassword(request.newPassword()));
+        userRepositoryPort.save(user);
+        log.info("Đổi mật khẩu thành công: user_id={}", userId);
+    }
 
     private void publishUserRegisteredEvent(User user) {
         UUID eventId = UUID.randomUUID();

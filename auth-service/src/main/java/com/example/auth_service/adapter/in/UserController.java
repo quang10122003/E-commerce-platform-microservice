@@ -1,6 +1,16 @@
 package com.example.auth_service.adapter.in;
 
+import com.example.auth_service.application.port.in.GetMyProfileUseCase;
+import com.example.auth_service.application.port.in.UpdateMyProfileUseCase;
+import com.example.auth_service.application.port.in.UpdateMyShopProfileUseCase;
+import com.example.auth_service.application.DTO.request.UpdateShopProfileRequest;
+import com.example.auth_service.application.port.in.ChangePasswordUseCase;
+import com.example.auth_service.application.DTO.request.ChangePasswordRequest;
+import com.example.auth_service.application.DTO.request.UpdateProfileRequest;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestBody;
 import com.example.auth_service.application.port.in.UploadAvatarUseCase;
+import com.example.auth_service.application.DTO.repone.UserProfileResponse;
 import com.example.auth_service.application.port.in.UploadShopLogoUseCase;
 import com.example.auth_service.application.DTO.repone.AvatarResponse;
 import com.example.auth_service.application.port.in.GetMyShopInfoUseCase;
@@ -52,6 +62,10 @@ public class UserController {
     private final DeleteUserUseCase deleteUserUseCase;
     private final UploadShopLogoUseCase uploadShopLogoUseCase;
     private final UploadAvatarUseCase uploadAvatarUseCase;
+    private final GetMyProfileUseCase getMyProfileUseCase;
+    private final UpdateMyProfileUseCase updateMyProfileUseCase;
+    private final UpdateMyShopProfileUseCase updateMyShopProfileUseCase;
+    private final ChangePasswordUseCase changePasswordUseCase;
     private final GetMyShopInfoUseCase getMyShopInfoUseCase;
 
     // Hồ sơ shop của tài khoản đang đăng nhập cho Kênh Người Bán.
@@ -59,6 +73,14 @@ public class UserController {
     @PreAuthorize("hasAuthority('ROLE_SHOP')")
     public PublicShopInfoResponse getMyShopInfo(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) {
         return getMyShopInfoUseCase.getMyShopInfo(authorizationHeader);
+    }
+
+    // Hiện sửa tên và mô tả shop; logo dùng PUT /me/shop-logo.
+    @PutMapping("/me/shop")
+    @PreAuthorize("hasAuthority('ROLE_SHOP')")
+    public PublicShopInfoResponse updateMyShopProfile(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+                                                      @Valid @RequestBody UpdateShopProfileRequest request) {
+        return updateMyShopProfileUseCase.updateMyShopProfile(authorizationHeader, request);
     }
 
     @PutMapping(value = "/me/shop-logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -69,9 +91,27 @@ public class UserController {
                 new UploadFileCommand(image.getOriginalFilename(), image.getContentType(), image.getBytes()));
     }
 
+    @GetMapping("/me")
+    public UserProfileResponse getMyProfile(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) {
+        return getMyProfileUseCase.getMyProfile(authorizationHeader);
+    }
+
+    // Hiện chỉ sửa họ tên; avatar dùng PUT /me/avatar.
+    @PutMapping("/me")
+    public UserProfileResponse updateMyProfile(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+                                               @Valid @RequestBody UpdateProfileRequest request) {
+        return updateMyProfileUseCase.updateMyProfile(authorizationHeader, request);
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<Void> changePassword(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+                                               @Valid @RequestBody ChangePasswordRequest request) {
+        changePasswordUseCase.changePassword(authorizationHeader, request);
+        return ResponseEntity.noContent().build();
+    }
+
     // Mọi tài khoản đăng nhập đều đổi được ảnh đại diện của chính mình.
     @PutMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("isAuthenticated()")
     public AvatarResponse uploadAvatar(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
                                        @RequestPart("image") MultipartFile image) throws IOException {
         return uploadAvatarUseCase.uploadAvatar(authorizationHeader,

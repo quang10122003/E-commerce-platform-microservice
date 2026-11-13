@@ -55,4 +55,9 @@ public class AuthenticationManagerAdapter implements AuthenticationManagerPort {
     public String encodePassword(String password) {
         return passwordEncoder.encode(password);
     }
+
+    @Override
+    public boolean matchesPassword(String rawPassword, String encodedPassword) {
+        return encodedPassword != null && passwordEncoder.matches(rawPassword, encodedPassword);
+    }
 }

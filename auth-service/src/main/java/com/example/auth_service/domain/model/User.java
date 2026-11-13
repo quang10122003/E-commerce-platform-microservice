@@ -8,6 +8,10 @@ import com.example.common.exception.BusinessException;
 
 public class User {
 
+    public static final int MAX_FULL_NAME_LENGTH = 30;
+    public static final int MAX_SHOP_NAME_LENGTH = 100;
+    public static final int MAX_SHOP_DESCRIPTION_LENGTH = 2000;
+
     private Long id;
     private String email;
     private String password;
@@ -151,10 +155,44 @@ public class User {
         }
     }
 
+    // Đổi tên và mô tả shop (bỏ khoảng trắng đầu cuối, mô tả rỗng lưu null); chỉ shop còn hoạt động mới được sửa.
+    public void changeShopProfile(String shopName, String shopDescription) {
+        assertCanEditShop();
+        String name = shopName == null ? "" : shopName.trim();
+        if (name.isEmpty() || name.length() > MAX_SHOP_NAME_LENGTH) {
+            throw new BusinessException(DomainAuthError.INVALID_SHOP_NAME);
+        }
+        String description = shopDescription == null ? "" : shopDescription.trim();
+        if (description.length() > MAX_SHOP_DESCRIPTION_LENGTH) {
+            throw new BusinessException(DomainAuthError.INVALID_SHOP_DESCRIPTION);
+        }
+        this.shopName = name;
+        this.shopDescription = description.isEmpty() ? null : description;
+    }
+
     public void changeShopLogo(String shopLogoUrl, String shopLogoObjectPath) {
         assertCanEditShop();
         this.shopLogoUrl = shopLogoUrl;
         this.shopLogoObjectPath = shopLogoObjectPath;
+    }
+
+    // Thay mật khẩu bằng chuỗi đã mã hóa; tài khoản đã xóa không còn mật khẩu nên không được đổi.
+    public void changePassword(String encodedPassword) {
+        assertNotDeleted();
+        if (encodedPassword == null || encodedPassword.isBlank()) {
+            throw new IllegalArgumentException("Mật khẩu đã mã hóa không được rỗng");
+        }
+        this.password = encodedPassword;
+    }
+
+    // Đổi họ tên hiển thị (bỏ khoảng trắng đầu cuối); tài khoản đã xóa hoặc tên rỗng, quá 30 ký tự thì từ chối.
+    public void changeFullName(String fullName) {
+        assertNotDeleted();
+        String trimmed = fullName == null ? "" : fullName.trim();
+        if (trimmed.isEmpty() || trimmed.length() > MAX_FULL_NAME_LENGTH) {
+            throw new BusinessException(DomainAuthError.INVALID_FULL_NAME);
+        }
+        this.fullName = trimmed;
     }
 
     // Đổi ảnh đại diện sang file mới đã upload; tài khoản đã xóa thì không được đổi.

@@ -4,10 +4,16 @@ import com.example.auth_service.application.DTO.command.UploadFileCommand;
 import com.example.auth_service.application.DTO.event.StoredFilesDeleteOutboxPayload;
 import com.example.auth_service.application.DTO.repone.AvatarResponse;
 import com.example.auth_service.application.DTO.repone.ShopLogoResponse;
+import com.example.auth_service.application.DTO.repone.UserProfileResponse;
+import com.example.auth_service.application.DTO.request.UpdateProfileRequest;
+import com.example.auth_service.application.DTO.request.UpdateShopProfileRequest;
 import com.example.auth_service.application.constant.Constant;
 import com.example.auth_service.application.error.AuthError;
 import com.example.auth_service.application.DTO.repone.PublicShopInfoResponse;
+import com.example.auth_service.application.port.in.GetMyProfileUseCase;
 import com.example.auth_service.application.port.in.GetMyShopInfoUseCase;
+import com.example.auth_service.application.port.in.UpdateMyProfileUseCase;
+import com.example.auth_service.application.port.in.UpdateMyShopProfileUseCase;
 import com.example.auth_service.application.port.in.UploadAvatarUseCase;
 import com.example.auth_service.application.port.in.UploadShopLogoUseCase;
 import com.example.auth_service.application.port.out.OutboxEventPort;
@@ -19,6 +25,7 @@ import com.example.auth_service.application.port.out.storage.StorageBucket;
 import com.example.auth_service.application.port.out.storage.StoredFile;
 import com.example.auth_service.application.port.out.storage.StoredFileRollbackPort;
 import com.example.auth_service.domain.model.OutboxEvent;
+import com.example.auth_service.domain.model.Role;
 import com.example.auth_service.domain.model.User;
 import com.example.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -30,12 +37,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.example.common.untill.FileUntils.getExtension;
 
 @Slf4j
 @RequiredArgsConstructor
-public class ShopProfileService implements UploadShopLogoUseCase, UploadAvatarUseCase, GetMyShopInfoUseCase {
+public class ShopProfileService implements UploadShopLogoUseCase, UploadAvatarUseCase, GetMyShopInfoUseCase, GetMyProfileUseCase,
+        UpdateMyProfileUseCase, UpdateMyShopProfileUseCase {
     private final UserRepositoryPort userRepositoryPort;
     private final TokenServicePort tokenServicePort;
     private final FileStoragePort fileStoragePort;
@@ -49,6 +58,48 @@ public class ShopProfileService implements UploadShopLogoUseCase, UploadAvatarUs
     public PublicShopInfoResponse getMyShopInfo(String authorizationHeader) {
         Long shopId = tokenServicePort.getIdFromToken(tokenServicePort.extractBearerToken(authorizationHeader));
         return authServiceInternal.getPublicShopInfo(shopId);
+    }
+
+    // User id lấy từ token nên chỉ xem được hồ sơ của chính mình.
+    @Override
+    @Transactional(readOnly = true)
+    public UserProfileResponse getMyProfile(String authorizationHeader) {
+        Long userId = tokenServicePort.getIdFromToken(tokenServicePort.extractBearerToken(authorizationHeader));
+        User user = userRepositoryPort.findById(userId)
+                .orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND));
+        return toProfile(user);
+    }
+
+    // Không khóa dòng: hai lần sửa họ tên cùng lúc hiếm, lần ghi sau thắng là chấp nhận được.
+    @Override
+    @Transactional
+    public UserProfileResponse updateMyProfile(String authorizationHeader, UpdateProfileRequest request) {
+        Long userId = tokenServicePort.getIdFromToken(tokenServicePort.extractBearerToken(authorizationHeader));
+        User user = userRepositoryPort.findById(userId)
+                .orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND));
+        user.changeFullName(request.fullName());
+        User saved = userRepositoryPort.save(user);
+        log.info("Cập nhật thông tin cá nhân thành công: user_id={}", userId);
+        return toProfile(saved);
+    }
+
+    // Đơn cũ giữ tên shop đã chụp lúc đặt; chỉ đơn mới và trang shop dùng tên mới.
+    @Override
+    @Transactional
+    public PublicShopInfoResponse updateMyShopProfile(String authorizationHeader, UpdateShopProfileRequest request) {
+        Long userId = tokenServicePort.getIdFromToken(tokenServicePort.extractBearerToken(authorizationHeader));
+        User user = userRepositoryPort.findById(userId)
+                .orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND));
+        user.changeShopProfile(request.shopName(), request.shopDescription());
+        userRepositoryPort.save(user);
+        log.info("Cập nhật hồ sơ shop thành công: shop_id={}", userId);
+        return authServiceInternal.getPublicShopInfo(userId);
+    }
+
+    private UserProfileResponse toProfile(User user) {
+        return new UserProfileResponse(user.getEmail(), user.getFullName(), user.getAvatarUrl(),
+                user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()),
+                user.getCreatedAt() == null ? null : user.getCreatedAt().atZone(clock.getZone()).toOffsetDateTime());
     }
 
     @Override
