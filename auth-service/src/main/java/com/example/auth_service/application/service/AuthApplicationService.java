@@ -3,6 +3,7 @@ package com.example.auth_service.application.service;
 import java.time.Duration;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -20,10 +21,14 @@ import com.example.auth_service.application.DTO.request.LoginRequest;
 import com.example.auth_service.application.DTO.request.RegisterRquest;
 import com.example.auth_service.application.error.AuthError;
 import com.example.auth_service.application.DTO.request.ChangePasswordRequest;
+import com.example.auth_service.application.DTO.command.OAuthLoginCommand;
+import com.example.auth_service.application.DTO.request.ExchangeOAuthLoginCodeRequest;
 import com.example.auth_service.application.port.in.ChangePasswordUseCase;
+import com.example.auth_service.application.constant.AuthCacheKeys;
 import com.example.auth_service.application.constant.Constant;
 import com.example.auth_service.application.port.out.*;
 import com.example.auth_service.application.port.out.cache.CachePort;
+import com.example.auth_service.domain.model.AuthProvider;
 import com.example.auth_service.domain.model.OutboxEvent;
 import com.example.auth_service.domain.model.Role;
 import com.example.auth_service.domain.model.User;
@@ -43,7 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthApplicationService implements LoginUseCase, RegisterUseCase , RefreshTokenUseCase, ChecktokenUseCase, LogoutUserCase,
-        ChangePasswordUseCase {
+        ChangePasswordUseCase, ExchangeOAuthLoginCodeUseCase {
     AuthenticationManagerPort authenticationManagerPort;
 
     TokenServicePort tokenServicePort;
@@ -67,20 +72,8 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
         User user = authenticatedUser.getUser();
         user.assertUserNotLocked();
 
-        String accectToken = tokenServicePort.generateAccessToken(user);
-
-        String refreshToken = tokenServicePort.generateRefreshToken(user);
         log.info("Đăng nhập thành công: user_id={}", user.getId());
-        return AuthResponse.builder()
-                .userId(user.getId())
-                .accessToken(accectToken)
-                .refreshToken(refreshToken)
-                .email(user.getEmail())
-                .fullName(user.getFullName())
-                .avatarUrl(user.getAvatarUrl())
-                .role(user.getRoles().stream().map(Role::getName).collect(
-                        Collectors.toSet()))
-                .build();
+        return buildAuthResponse(user);
     }
 
     @Transactional
@@ -88,24 +81,57 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
     public AuthResponse register(RegisterRquest request) {
         User user = createNewUser(request);
         publishUserRegisteredEvent(user);
-
-        String accessToken = tokenServicePort.generateAccessToken(user);
-        String refreshToken = tokenServicePort.generateRefreshToken(user);
-
         log.info("Đăng ký tài khoản thành công: user_id={}", user.getId());
+        return buildAuthResponse(user);
+    }
 
-        return AuthResponse.builder()
-                .userId(user.getId())
-                .accessToken(
-                        accessToken)
-                .refreshToken(refreshToken)
-                .email(user.getEmail())
-                .fullName(user.getFullName())
-                .avatarUrl(user.getAvatarUrl())
-                .role(user.getRoles().stream().map(Role::getName).collect(
-                        Collectors.toSet()))
-                .build();
+    // Ưu tiên tìm theo sub Google; chỉ gộp theo email khi Google xác nhận email để tránh chiếm tài khoản.
+    @Transactional
+    public User loginWithGoogle(OAuthLoginCommand command) {
+        if (!command.emailVerified()) {
+            throw new BusinessException(AuthError.OAUTH_EMAIL_NOT_VERIFIED);
+        }
+        Optional<User> linkedUser = userRepositoryPort.findByProviderId(command.providerId());
+        if (linkedUser.isPresent()) {
+            linkedUser.get().assertUserNotLocked();
+            return linkedUser.get();
+        }
+        String email = ValidationUtils.normalizeEmail(command.email());
+        Optional<User> existingUser = userRepositoryPort.findByEmail(email);
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            user.assertUserNotLocked();
+            user.linkGoogle(command.providerId());
+            log.info("Liên kết Google vào tài khoản sẵn có: user_id={}", user.getId());
+            return userRepositoryPort.save(user);
+        }
+        Role role = roleRepositoryPort.findByName(RoleEnum.ROLE_USER)
+                .orElseThrow(() -> new BusinessException(AuthError.ROLE_NOT_FOUND));
+        User user = userRepositoryPort.save(User.createFromOAuth(email, toFullName(command.fullName(), email),
+                AuthProvider.GOOGLE, command.providerId(), Set.of(role)));
+        publishUserRegisteredEvent(user);
+        log.info("Tạo tài khoản bằng Google thành công: user_id={}", user.getId());
+        return user;
+    }
 
+    // gen code đổi token khi đnagw nhap gg
+    public String issueOAuthLoginCode(User user) {
+        String code = UUID.randomUUID().toString();
+        cachePort.set(AuthCacheKeys.oauthLoginCode(code), user.getId(), Constant.OAUTH_LOGIN_CODE_TTL);
+        return code;
+    }
+
+//    đổi code lấy token
+    @Transactional(readOnly = true)
+    @Override
+    public AuthResponse exchange(ExchangeOAuthLoginCodeRequest request) {
+        Long userId = cachePort.getAndDelete(AuthCacheKeys.oauthLoginCode(request.code()), Long.class)
+                .orElseThrow(() -> new BusinessException(AuthError.OAUTH_LOGIN_CODE_INVALID));
+        User user = userRepositoryPort.findById(userId)
+                .orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND));
+        user.assertUserNotLocked();
+        log.info("Đổi mã đăng nhập OAuth thành token: user_id={}", userId);
+        return buildAuthResponse(user);
     }
 
 
@@ -177,6 +203,7 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
         User user = userRepositoryPort.findById(userId)
                 .orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND));
         user.assertUserNotLocked();
+        user.assertHasPassword();
         if (!authenticationManagerPort.matchesPassword(request.currentPassword(), user.getPassword())) {
             log.warn("Đổi mật khẩu thất bại do mật khẩu hiện tại không đúng: user_id={}", userId);
             throw new BusinessException(AuthError.CURRENT_PASSWORD_INCORRECT);
@@ -209,6 +236,24 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
         String fullName = ValidationUtils.normalize(request.getFullName());
         User newUser = User.create(email, hashedPassword, fullName, Set.of(role));
         return userRepositoryPort.save(newUser);
+    }
+
+    private AuthResponse buildAuthResponse(User user) {
+        return AuthResponse.builder()
+                .userId(user.getId())
+                .accessToken(tokenServicePort.generateAccessToken(user))
+                .refreshToken(tokenServicePort.generateRefreshToken(user))
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .avatarUrl(user.getAvatarUrl())
+                .role(user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()))
+                .build();
+    }
+
+    // Tên Google có thể rỗng hoặc dài hơn giới hạn họ tên của hệ thống.
+    private String toFullName(String fullName, String email) {
+        String name = fullName == null || fullName.isBlank() ? email.substring(0, email.indexOf('@')) : fullName.trim();
+        return name.length() > User.MAX_FULL_NAME_LENGTH ? name.substring(0, User.MAX_FULL_NAME_LENGTH) : name;
     }
 
     private void revokeAccessToken(String accessToken) {

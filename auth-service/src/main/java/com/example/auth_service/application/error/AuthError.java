@@ -14,7 +14,11 @@ public enum AuthError implements ErrorCode {
     REFRESH_TOKEN_INVALID("REFRESH_TOKEN_INVALID","Invalid refresh token",401),
     CURRENT_PASSWORD_INCORRECT("CURRENT_PASSWORD_INCORRECT", "Mật khẩu hiện tại không đúng", 400),
     PASSWORD_CONFIRM_MISMATCH("PASSWORD_CONFIRM_MISMATCH", "Mật khẩu nhập lại không khớp", 400),
-    NEW_PASSWORD_SAME_AS_CURRENT("NEW_PASSWORD_SAME_AS_CURRENT", "Mật khẩu mới phải khác mật khẩu hiện tại", 400);
+    NEW_PASSWORD_SAME_AS_CURRENT("NEW_PASSWORD_SAME_AS_CURRENT", "Mật khẩu mới phải khác mật khẩu hiện tại", 400),
+    OAUTH_PROVIDER_NOT_SUPPORTED("OAUTH_PROVIDER_NOT_SUPPORTED", "Phương thức đăng nhập chưa được hỗ trợ", 400),
+    OAUTH_EMAIL_NOT_VERIFIED("OAUTH_EMAIL_NOT_VERIFIED", "Email của tài khoản Google chưa được xác minh", 401),
+    OAUTH_LOGIN_FAILED("OAUTH_LOGIN_FAILED", "Đăng nhập Google thất bại", 401),
+    OAUTH_LOGIN_CODE_INVALID("OAUTH_LOGIN_CODE_INVALID", "Mã đăng nhập không hợp lệ hoặc đã hết hạn", 401);
     private final String code;
     private final String message;
     private final int httpStatusCode;

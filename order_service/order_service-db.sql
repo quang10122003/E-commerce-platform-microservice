@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS cart_items (
 
 	CONSTRAINT uk_cart_items_cart_variant UNIQUE (cart_id, product_variant_id),
     CONSTRAINT fk_cart_items_cart FOREIGN KEY (cart_id) REFERENCES carts (id) ON DELETE CASCADE,
+    INDEX idx_cart_items_variant (product_variant_id),
 
     CONSTRAINT chk_cart_items_quantity CHECK (quantity > 0)
     ) ENGINE = InnoDB
@@ -46,11 +47,11 @@ CREATE TABLE IF NOT EXISTS outbox_event (
     error_message TEXT NULL,
     PRIMARY KEY (id),
     CONSTRAINT uk_outbox_event_event_id UNIQUE (event_id),
-    INDEX idx_outbox_event_pending (status, next_attempt_at, id)
+    INDEX idx_outbox_event_status_next_attempt (status, next_attempt_at),
+    INDEX idx_outbox_event_aggregate (aggregate_type, aggregate_id, event_type)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Cần MySQL 8.0.16+ để các ràng buộc CHECK được thực thi.
--- Chưa thêm index tối ưu cho checkout; MySQL vẫn tạo index phục vụ khóa và ràng buộc.
 -- IF NOT EXISTS không nâng cấp cấu trúc bảng đã tồn tại.
 CREATE TABLE IF NOT EXISTS checkout (
     id BIGINT NOT NULL AUTO_INCREMENT,
@@ -71,7 +72,7 @@ CREATE TABLE IF NOT EXISTS checkout (
     updated_at DATETIME(6) NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT uk_checkout_idempotency_key UNIQUE (idempotency_key),
-    INDEX idx_checkout_user (user_id),
+    INDEX idx_checkout_user_status (user_id, status),
     CONSTRAINT chk_checkout_amount CHECK (total_amount > 0),
     CONSTRAINT chk_checkout_address CHECK (CHAR_LENGTH(TRIM(shipping_address_snapshot)) > 0)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -104,9 +105,9 @@ CREATE TABLE IF NOT EXISTS orders (
     updated_at DATETIME(6) NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT uk_orders_checkout_shop_price_type UNIQUE (checkout_id, shop_id, price_type),
-    -- Job tự hoàn thành đơn quét theo trạng thái và mốc giao cho đơn vị vận chuyển.
-    INDEX idx_orders_status_shipped_at (status, shipped_at),
-    INDEX idx_orders_shop_created_at (shop_id, created_at),
+    INDEX idx_orders_shop_created (shop_id, created_at),
+    INDEX idx_orders_created_shop (created_at, shop_id),
+    INDEX idx_orders_status (status),
     CONSTRAINT fk_orders_checkout FOREIGN KEY (checkout_id)
         REFERENCES checkout (id) ON DELETE RESTRICT,
     CONSTRAINT chk_orders_amount CHECK (total_amount > 0),
@@ -130,6 +131,8 @@ CREATE TABLE IF NOT EXISTS order_items (
     created_at DATETIME(6) NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT uk_order_items_variant UNIQUE (order_id, product_variant_id),
+    INDEX idx_order_items_product (product_id),
+    INDEX idx_order_items_variant (product_variant_id),
     CONSTRAINT fk_order_items_order FOREIGN KEY (order_id)
         REFERENCES orders (id) ON DELETE RESTRICT,
     CONSTRAINT chk_order_items_quantity CHECK (quantity > 0),
@@ -169,6 +172,7 @@ CREATE TABLE IF NOT EXISTS payment (
     CONSTRAINT uk_payment_checkout UNIQUE (checkout_id),
     CONSTRAINT uk_payment_reference UNIQUE (transaction_reference),
     CONSTRAINT uk_payment_provider_transaction UNIQUE (provider_transaction_id),
+    INDEX idx_payment_status_expires (status, expires_at),
     CONSTRAINT fk_payment_checkout FOREIGN KEY (checkout_id)
         REFERENCES checkout (id) ON DELETE RESTRICT,
     CONSTRAINT chk_payment_currency CHECK (currency = 'VND'),
@@ -230,12 +234,8 @@ CREATE TABLE IF NOT EXISTS product_reviews (
         REFERENCES orders (id) ON DELETE RESTRICT,
     CONSTRAINT chk_product_reviews_rating CHECK (rating BETWEEN 1 AND 5),
     CONSTRAINT chk_product_reviews_attributes CHECK (JSON_TYPE(variant_attributes) = 'ARRAY'),
-    -- Danh sách đánh giá của sản phẩm, mới nhất trước.
     INDEX idx_product_reviews_product_created (product_id, created_at),
-    -- Lọc theo số sao và tính lại điểm trung bình của sản phẩm.
-    INDEX idx_product_reviews_product_rating (product_id, rating),
-    INDEX idx_product_reviews_user (user_id),
-    INDEX idx_product_reviews_shop (shop_id)
+    INDEX idx_product_reviews_product_rating_created (product_id, rating, created_at)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Lưu ảnh như variant_images: object_path và bucket để xóa file trên Storage khi cần.

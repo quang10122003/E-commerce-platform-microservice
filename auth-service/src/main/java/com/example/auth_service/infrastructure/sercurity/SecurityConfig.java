@@ -20,6 +20,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.example.auth_service.adapter.in.oauth2.OAuth2LoginSuccessHandler;
+import com.example.auth_service.adapter.in.oauth2.OAuth2LoginFailureHandler;
 
 @Configuration
 @EnableMethodSecurity
@@ -34,6 +36,8 @@ public class SecurityConfig {
             "/api/auth/login",
             "/api/auth/refresh_token",
             "/api/auth/logout",
+            "/api/auth/oauth2/**",
+            "/api/auth/login/oauth2/**",
             "/error"
     };
 
@@ -51,7 +55,9 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
             DaoAuthenticationProvider authenticationProvider,
             ApiAuthenticationEntryPoint authenticationEntryPoint,
-            ApiAccessDeniedHandler accessDeniedHandler) throws Exception {
+            ApiAccessDeniedHandler accessDeniedHandler,
+            OAuth2LoginSuccessHandler oauth2LoginSuccessHandler,
+            OAuth2LoginFailureHandler oauth2LoginFailureHandler) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -68,6 +74,13 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
                 .httpBasic(basic -> basic.authenticationEntryPoint(authenticationEntryPoint))
+                .oauth2Login(oauth2 -> oauth2
+                        // endpoint fe gọi đang nhạp gg
+                        .authorizationEndpoint(endpoint -> endpoint.baseUri("/api/auth/oauth2/authorize"))
+                        // endpoint gg trả be
+                        .redirectionEndpoint(endpoint -> endpoint.baseUri("/api/auth/login/oauth2/*"))
+                        .successHandler(oauth2LoginSuccessHandler)
+                        .failureHandler(oauth2LoginFailureHandler))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

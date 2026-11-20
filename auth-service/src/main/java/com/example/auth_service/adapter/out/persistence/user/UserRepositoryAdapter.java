@@ -109,6 +109,12 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     }
 
     @Override
+    public Optional<User> findByProviderId(String providerId) {
+        return userRepoJpa.findByProviderId(providerId)
+                .map(userMapper::toDomain);
+    }
+
+    @Override
     public List<ShopInfoResponse> findShopInfosByIds(Collection<Long> userIds) {
         return userIds.isEmpty() ? List.of() : userRepoJpa.findShopInfosByIds(userIds).stream()
                 .map(userMapper::toShopInfo).toList();

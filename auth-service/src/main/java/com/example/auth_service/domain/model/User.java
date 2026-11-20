@@ -31,12 +31,14 @@ public class User {
     private String shopLogoObjectPath;
     private String avatarUrl;
     private String avatarObjectPath;
+    private AuthProvider provider;
+    private String providerId;
 
     public User(Long id, String email, String password, String fullName, String shopName,
                 String shopLogoUrl, String shopDescription, String shopPhone, String shopAddress,
                 Instant shopCreatedAt, boolean shopLock, Set<Role> roles, boolean locked,
                 Instant createdAt, Instant updatedAt, Instant deletedAt, String shopLogoObjectPath,
-                String avatarUrl, String avatarObjectPath) {
+                String avatarUrl, String avatarObjectPath, AuthProvider provider, String providerId) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -56,6 +58,8 @@ public class User {
         this.shopLogoObjectPath = shopLogoObjectPath;
         this.avatarUrl = avatarUrl;
         this.avatarObjectPath = avatarObjectPath;
+        this.provider = provider == null ? AuthProvider.LOCAL : provider;
+        this.providerId = providerId;
     }
 
     // ID và thời gian do persistence sinh, không tự gán khi đăng ký.
@@ -65,7 +69,18 @@ public class User {
             String fullName,
             Set<Role> roles) {
         return new User(null, email, password, fullName, null, null, null, null, null,
-                null, false, roles, false, null, null, null, null, null, null);
+                null, false, roles, false, null, null, null, null, null, null, AuthProvider.LOCAL, null);
+    }
+
+    // Tài khoản tạo qua OAuth không có mật khẩu, chỉ đăng nhập được bằng provider.
+    public static User createFromOAuth(
+            String email,
+            String fullName,
+            AuthProvider provider,
+            String providerId,
+            Set<Role> roles) {
+        return new User(null, email, null, fullName, null, null, null, null, null,
+                null, false, roles, false, null, null, null, null, null, null, provider, providerId);
     }
 
     public Long getId() {
@@ -144,6 +159,30 @@ public class User {
         return avatarObjectPath;
     }
 
+    public AuthProvider getProvider() {
+        return provider;
+    }
+
+    public String getProviderId() {
+        return providerId;
+    }
+
+    public boolean hasPassword() {
+        return provider != AuthProvider.GOOGLE;
+    }
+
+    // Gắn Google vào tài khoản mật khẩu cùng email đã xác minh, giữ nguyên toàn bộ dữ liệu cũ.
+    public void linkGoogle(String providerId) {
+        assertNotDeleted();
+        if (providerId == null || providerId.isBlank()) {
+            throw new IllegalArgumentException("providerId không được rỗng");
+        }
+        this.providerId = providerId;
+        if (provider == AuthProvider.LOCAL) {
+            provider = AuthProvider.LOCAL_GOOGLE;
+        }
+    }
+
     // Chỉ shop còn hoạt động mới được sửa hồ sơ shop.
     public void assertCanEditShop() {
         assertNotDeleted();
@@ -179,6 +218,7 @@ public class User {
     // Thay mật khẩu bằng chuỗi đã mã hóa; tài khoản đã xóa không còn mật khẩu nên không được đổi.
     public void changePassword(String encodedPassword) {
         assertNotDeleted();
+        assertHasPassword();
         if (encodedPassword == null || encodedPassword.isBlank()) {
             throw new IllegalArgumentException("Mật khẩu đã mã hóa không được rỗng");
         }
@@ -241,6 +281,8 @@ public class User {
         shopLogoObjectPath = null;
         avatarUrl = null;
         avatarObjectPath = null;
+        // Bỏ liên kết để tài khoản Google này có thể tạo tài khoản mới sau khi xóa.
+        providerId = null;
         shopDescription = null;
         shopPhone = null;
         shopAddress = null;
@@ -252,6 +294,12 @@ public class User {
     private void assertNotDeleted() {
         if (isDeleted()) {
             throw new BusinessException(DomainAuthError.USER_DELETED);
+        }
+    }
+
+    public void assertHasPassword() {
+        if (!hasPassword()) {
+            throw new BusinessException(DomainAuthError.PASSWORD_NOT_SUPPORTED);
         }
     }
 

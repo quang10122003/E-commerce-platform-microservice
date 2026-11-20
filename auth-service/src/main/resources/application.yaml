@@ -11,6 +11,14 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-init-sql: "SET time_zone = '+07:00'"
+  jpa:
+    properties:
+      hibernate:
+        # Hibernate mặc định ghi Instant theo giờ UTC, lệch với phiên MySQL +07 ở trên; ép cùng múi giờ.
+        type:
+          preferred_instant_jdbc_type: TIMESTAMP
+        jdbc:
+          time_zone: Asia/Ho_Chi_Minh
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
@@ -93,6 +101,13 @@ app:
     public-key: ${JWT_PUBLIC_KEY}
     access-token-expiration-minutes: 15
     refresh-token-expiration-days: 7
+  oauth2:
+    frontend-callback-url: ${OAUTH2_FRONTEND_CALLBACK_URL:http://localhost:3000/api/auth/oauth2/callback}
+    google:
+      client-id: ${CLIENT_ID}
+      client-secret: ${CLIENT_SECRET}
+      # Cố định URL gateway vì gateway không gửi X-Forwarded-* nên {baseUrl} sẽ là địa chỉ nội bộ của auth-service.
+      redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/api/auth/login/oauth2/{registrationId}}
   kafka:
     publisher:
       fixed-delay-ms: 10000

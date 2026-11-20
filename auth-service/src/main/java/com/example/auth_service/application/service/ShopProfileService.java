@@ -99,7 +99,8 @@ public class ShopProfileService implements UploadShopLogoUseCase, UploadAvatarUs
     private UserProfileResponse toProfile(User user) {
         return new UserProfileResponse(user.getEmail(), user.getFullName(), user.getAvatarUrl(),
                 user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()),
-                user.getCreatedAt() == null ? null : user.getCreatedAt().atZone(clock.getZone()).toOffsetDateTime());
+                user.getCreatedAt() == null ? null : user.getCreatedAt().atZone(clock.getZone()).toOffsetDateTime(),
+                user.getProvider());
     }
 
     @Override

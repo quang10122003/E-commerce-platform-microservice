@@ -3,6 +3,7 @@ package com.example.auth_service.adapter.in.rest;
 import com.example.auth_service.application.DTO.repone.AccessTokenValidationResponse;
 import com.example.auth_service.application.DTO.repone.AuthResponse;
 import com.example.auth_service.application.DTO.repone.RefreshTokenRepone;
+import com.example.auth_service.application.DTO.request.ExchangeOAuthLoginCodeRequest;
 import com.example.auth_service.application.DTO.request.LoginRequest;
 import com.example.auth_service.application.DTO.request.LogoutRequest;
 import com.example.auth_service.application.DTO.request.RegisterRquest;
@@ -27,6 +28,7 @@ public class AuthController {
    RefreshTokenUseCase refreshTokenUseCase;
    ChecktokenUseCase checktokenUseCase;
    LogoutUserCase logoutUserCase;
+   ExchangeOAuthLoginCodeUseCase exchangeOAuthLoginCodeUseCase;
 
 
     @PostMapping("/register")
@@ -37,6 +39,11 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(loginUseCase.login(request));
+    }
+// api đổi token khi đăng nhập bằng gg từ mà be trả
+    @PostMapping("/oauth2/exchange")
+    public ResponseEntity<AuthResponse> exchangeOAuthLoginCode(@Valid @RequestBody ExchangeOAuthLoginCodeRequest request) {
+        return ResponseEntity.ok(exchangeOAuthLoginCodeUseCase.exchange(request));
     }
 
     @PostMapping("/refresh_token")

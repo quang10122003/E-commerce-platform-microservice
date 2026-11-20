@@ -3,6 +3,7 @@ package com.example.auth_service.adapter.entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import com.example.auth_service.application.port.out.storage.StorageBucket;
+import com.example.auth_service.domain.model.AuthProvider;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Set;
@@ -28,6 +29,7 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -53,6 +55,14 @@ public class UserEntity implements UserDetails {
 
     @Column(name = "full_name", nullable = false)
     String fullName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "provider", nullable = false)
+    @Default
+    AuthProvider provider = AuthProvider.LOCAL;
+
+    @Column(length = 255, name = "provider_id")
+    String providerId;
 
     @Column(name = "shop_name")
     String shopName;

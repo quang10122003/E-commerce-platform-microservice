@@ -37,6 +37,8 @@ public interface UserRepositoryPort {
 
     Optional<User> findByEmail(String email);
 
+    Optional<User> findByProviderId(String providerId);
+
     List<ShopInfoResponse> findShopInfosByIds(Collection<Long> userIds);
 
     User save(User user);

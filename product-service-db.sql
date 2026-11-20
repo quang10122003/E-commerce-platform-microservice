@@ -89,9 +89,8 @@ CREATE TABLE user_product_behavior (
     CONSTRAINT fk_user_product_behavior_product
         FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     INDEX idx_user_product_behavior_product (product_id),
+    INDEX idx_user_product_behavior_user_product_type_created (user_id, product_id, event_type, created_at),
     INDEX idx_user_product_behavior_user_created (user_id, created_at),
-    -- Index hỗ trợ tra lượt xem; chống lặp đồng thời cần cơ chế nguyên tử riêng.
-    INDEX idx_user_product_behavior_recent_view (user_id, product_id, event_type, created_at),
     INDEX idx_user_product_behavior_created (created_at)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -105,8 +104,7 @@ CREATE TABLE user_product_view_state (
     CONSTRAINT uk_user_product_view_state_user_product UNIQUE (user_id, product_id),
     CONSTRAINT fk_user_product_view_state_product
         FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    INDEX idx_user_product_view_state_product (product_id),
-    INDEX idx_user_product_view_state_next_allowed (next_allowed_at)
+    INDEX idx_user_product_view_state_product (product_id)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Loại thuộc tính của 1 sản phẩm (VD: "Màu sắc", "Size")
@@ -174,10 +172,10 @@ CREATE TABLE variant_attribute_values (
 -- ============================================================
 -- INDEX
 -- ============================================================
-CREATE INDEX idx_outbox_pending ON outbox_event(status, next_attempt_at, created_at);
-CREATE INDEX idx_outbox_aggregate ON outbox_event(aggregate_type, aggregate_id, event_type);
+CREATE INDEX idx_outbox_event_status_next_attempt ON outbox_event(status, next_attempt_at);
 CREATE INDEX idx_products_by_brand ON products(brands_id);
-CREATE INDEX idx_products_active ON products(is_active);
+CREATE INDEX idx_products_user_status ON products(user_id, is_active);
+CREATE INDEX idx_products_user_created ON products(user_id, created_at);
 CREATE INDEX idx_variants_by_product ON product_variants(products_id);
 CREATE INDEX idx_attributes_by_product ON attributes(products_id);
 CREATE INDEX idx_values_by_attribute ON attribute_values(attributes_id);
@@ -230,7 +228,9 @@ CREATE TABLE flash_sale_campaigns (
         CHECK (
             registration_deadline < starts_at
             AND starts_at < ends_at
-        )
+        ),
+
+    INDEX idx_flash_sale_campaigns_status_starts (status, starts_at)
 ) ENGINE=InnoDB
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
@@ -306,8 +306,7 @@ CREATE TABLE flash_sale_items (
     CONSTRAINT chk_flash_sale_item_sold_quantity
         CHECK (sold_quantity >= 0),
 
-    -- Hỗ trợ lấy đăng ký của Shop trong từng chương trình.
-    INDEX idx_flash_sale_item_shop_campaign (shop_id, flash_sale_campaigns_id),
+    INDEX idx_flash_sale_items_campaign_shop (flash_sale_campaigns_id, shop_id),
 
     -- Hỗ trợ tra cứu đăng ký theo variant.
     INDEX idx_flash_sale_item_variant (product_variants_id)

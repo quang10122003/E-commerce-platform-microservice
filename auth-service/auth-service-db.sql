@@ -9,6 +9,9 @@ create table users(
 	email varchar(255) not null unique,
 	password text,
 	full_name varchar(255) not null,
+	provider enum('LOCAL','GOOGLE','LOCAL_GOOGLE') not null default 'LOCAL',
+	-- sub của Google; unique để một tài khoản Google chỉ gắn với một user.
+	provider_id varchar(255) null,
 	shop_name varchar(255) null,
 	shop_logo_url text null,
 	-- Vị trí logo trong storage để dọn file khi đổi logo, rollback hoặc xóa tài khoản.
@@ -27,7 +30,8 @@ create table users(
 	-- Xóa mềm: giữ dòng để đơn hàng/chat ở service khác vẫn tham chiếu được, thông tin cá nhân đã bị xóa.
 	deleted_at TIMESTAMP NULL DEFAULT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	unique key uk_users_provider_id (provider_id)
 );
 
 -- Bảng chứa vai trò của người dùng.
@@ -65,5 +69,6 @@ CREATE TABLE outbox_event (
     published_at    DATETIME NULL COMMENT 'Thời điểm publish thành công ra message broker',
 
     error_message   TEXT NULL COMMENT 'Thông báo lỗi lần publish gần nhất, phục vụ debug',
-    CONSTRAINT uk_outbox_event_id UNIQUE (event_id)
+    CONSTRAINT uk_outbox_event_id UNIQUE (event_id),
+    INDEX idx_outbox_event_status (status)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

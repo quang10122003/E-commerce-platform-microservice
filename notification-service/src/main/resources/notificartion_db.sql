@@ -44,7 +44,10 @@ CREATE TABLE IF NOT EXISTS chat_conversations (
     PRIMARY KEY (id),
 
     UNIQUE KEY uk_conversation_customer_shop_product
-(customer_id, shop_id, product_id)
+(customer_id, shop_id, product_id),
+    INDEX idx_chat_conversations_customer_updated (customer_id, updated_at),
+    INDEX idx_chat_conversations_shop_updated (shop_id, updated_at),
+    INDEX idx_chat_conversations_product (product_id)
     ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS chat_messages (
@@ -66,5 +69,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     CONSTRAINT fk_chat_message_conversation
     FOREIGN KEY (conversation_id)
     REFERENCES chat_conversations(id)
-    ON DELETE CASCADE
+    ON DELETE CASCADE,
+    INDEX idx_chat_messages_conversation_created (conversation_id, created_at),
+    INDEX idx_chat_messages_conversation_read (conversation_id, is_read)
     ) ENGINE = InnoDB;

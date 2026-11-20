@@ -30,6 +30,12 @@ import com.example.auth_service.application.DTO.OutboxEventDto;
 import com.example.auth_service.application.strategy.EventHandler;
 import com.example.auth_service.application.strategy.outbox.UserRegisteredOutboxHandler;
 
+import com.example.auth_service.application.port.in.ExchangeOAuthLoginCodeUseCase;
+import com.example.auth_service.application.registry.OAuthLoginHandlerRegistry;
+import com.example.auth_service.application.service.OAuthLoginService;
+import com.example.auth_service.application.strategy.oauth.GoogleOAuthLoginHandler;
+import com.example.auth_service.application.strategy.oauth.OAuthLoginHandler;
+
 import java.util.List;
 import java.time.Clock;
 
@@ -113,6 +119,27 @@ public class AuthConfig {
     @Bean
     ChangePasswordUseCase changePasswordUseCase(AuthApplicationService authApplicationService) {
         return authApplicationService;
+    }
+
+    @Bean
+    ExchangeOAuthLoginCodeUseCase exchangeOAuthLoginCodeUseCase(AuthApplicationService authApplicationService) {
+        return authApplicationService;
+    }
+
+    @Bean
+    OAuthLoginHandler googleOAuthLoginHandler(AuthApplicationService authApplicationService) {
+        return new GoogleOAuthLoginHandler(authApplicationService);
+    }
+
+    @Bean
+    OAuthLoginHandlerRegistry oauthLoginHandlerRegistry(List<OAuthLoginHandler> oauthLoginHandlers) {
+        return new OAuthLoginHandlerRegistry(oauthLoginHandlers);
+    }
+
+    @Bean
+    OAuthLoginService oauthLoginService(OAuthLoginHandlerRegistry oauthLoginHandlerRegistry,
+            AuthApplicationService authApplicationService) {
+        return new OAuthLoginService(oauthLoginHandlerRegistry, authApplicationService);
     }
 
 

@@ -1,5 +1,7 @@
 package com.example.auth_service.application.constant;
 
+import java.time.Duration;
+
 public final class Constant {
     public static final String ACCESS_TOKEN = "access";
     public static final String REFRESH_TOKEN = "refresh";
@@ -14,6 +16,8 @@ public final class Constant {
     public static final String STORAGE_OBJECT_PATH = "/storage/v1/object/";
     // Đường dẫn truy cập công khai tới object.
     public static final String STORAGE_PUBLIC_OBJECT_PATH = STORAGE_OBJECT_PATH + "public/";
+
+    public static final Duration OAUTH_LOGIN_CODE_TTL = Duration.ofSeconds(60);
 
     private Constant() {
     }

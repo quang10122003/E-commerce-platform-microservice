@@ -11,6 +11,14 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-init-sql: "SET time_zone = '+07:00'"
+  jpa:
+    properties:
+      hibernate:
+        # Hibernate mặc định ghi Instant theo giờ UTC, lệch với phiên MySQL +07 ở trên; ép cùng múi giờ.
+        type:
+          preferred_instant_jdbc_type: TIMESTAMP
+        jdbc:
+          time_zone: Asia/Ho_Chi_Minh
   application:
     name: notification-service
   cloud:

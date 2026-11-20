@@ -100,6 +100,8 @@ public interface UserRepoJpa extends JpaRepository<UserEntity, Long> {
 
     public Optional<UserEntity> findByEmail(String email);
 
+    Optional<UserEntity> findByProviderId(String providerId);
+
     @Query("select u.id as shopId, u.shopName as shopName, u.shopLogoUrl as shopLogoUrl from UserEntity u where u.id in :userIds")
     List<ShopInfoProjection> findShopInfosByIds(@Param("userIds") Collection<Long> userIds);
 }
