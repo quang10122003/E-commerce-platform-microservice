@@ -8,6 +8,7 @@ public enum OrderError implements ErrorCode {
     CHECKOUT_PRODUCT_UNAVAILABLE("CHECKOUT_PRODUCT_UNAVAILABLE", "Sản phẩm không còn được phép mua", 409),
     CHECKOUT_SHOP_NOT_FOUND("CHECKOUT_SHOP_NOT_FOUND", "Shop không còn tồn tại", 409),
     ORDER_NOT_FOUND("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng", 404),
+    CHECKOUT_NOT_FOUND("CHECKOUT_NOT_FOUND", "Không tìm thấy checkout", 404),
     SHOP_LOCKED("ORDER_SHOP_LOCKED", "Shop đang bị khóa, không thể thao tác đơn hàng", 403),
     INVALID_DATE_RANGE("ORDER_INVALID_DATE_RANGE", "Thời điểm kết thúc phải lớn hơn hoặc bằng thời điểm bắt đầu", 400),
     ANALYTICS_RANGE_TOO_LONG("ORDER_ANALYTICS_RANGE_TOO_LONG", "Khoảng thời gian thống kê tối đa 366 ngày", 400),

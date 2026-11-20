@@ -1,4 +1,4 @@
-package com.example.auth_service.adapter.in;
+package com.example.auth_service.adapter.in.rest;
 
 import com.example.auth_service.application.port.in.GetMyProfileUseCase;
 import com.example.auth_service.application.port.in.UpdateMyProfileUseCase;

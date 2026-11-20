@@ -3,6 +3,7 @@ package com.example.order_service.adapter.out.persistence.outbox;
 import com.example.order_service.adapter.entity.OutboxEventEntity;
 import com.example.order_service.adapter.mapper.OutboxEventMapper;
 import com.example.order_service.application.constant.Constant;
+import com.example.order_service.application.dto.event.CheckoutFailedPayload;
 import com.example.order_service.application.dto.event.CheckoutSucceededPayload;
 import com.example.order_service.application.port.out.serialization.ObjectMapperPort;
 import com.example.order_service.application.dto.outbox.OutboxEventDto;
@@ -33,6 +34,14 @@ public class OutboxEventRepoAdapter implements OutboxPort {
                         Constant.CHECKOUT, checkoutId.toString(), CheckoutSucceededPayload.EVENT_TYPE)
                 .map((OutboxEventEntity entity) -> objectMapperPort.readValue(entity.getPayload(),
                         CheckoutSucceededPayload.class));
+    }
+
+    @Override
+    public Optional<CheckoutFailedPayload> findCheckoutFailed(Long checkoutId) {
+        return outboxEventJpa.findFirstByAggregateTypeAndAggregateIdAndEventTypeOrderByIdDesc(
+                        Constant.CHECKOUT, checkoutId.toString(), CheckoutFailedPayload.EVENT_TYPE)
+                .map((OutboxEventEntity entity) -> objectMapperPort.readValue(entity.getPayload(),
+                        CheckoutFailedPayload.class));
     }
 
     @Override

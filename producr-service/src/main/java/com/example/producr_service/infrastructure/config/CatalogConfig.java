@@ -1,6 +1,7 @@
 package com.example.producr_service.infrastructure.config;
 
 import com.example.producr_service.application.port.in.DeleteBrandUseCase;
+import com.example.producr_service.application.port.in.CreateBrandUseCase;
 import com.example.producr_service.application.port.in.GetAdminBrandsUseCase;
 import com.example.producr_service.application.port.in.CreateCategoryUseCase;
 import com.example.producr_service.application.port.in.DeleteCategoryUseCase;
@@ -65,6 +66,11 @@ public class CatalogConfig {
 
     @Bean
     DeleteBrandUseCase deleteBrandUseCase(BrandService brandService) {
+        return brandService;
+    }
+
+    @Bean
+    CreateBrandUseCase createBrandUseCase(BrandService brandService) {
         return brandService;
     }
 

@@ -1,5 +1,6 @@
 package com.example.order_service.application.port.out.outbox;
 
+import com.example.order_service.application.dto.event.CheckoutFailedPayload;
 import com.example.order_service.application.dto.event.CheckoutSucceededPayload;
 import com.example.order_service.application.dto.outbox.OutboxEventDto;
 
@@ -14,4 +15,5 @@ public interface OutboxPort {
     void markPublished(UUID eventId);
     void markFailed(UUID eventId, String errorMessage);
     Optional<CheckoutSucceededPayload> findCheckoutSucceeded(Long checkoutId);
+    Optional<CheckoutFailedPayload> findCheckoutFailed(Long checkoutId);
 }

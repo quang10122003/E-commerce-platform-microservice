@@ -12,11 +12,17 @@ import lombok.experimental.FieldDefaults;
 public class BrandResponse {
     Long id;
     String name;
+    int productCount;
 
     public static BrandResponse from(Brand brand) {
+        return from(brand, 0);
+    }
+
+    public static BrandResponse from(Brand brand, long productCount) {
         BrandResponse response = new BrandResponse();
         response.id = brand.getId();
         response.name = brand.getName();
+        response.productCount = Math.toIntExact(productCount);
         return response;
     }
 }

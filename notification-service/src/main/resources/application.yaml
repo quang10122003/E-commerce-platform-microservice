@@ -114,7 +114,7 @@ app:
       dlt-replicas: 1
   websocket:
     ticket-ttl-seconds: 30
-    allowed-origins: http://localhost:3000
+    allowed-origins: ${FE_HOST}
   jwt:
     public-key: ${JWT_PUBLIC_KEY}
   mail:

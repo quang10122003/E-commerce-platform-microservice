@@ -43,7 +43,6 @@ public class SystemStatusService implements GetSystemStatusUseCase {
         // lấy list instances các service
         List<RegisteredInstance> instances = serviceRegistryPort.findAllInstances();
 
-        // Gọi song song để thời gian phản hồi bằng instance chậm nhất thay vì cộng dồn.
         List<CompletableFuture<InstanceStatusResponse>> futures = instances.stream()
                 .map(instance -> CompletableFuture.supplyAsync(() -> checkInstance(instance), healthCheckExecutor))
                 .toList();

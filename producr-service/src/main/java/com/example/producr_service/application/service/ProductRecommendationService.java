@@ -188,7 +188,9 @@ public class ProductRecommendationService implements RecordProductViewUseCase, G
             recommendations = filterEligibleIds(userId, topIds, now).stream()
                     .limit(Constant.RECOMMENDATION_CACHE_LIMIT).toList();
         } else {
+            // list các ứng viên
             List<Long> candidates = collectCandidateIds(profile, topIds);
+            // list các ứng viên sau khi lọc
             List<Long> eligibleIds = filterEligibleIds(userId, candidates, now);
 //            lấy dữ liệu của các sản phẩm ứng viên rồi chấm điểm, sắp xếp để tạo danh sách gợi ý
             recommendations = userPreferenceCalculator.rank(profile,
@@ -199,7 +201,7 @@ public class ProductRecommendationService implements RecordProductViewUseCase, G
                 userId, behaviors.size(), recommendations.size(), profile.hasSignals());
         return recommendations;
     }
-//    Hàm này gom các sản phẩm ứng viên để đem đi lọc và chấm điểm
+//    Hàm này gom các sản phẩm ứng viên
     private List<Long> collectCandidateIds(UserPreferenceProfile profile, List<Long> topIds) {
         Set<Long> ids = new LinkedHashSet<>();
         if (!profile.vector().isEmpty()) {

@@ -6,6 +6,7 @@ import com.example.producr_service.adapter.entity.BrandEntity;
 import com.example.producr_service.adapter.entity.CategoryEntity;
 import com.example.producr_service.adapter.entity.ProductEntity;
 import com.example.producr_service.adapter.mapper.ProductMapper;
+import com.example.producr_service.adapter.out.persistence.projection.ProductCatalogCountProjection;
 import com.example.producr_service.adapter.out.persistence.Brand.BrandJpa;
 import com.example.producr_service.adapter.out.persistence.Category.CategoryJpa;
 import com.example.producr_service.application.dto.embedding.ProductPreferenceData;
@@ -28,8 +29,10 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -222,6 +225,26 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     @Override
     public List<Long> findIdsByBrandId(Long brandId) {
         return productJpa.findIdsByBrandId(brandId);
+    }
+
+    @Override
+    public Map<Long, Long> countProductsByCategoryIds(Collection<Long> categoryIds) {
+        if (categoryIds.isEmpty()) {
+            return Map.of();
+        }
+        return productJpa.countProductsByCategoryIds(categoryIds).stream()
+                .collect(Collectors.toMap(ProductCatalogCountProjection::getCatalogId,
+                        ProductCatalogCountProjection::getProductCount));
+    }
+
+    @Override
+    public Map<Long, Long> countProductsByBrandIds(Collection<Long> brandIds) {
+        if (brandIds.isEmpty()) {
+            return Map.of();
+        }
+        return productJpa.countProductsByBrandIds(brandIds).stream()
+                .collect(Collectors.toMap(ProductCatalogCountProjection::getCatalogId,
+                        ProductCatalogCountProjection::getProductCount));
     }
 
     // Lấy ảnh bìa của sản phẩm đã khóa mà không tải các quan hệ con.

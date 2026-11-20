@@ -30,12 +30,17 @@ public class CheckoutCancellationService {
 
     @Transactional
     public void cancelInvalidRequest(Long checkoutId, String reason) {
-        cancelCheckout(checkoutId, Constant.CHECKOUT_INVALID_REQUEST, reason);
+        // Lỗi validate là thông tin kỹ thuật: chỉ lưu DB và log, người mua nhận câu cố định.
+        cancel(checkoutId, Constant.CHECKOUT_INVALID_REQUEST, reason, Constant.CHECKOUT_INVALID_REQUEST_REASON);
     }
 
     // hàm đánh dấu cancel check out và payement nếu có kèm gửi event CheckoutFailed về notification
     @Transactional
     public void cancelCheckout(Long checkoutId, String reasonCode, String reason) {
+        cancel(checkoutId, reasonCode, reason, reason);
+    }
+
+    private void cancel(Long checkoutId, String reasonCode, String reason, String displayReason) {
         Optional<Checkout> existing = checkoutRepoPort.findByIdForUpdate(checkoutId);
         if (existing.isEmpty()) {
             log.warn("Bỏ qua hủy checkout không tồn tại: checkout_id={}", checkoutId);
@@ -55,7 +60,8 @@ public class CheckoutCancellationService {
             return;
         }
         LocalDateTime now = LocalDateTime.now(clock);
-        reason = reason == null || reason.isBlank() ? "Không thể tiếp tục checkout" : reason;
+        reason = reason == null || reason.isBlank() ? Constant.CHECKOUT_DEFAULT_CANCEL_REASON : reason;
+        displayReason = displayReason == null || displayReason.isBlank() ? reason : displayReason;
         checkout.cancel(reason, now);
         checkoutRepoPort.save(checkout);
         if (payment.isPresent() && payment.get().getStatus() == PaymentStatus.UNPAID) {
@@ -64,10 +70,10 @@ public class CheckoutCancellationService {
         }
         UUID eventId = UUID.randomUUID();
         CheckoutFailedPayload payload = new CheckoutFailedPayload(eventId, CheckoutFailedPayload.EVENT_TYPE,
-                checkoutId, checkout.getStatus(), reasonCode, reason,
+                checkoutId, checkout.getStatus(), reasonCode, displayReason,
                 now.atZone(clock.getZone()).toOffsetDateTime());
         outbox.save(new OutboxEventDto(eventId, Constant.CHECKOUT, checkoutId.toString(),
                 payload.eventType(), payload, now));
-        log.info("Đã ghi hủy checkout do event không hợp lệ: checkout_id={}", checkoutId);
+        log.info("Đã ghi hủy checkout: checkout_id={}, reason_code={}, reason={}", checkoutId, reasonCode, reason);
     }
 }

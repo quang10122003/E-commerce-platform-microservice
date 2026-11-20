@@ -1,4 +1,4 @@
-package com.example.monitoring_service.adapter.out.registry;
+package com.example.monitoring_service.adapter.out.serviceregistry;
 
 import com.example.monitoring_service.application.dto.RegisteredInstance;
 import com.example.monitoring_service.application.port.out.ServiceRegistryPort;

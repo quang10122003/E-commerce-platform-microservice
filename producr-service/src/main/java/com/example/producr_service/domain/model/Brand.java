@@ -9,7 +9,7 @@ public class Brand {
 
     private final Long id;
     private final String name;
-    public Brand(Long id, String name, String logoUrl) {
+    public Brand(Long id, String name) {
         if (name == null || name.isBlank()) {
             throw new BusinessException(DomainProductError.BRAND_NAME_REQUIRED);
         }

@@ -2,6 +2,7 @@ package com.example.producr_service.adapter.out.persistence.Product;
 
 import com.example.producr_service.adapter.entity.ProductEntity;
 import com.example.producr_service.adapter.out.persistence.projection.ProductPreferenceProjection;
+import com.example.producr_service.adapter.out.persistence.projection.ProductCatalogCountProjection;
 import com.example.producr_service.adapter.out.persistence.projection.ProductSummaryProjection;
 import com.example.producr_service.adapter.out.persistence.projection.SellerProductOverviewProjection;
 import com.example.producr_service.adapter.out.persistence.projection.TopSellingProductProjection;
@@ -29,6 +30,14 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
 
     @Query("select p.id from ProductEntity p where p.brand.id = :brandId")
     List<Long> findIdsByBrandId(@Param("brandId") Long brandId);
+
+    @Query("select p.category.id as catalogId, count(p.id) as productCount "
+            + "from ProductEntity p where p.category.id in :categoryIds group by p.category.id")
+    List<ProductCatalogCountProjection> countProductsByCategoryIds(@Param("categoryIds") Collection<Long> categoryIds);
+
+    @Query("select p.brand.id as catalogId, count(p.id) as productCount "
+            + "from ProductEntity p where p.brand.id in :brandIds group by p.brand.id")
+    List<ProductCatalogCountProjection> countProductsByBrandIds(@Param("brandIds") Collection<Long> brandIds);
 
     @Modifying
     @Query("""

@@ -3,6 +3,7 @@ package com.example.order_service.adapter.in.rest;
 import com.example.order_service.application.dto.response.CreateCheckoutResponse;
 import com.example.order_service.application.dto.request.CreateCheckoutRequest;
 import com.example.order_service.application.port.in.CreateCheckoutUseCase;
+import com.example.order_service.application.port.in.GetCheckoutUseCase;
 import com.example.order_service.application.dto.request.CheckoutQuoteRequest;
 import com.example.order_service.application.dto.response.CheckoutQuoteResponse;
 import com.example.order_service.application.port.in.GetCheckoutQuoteUseCase;
@@ -12,9 +13,12 @@ import com.example.order_service.application.dto.response.CheckoutItemsResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -29,6 +33,13 @@ public class CheckoutController {
     private final CreateCheckoutUseCase createCheckoutUseCase;
     private final GetCheckoutItemsUseCase getCheckoutItemsUseCase;
     private final GetCheckoutQuoteUseCase getCheckoutQuoteUseCase;
+    private final GetCheckoutUseCase getCheckoutUseCase;
+
+    @GetMapping("/{checkoutId}")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    public ResponseEntity<CreateCheckoutResponse> getCheckout(@PathVariable @Positive Long checkoutId) {
+        return ResponseEntity.ok(getCheckoutUseCase.getCheckout(checkoutId));
+    }
 
     @PostMapping("/quote")
     @PreAuthorize("hasAuthority('ROLE_USER')")

@@ -4,6 +4,7 @@ import com.example.producr_service.application.constant.Constant;
 import com.example.producr_service.application.dto.embedding.ProductEmbeddingData;
 import com.example.producr_service.application.dto.embedding.ProductPreferenceData;
 import com.example.producr_service.application.dto.embedding.UserPreferenceProfile;
+import com.example.producr_service.application.dto.recommendation.RankedProductData;
 import com.example.producr_service.application.dto.response.ProductSearchResponse;
 import com.example.producr_service.domain.model.UserProductBehavior;
 
@@ -76,11 +77,11 @@ public class UserPreferenceCalculator {
         long maxSold = products.stream().mapToLong(ProductSearchResponse::totalSold).max().orElse(0);
 
         return products.stream()
-                .map(product -> new RankedProduct(product,
+                .map(product -> new RankedProductData(product,
                         score(profile, product, embeddings.get(product.id()), maxCategory, maxBrand, maxSold)))
-                .sorted(Comparator.comparingDouble(RankedProduct::score).reversed()
+                .sorted(Comparator.comparingDouble(RankedProductData::score).reversed()
                         .thenComparing(Comparator.comparingLong(
-                                (RankedProduct ranked) -> ranked.product().totalSold()).reversed())
+                                (RankedProductData ranked) -> ranked.product().totalSold()).reversed())
                         .thenComparing(ranked -> ranked.product().id(), Comparator.reverseOrder()))
                 .limit(Constant.RECOMMENDATION_CACHE_LIMIT)
                 .map(ranked -> ranked.product().id())
@@ -136,7 +137,7 @@ public class UserPreferenceCalculator {
                 + Constant.RECOMMENDATION_POPULARITY_WEIGHT * popularity;
 
         Double cosine = cosine(profile.vector(), embedding);
-//        ách tính điểm khi không có vector hợp lệ để tính cosine chia có ruleWeight để trọng số ko bị giới hạn = rule khi k có cosine
+//        cách tính điểm khi không có vector hợp lệ để tính cosine chia có ruleWeight để trọng số ko bị giới hạn = rule khi k có cosine
         if (cosine == null) {
             double ruleWeight = Constant.RECOMMENDATION_CATEGORY_WEIGHT + Constant.RECOMMENDATION_BRAND_WEIGHT
                     + Constant.RECOMMENDATION_PRICE_WEIGHT + Constant.RECOMMENDATION_POPULARITY_WEIGHT;
@@ -161,7 +162,7 @@ public class UserPreferenceCalculator {
         }
         return Math.max(0, Math.min(1, dot / (userNorm * productNorm)));
     }
-
+//    tính độ dài của một vector
     private double vectorNorm(List<Float> vector) {
         if (vector == null || vector.size() != Constant.PRODUCT_EMBEDDING_DIMENSIONS) {
             return 0;
@@ -175,15 +176,15 @@ public class UserPreferenceCalculator {
         }
         return Double.isFinite(squaredNorm) ? Math.sqrt(squaredNorm) : 0;
     }
-
+//    Tìm điểm cao nhất trong map sở thích.
     private double maximum(Map<Long, Double> scores) {
         return scores.values().stream().mapToDouble(Double::doubleValue).max().orElse(0);
     }
-
+//    Tính mức độ sản phẩm hiện tại khớp với sở thích
     private double affinity(Map<Long, Double> scores, Long id, double max) {
         return id != null && max > 0 ? scores.getOrDefault(id, 0.0) / max : 0;
     }
-
+//    Kiểm tra giá có dùng được không:
     private double positivePrice(BigDecimal price) {
         if (price == null || price.signum() <= 0) {
             return 0;
@@ -191,6 +192,4 @@ public class UserPreferenceCalculator {
         double value = price.doubleValue();
         return Double.isFinite(value) ? value : 0;
     }
-
-    private record RankedProduct(ProductSearchResponse product, double score) {}
 }

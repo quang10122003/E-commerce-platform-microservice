@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -70,6 +71,10 @@ public interface ProductRepositoryPort {
     List<Long> findIdsByCategoryId(Long categoryId);
 
     List<Long> findIdsByBrandId(Long brandId);
+
+    Map<Long, Long> countProductsByCategoryIds(Collection<Long> categoryIds);
+
+    Map<Long, Long> countProductsByBrandIds(Collection<Long> brandIds);
 
     // Lấy thông tin ảnh bìa của sản phẩm trước khi xóa.
     StoredFile findCoverFile(Long productId);

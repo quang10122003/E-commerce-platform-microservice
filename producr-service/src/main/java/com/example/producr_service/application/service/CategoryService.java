@@ -33,6 +33,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -49,9 +50,12 @@ public class CategoryService implements GetCategoriesUseCase, CreateCategoryUseC
     @Transactional(readOnly = true)
     @Override
     public List<CategoryResponse> getCategories() {
-        return categoryRepoPort.getAllCategories()
+        List<Category> categories = categoryRepoPort.getAllCategories();
+        Map<Long, Long> productCounts = productRepositoryPort.countProductsByCategoryIds(
+                categories.stream().map(Category::getId).toList());
+        return categories
                 .stream()
-                .map(CategoryResponse::from)
+                .map(category -> CategoryResponse.from(category, productCounts.getOrDefault(category.getId(), 0L)))
                 .toList();
     }
 
@@ -63,9 +67,12 @@ public class CategoryService implements GetCategoriesUseCase, CreateCategoryUseC
         }
         PageResponse<AdminCategoryView> categories = categoryRepoPort.findAdminCategories(
                 new PageQuery(page, size), keyword == null || keyword.isBlank() ? null : keyword.trim());
+        Map<Long, Long> productCounts = productRepositoryPort.countProductsByCategoryIds(
+                categories.items().stream().map(AdminCategoryView::id).toList());
         return new PageResponse<>(
                 categories.items().stream()
-                        .map(category -> AdminCategoryResponse.from(category, clock.getZone()))
+                        .map(category -> AdminCategoryResponse.from(category, clock.getZone(),
+                                productCounts.getOrDefault(category.id(), 0L)))
                         .toList(),
                 categories.page(),
                 categories.pageSize(),

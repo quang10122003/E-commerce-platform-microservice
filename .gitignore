@@ -21,3 +21,4 @@ target/
 # Bỏ qua tài liệu Markdown, ngoại trừ README; file hướng dẫn AI chỉ dùng cục bộ nên không đưa lên git.
 *.[mM][dD]
 !/README.md
+!/MUC_1_4_CONG_NGHE_LY_DO_LUA_CHON.md

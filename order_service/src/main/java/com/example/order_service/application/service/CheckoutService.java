@@ -12,6 +12,8 @@ import com.example.order_service.application.dto.response.CreateCheckoutResponse
 import com.example.order_service.application.dto.request.CreateCheckoutRequest;
 import com.example.order_service.application.error.OrderError;
 import com.example.order_service.application.port.in.CreateCheckoutUseCase;
+import com.example.order_service.application.port.in.GetCheckoutUseCase;
+import com.example.order_service.application.dto.event.CheckoutFailedPayload;
 import com.example.order_service.application.port.out.repo.CheckoutRepoPort;
 import com.example.order_service.application.port.out.repo.PaymentRepoPort;
 import com.example.order_service.domain.model.Payment;
@@ -58,7 +60,7 @@ import java.util.Set;
 
 @RequiredArgsConstructor
 @Slf4j
-public class CheckoutService implements CreateCheckoutUseCase {
+public class CheckoutService implements CreateCheckoutUseCase, GetCheckoutUseCase {
 
     private final CurrentUserPort currentUserPort;
     private final CheckoutRepoPort checkoutRepoPort;
@@ -94,7 +96,7 @@ public class CheckoutService implements CreateCheckoutUseCase {
 
         try {
             Checkout checkout = checkoutCreationService.create(request, idempotencyKey, clientIp, buyer);
-            return new CreateCheckoutResponse(checkout.getId(), checkout.getStatus(), null);
+            return new CreateCheckoutResponse(checkout.getId(), checkout.getStatus(), null, List.of(), null, null);
         } catch (BusinessException exception) {
             if (exception.getErrorCode() != OrderError.CHECKOUT_IDEMPOTENCY_CONFLICT) {
                 throw exception;
@@ -260,13 +262,34 @@ public class CheckoutService implements CreateCheckoutUseCase {
                 eventId, succeeded.checkoutId(), reasonCode);
     }
 
-    // trả
+    @Override
+    @Transactional(readOnly = true)
+    public CreateCheckoutResponse getCheckout(Long checkoutId) {
+        Checkout checkout = checkoutRepoPort.findById(checkoutId)
+                .orElseThrow(() -> new BusinessException(OrderError.CHECKOUT_NOT_FOUND));
+        return responseForOwner(checkout, currentUserPort.getInfo().userId());
+    }
+
+    // Lấy kết quả từ event đã ghi outbox để trả đúng dữ liệu như SSE, kể cả khi SSE đã hết hạn replay.
     private CreateCheckoutResponse responseForOwner(Checkout checkout, Long userId) {
         if (userId == null || !Objects.equals(checkout.getUserId(), userId)) {
             throw new BusinessException(AuthorizationError.ACCESS_DENIED);
         }
+        if (checkout.getStatus() == CheckoutStatus.DONE) {
+            Optional<CheckoutSucceededPayload> succeeded = outbox.findCheckoutSucceeded(checkout.getId());
+            if (succeeded.isPresent()) {
+                return new CreateCheckoutResponse(checkout.getId(), checkout.getStatus(),
+                        succeeded.get().paymentMethod(), succeeded.get().orderIds(), succeeded.get().urlPayment(), null);
+            }
+        }
+        if (checkout.getStatus() == CheckoutStatus.CANCEL) {
+            // Không trả cancellationReason trong DB vì có thể là lỗi kỹ thuật gốc.
+            String reason = outbox.findCheckoutFailed(checkout.getId()).map(CheckoutFailedPayload::reason)
+                    .orElse(Constant.CHECKOUT_DEFAULT_CANCEL_REASON);
+            return new CreateCheckoutResponse(checkout.getId(), checkout.getStatus(), null, List.of(), null, reason);
+        }
         String paymentUrl = payments.findByCheckoutId(checkout.getId()).map(Payment::getPaymentUrl).orElse(null);
-        return new CreateCheckoutResponse(checkout.getId(), checkout.getStatus(), paymentUrl);
+        return new CreateCheckoutResponse(checkout.getId(), checkout.getStatus(), null, List.of(), paymentUrl, null);
     }
 
 }

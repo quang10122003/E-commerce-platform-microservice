@@ -30,6 +30,11 @@ public class BrandRepoAdapter implements BrandRepositoryPort {
     }
 
     @Override
+    public boolean existsByName(String name) {
+        return brandJpa.existsByName(name);
+    }
+
+    @Override
     public Optional<Brand> findById(Long id) {
         return brandJpa.findById(id).map(brandMapper::toDomain);
     }
@@ -60,5 +65,10 @@ public class BrandRepoAdapter implements BrandRepositoryPort {
     @Override
     public void deleteById(Long id) {
         brandJpa.deleteById(id);
+    }
+
+    @Override
+    public Brand save(Brand brand) {
+        return brandMapper.toDomain(brandJpa.save(brandMapper.toEntity(brand)));
     }
 }

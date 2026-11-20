@@ -17,6 +17,7 @@ public enum ProductError implements ErrorCode  {
             "Trang phải từ 1 trở lên và kích thước trang phải từ 1 đến 100", 400),
     CATEGORY_HAS_PRODUCTS("CATEGORY_HAS_PRODUCTS", "Danh mục đang có sản phẩm nên không thể xóa", 409),
     CATEGORY_NAME_DUPLICATED("CATEGORY_NAME_DUPLICATED", "Tên danh mục đã tồn tại", 409),
+    BRAND_NAME_DUPLICATED("BRAND_NAME_DUPLICATED", "Tên thương hiệu đã tồn tại", 409),
     SHOP_INFO_UNAVAILABLE("SHOP_INFO_UNAVAILABLE", "Tạm thời không thể lấy thông tin shop", 503),
     PRODUCT_ACCESS_DENIED("PRODUCT_ACCESS_DENIED", "Bạn không có quyền truy cập sản phẩm này", 403),
     FLASH_SALE_ITEM_ALREADY_EXISTS("FLASH_SALE_ITEM_ALREADY_EXISTS", "Variant đã có đăng ký trong chương trình", 409),
