@@ -2,6 +2,8 @@ package com.example.order_service.adapter.in.rest;
 
 import com.example.order_service.application.dto.response.AdminAnalyticsResponse;
 import com.example.order_service.application.port.in.GetAdminAnalyticsUseCase;
+import com.example.order_service.application.port.in.GetAdminOverviewUseCase;
+import com.example.order_service.application.dto.response.AdminOverviewResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,12 @@ import java.time.OffsetDateTime;
 public class AdminOrderController {
 
     private final GetAdminAnalyticsUseCase getAdminAnalyticsUseCase;
+    private final GetAdminOverviewUseCase getAdminOverviewUseCase;
+
+    @GetMapping("/overview")
+    public ResponseEntity<AdminOverviewResponse> getAdminOverview() {
+        return ResponseEntity.ok(getAdminOverviewUseCase.getAdminOverview());
+    }
 
     @GetMapping("/analytics")
     public ResponseEntity<AdminAnalyticsResponse> getAdminAnalytics(

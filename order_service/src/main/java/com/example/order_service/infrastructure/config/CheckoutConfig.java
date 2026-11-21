@@ -32,6 +32,8 @@ import com.example.order_service.application.port.in.AutoCompleteOrderUseCase;
 import com.example.order_service.application.service.AutoCompleteOrderService;
 import com.example.order_service.application.service.UserOrderService;
 import com.example.order_service.application.service.ShopAnalyticsService;
+import com.example.order_service.application.service.OrderOverviewService;
+import com.example.order_service.application.port.out.repo.OrderOverviewQueryPort;
 import com.example.order_service.application.port.out.repo.ShopAnalyticsQueryPort;
 import com.example.order_service.application.port.out.client.VnpayQueryPort;
 import com.example.order_service.application.service.PaymentReconciliationService;
@@ -53,6 +55,7 @@ import com.example.order_service.application.strategy.eventKafka.CheckoutInvento
 import com.example.order_service.application.port.out.client.ShopSnapshotPort;
 import com.example.order_service.application.port.out.repo.InboxEventPort;
 import com.example.order_service.application.port.out.repo.OrderRepoPort;
+import com.example.order_service.application.port.out.repo.ProductReviewRepoPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -148,6 +151,14 @@ public class CheckoutConfig {
     ShopAnalyticsService shopAnalyticsService(CurrentUserPort currentUserPort,
                                               ShopAnalyticsQueryPort shopAnalyticsQueryPort, Clock clock) {
         return new ShopAnalyticsService(currentUserPort, shopAnalyticsQueryPort, clock);
+    }
+
+    @Bean
+    OrderOverviewService orderOverviewService(CurrentUserPort currentUserPort, ShopAnalyticsQueryPort shopAnalyticsQueryPort,
+                                              OrderOverviewQueryPort orderOverviewQueryPort, OrderRepoPort orderRepoPort,
+                                              ProductReviewRepoPort productReviewRepoPort, Clock clock) {
+        return new OrderOverviewService(currentUserPort, shopAnalyticsQueryPort, orderOverviewQueryPort, orderRepoPort,
+                productReviewRepoPort, clock);
     }
 
     @Bean

@@ -8,6 +8,8 @@ import com.example.order_service.application.dto.response.ShopOrderResponse;
 import com.example.order_service.application.port.in.AdvanceShopOrderUseCase;
 import com.example.order_service.application.port.in.CancelShopOrderUseCase;
 import com.example.order_service.application.port.in.GetShopAnalyticsUseCase;
+import com.example.order_service.application.port.in.GetShopOverviewUseCase;
+import com.example.order_service.application.dto.response.ShopOverviewResponse;
 import com.example.order_service.application.port.in.GetShopOrdersUseCase;
 import com.example.order_service.domain.model.CheckoutPaymentMethod;
 import com.example.order_service.domain.model.OrderStatus;
@@ -40,6 +42,12 @@ public class ShopOrderController {
     private final CancelShopOrderUseCase cancelShopOrderUseCase;
     private final AdvanceShopOrderUseCase advanceShopOrderUseCase;
     private final GetShopAnalyticsUseCase getShopAnalyticsUseCase;
+    private final GetShopOverviewUseCase getShopOverviewUseCase;
+
+    @GetMapping("/overview")
+    public ResponseEntity<ShopOverviewResponse> getShopOverview() {
+        return ResponseEntity.ok(getShopOverviewUseCase.getShopOverview());
+    }
 
     @GetMapping
     public ResponseEntity<List<ShopOrderResponse>> getShopOrders(

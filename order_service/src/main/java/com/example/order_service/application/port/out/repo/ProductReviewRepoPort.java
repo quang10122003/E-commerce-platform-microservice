@@ -4,6 +4,7 @@ import com.example.order_service.application.dto.review.ReviewableOrderItemView;
 import com.example.order_service.domain.model.ProductReview;
 import com.example.order_service.domain.model.RatingSummary;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,4 +25,8 @@ public interface ProductReviewRepoPort {
     List<ProductReview> findProductReviews(Long productId, Integer rating, int offset, int limit);
 
     int clearDeletedProduct(Long productId);
+
+    RatingSummary findShopRatingSummary(Long shopId);
+
+    long countShopReviewsSince(Long shopId, LocalDateTime since);
 }

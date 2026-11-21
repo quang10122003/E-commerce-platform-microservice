@@ -1,5 +1,10 @@
 package com.example.order_service.adapter.out.persistence;
 
+import com.example.order_service.application.port.out.repo.OrderOverviewQueryPort;
+import com.example.order_service.application.dto.order.RecentOrderView;
+import com.example.order_service.adapter.out.persistence.projection.StatusCountProjection;
+import java.util.Map;
+import java.util.stream.Collectors;
 import com.example.order_service.adapter.entity.OrderEntity;
 import com.example.order_service.adapter.entity.OrderItemEntity;
 import com.example.order_service.adapter.mapper.OrderMapper;
@@ -29,7 +34,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class OrderRepoAdapter implements OrderRepoPort, ShopAnalyticsQueryPort {
+public class OrderRepoAdapter implements OrderRepoPort, ShopAnalyticsQueryPort, OrderOverviewQueryPort {
     private final OrderJpaRepo orders;
     private final OrderItemJpaRepo items;
     private final CheckoutJpaRepo checkouts;
@@ -162,5 +167,20 @@ public class OrderRepoAdapter implements OrderRepoPort, ShopAnalyticsQueryPort {
                 com.example.order_service.domain.model.OrderStatus.PENDING_CONFIRMATION,
                 com.example.order_service.domain.model.OrderStatus.PENDING_PICKUP,
                 com.example.order_service.domain.model.OrderStatus.SHIPPING));
+    }
+
+    @Override
+    public Map<OrderStatus, Long> countOrdersByStatus(Long shopId) {
+        return orders.countByStatus(shopId).stream()
+                .collect(Collectors.toMap(StatusCountProjection::getStatus, StatusCountProjection::getTotal));
+    }
+
+    @Override
+    public List<RecentOrderView> findRecentOrders(Long shopId, int limit) {
+        return orders.findRecentOrders(shopId, PageRequest.of(0, limit)).stream()
+                .map(order -> new RecentOrderView(order.getOrderId(), order.getShopId(), order.getShopName(),
+                        order.getRecipientName(), order.getTotalAmount(), order.getStatus(), order.getPaymentMethod(),
+                        order.getCreatedAt()))
+                .toList();
     }
 }

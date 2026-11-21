@@ -5,6 +5,8 @@ import com.example.order_service.adapter.out.persistence.projection.UserOrderPro
 import com.example.order_service.adapter.out.persistence.projection.ShopOrderProjection;
 import com.example.order_service.adapter.out.persistence.projection.ShopAnalyticsOrderProjection;
 import com.example.order_service.adapter.out.persistence.projection.TopShopProjection;
+import com.example.order_service.adapter.out.persistence.projection.StatusCountProjection;
+import com.example.order_service.adapter.out.persistence.projection.RecentOrderProjection;
 import com.example.order_service.domain.model.OrderStatus;
 import com.example.order_service.domain.model.CheckoutPaymentMethod;
 import jakarta.persistence.LockModeType;
@@ -120,4 +122,21 @@ public interface OrderJpaRepo extends JpaRepository<OrderEntity, Long> {
 
     @Query("select count(distinct o.shopId) from OrderEntity o where o.createdAt between :from and :to")
     long countActiveShops(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("""
+            select o.status as status, count(o) as total from OrderEntity o
+            where (:shopId is null or o.shopId = :shopId)
+            group by o.status
+            """)
+    List<StatusCountProjection> countByStatus(@Param("shopId") Long shopId);
+
+    @Query("""
+            select o.id as orderId, o.shopId as shopId, o.shopNameSnapshot as shopName,
+                   c.recipientNameSnapshot as recipientName, o.totalAmount as totalAmount, o.status as status,
+                   o.paymentMethod as paymentMethod, o.createdAt as createdAt
+            from OrderEntity o join o.checkout c
+            where (:shopId is null or o.shopId = :shopId)
+            order by o.createdAt desc, o.id desc
+            """)
+    List<RecentOrderProjection> findRecentOrders(@Param("shopId") Long shopId, Pageable pageable);
 }

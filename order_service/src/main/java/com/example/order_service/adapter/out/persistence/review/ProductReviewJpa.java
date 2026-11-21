@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,4 +50,12 @@ public interface ProductReviewJpa extends JpaRepository<ProductReviewEntity, Lon
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update ProductReviewEntity r set r.productId = null where r.productId = :productId")
     int clearProductId(@Param("productId") Long productId);
+
+    @Query("""
+            select count(r) as reviewCount, coalesce(sum(r.rating), 0) as ratingSum
+            from ProductReviewEntity r where r.shopId = :shopId
+            """)
+    RatingSummaryProjection findShopRatingSummary(@Param("shopId") Long shopId);
+
+    long countByShopIdAndCreatedAtGreaterThanEqual(Long shopId, LocalDateTime since);
 }

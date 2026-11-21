@@ -14,6 +14,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -73,5 +74,16 @@ public class ProductReviewRepoAdapter implements ProductReviewRepoPort {
     @Override
     public int clearDeletedProduct(Long productId) {
         return reviews.clearProductId(productId);
+    }
+
+    @Override
+    public RatingSummary findShopRatingSummary(Long shopId) {
+        RatingSummaryProjection summary = reviews.findShopRatingSummary(shopId);
+        return new RatingSummary(summary.getReviewCount(), summary.getRatingSum());
+    }
+
+    @Override
+    public long countShopReviewsSince(Long shopId, LocalDateTime since) {
+        return reviews.countByShopIdAndCreatedAtGreaterThanEqual(shopId, since);
     }
 }
