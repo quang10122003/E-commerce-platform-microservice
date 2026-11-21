@@ -72,3 +72,19 @@ CREATE TABLE outbox_event (
     CONSTRAINT uk_outbox_event_id UNIQUE (event_id),
     INDEX idx_outbox_event_status (status)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Địa chỉ giao hàng của người dùng; xóa theo tài khoản khi user bị xóa.
+CREATE TABLE user_addresses (
+    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id    BIGINT       NOT NULL,
+    recipient_name VARCHAR(50) NOT NULL,
+    province   VARCHAR(100) NOT NULL,
+    ward       VARCHAR(100) NOT NULL,
+    detail     VARCHAR(255) NOT NULL,
+    phone      VARCHAR(15)  NOT NULL,
+    -- Mỗi user tối đa một địa chỉ mặc định, service khóa dòng user khi đổi để giữ ràng buộc.
+    is_default BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_addresses_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_addresses_user (user_id)
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

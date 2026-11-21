@@ -17,6 +17,7 @@ public record ShopOrderResponse(
         OffsetDateTime confirmedAt, OffsetDateTime shippedAt, OffsetDateTime deliveredAt, OffsetDateTime createdAt,
         Buyer buyer) {
 
-    public record Buyer(String fullName, String email, String shippingAddress, String note) {
+    // Không trả tên tài khoản người mua; recipientName và phone null với đơn đặt trước khi checkout lưu thông tin người nhận.
+    public record Buyer(String recipientName, String email, String shippingAddress, String phone, String note) {
     }
 }

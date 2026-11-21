@@ -73,8 +73,8 @@ public interface OrderJpaRepo extends JpaRepository<OrderEntity, Long> {
                    o.paymentMethod as paymentMethod, o.totalAmount as totalAmount, o.cancelledBy as cancelledBy, o.cancelReason as cancelReason,
                    o.cancelledAt as cancelledAt, o.confirmedAt as confirmedAt, o.shippedAt as shippedAt, o.deliveredAt as deliveredAt, o.createdAt as createdAt, p.status as paymentStatus,
                    p.paymentUrl as paymentUrl, p.expiresAt as paymentExpiresAt, p.paidAt as paymentPaidAt,
-                   c.buyerFullNameSnapshot as buyerFullName, c.buyerEmailSnapshot as buyerEmail,
-                   c.shippingAddressSnapshot as shippingAddress, c.note as note
+                   c.recipientNameSnapshot as recipientName, c.buyerEmailSnapshot as buyerEmail,
+                   c.shippingAddressSnapshot as shippingAddress, c.phoneSnapshot as phone, c.note as note
             from OrderEntity o join o.checkout c left join PaymentEntity p on p.checkout = c
             where o.shopId = :shopId
               and (:status is null or o.status = :status)
@@ -82,7 +82,7 @@ public interface OrderJpaRepo extends JpaRepository<OrderEntity, Long> {
               and (:from is null or o.createdAt >= :from)
               and (:to is null or o.createdAt <= :to)
               and (:keyword is null or o.id = :orderId
-                   or lower(c.buyerFullNameSnapshot) like lower(concat('%', :keyword, '%')) escape '!'
+                   or lower(c.recipientNameSnapshot) like lower(concat('%', :keyword, '%')) escape '!'
                    or lower(c.buyerEmailSnapshot) like lower(concat('%', :keyword, '%')) escape '!'
                    or exists (select 1 from OrderItemEntity i where i.order = o
                               and lower(i.productName) like lower(concat('%', :keyword, '%')) escape '!'))

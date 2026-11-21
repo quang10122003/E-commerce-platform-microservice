@@ -17,6 +17,7 @@ import com.example.auth_service.application.port.in.ToggleUserLockUseCase;
 import com.example.auth_service.application.port.in.ToggleShopLockUseCase;
 import com.example.auth_service.application.DTO.repone.ShopStatusResponse;
 import com.example.auth_service.application.port.out.UserRepositoryPort;
+import com.example.auth_service.application.port.out.UserAddressRepositoryPort;
 import com.example.auth_service.application.port.out.cache.CachePort;
 import com.example.auth_service.application.error.AuthError;
 import com.example.auth_service.domain.model.User;
@@ -41,6 +42,7 @@ public class UserService implements GetUsersUseCase, GetUserOverviewUseCase, Tog
     private final CachePort cachePort;
     private final OrderActivityPort orderActivityPort;
     private final OutboxEventPort outboxEventPort;
+    private final UserAddressRepositoryPort userAddressRepositoryPort;
     private final Clock clock;
 
     @Override
@@ -102,6 +104,8 @@ public class UserService implements GetUsersUseCase, GetUserOverviewUseCase, Tog
             throw new BusinessException(AuthError.USER_HAS_ACTIVE_ORDERS);
         }
         userRepositoryPort.save(user);
+        // Địa chỉ giao hàng là dữ liệu cá nhân nên xóa hẳn cùng lúc ẩn danh tài khoản.
+        int removedAddresses = userAddressRepositoryPort.deleteByUserId(userId);
         // Gateway đọc key này để chặn ngay access token còn hạn của tài khoản đã xóa.
         cachePort.set(AccessControlCacheKeys.userLocked(userId.toString()), "1");
         if (logoObjectPath != null) {
@@ -117,6 +121,6 @@ public class UserService implements GetUsersUseCase, GetUserOverviewUseCase, Tog
         outboxEventPort.save(new OutboxEvent(eventId, Constant.USER, String.valueOf(userId),
                 UserDeletedEventDto.EVENT_TYPE,
                 new UserDeletedEventDto(eventId, UserDeletedEventDto.EVENT_TYPE, userId, now), now));
-        log.info("Xóa mềm tài khoản: user_id={}", userId);
+        log.info("Xóa mềm tài khoản: user_id={}, removed_addresses={}", userId, removedAddresses);
     }
 }

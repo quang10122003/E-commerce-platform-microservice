@@ -6,6 +6,7 @@ import com.example.auth_service.application.port.out.storage.FileStoragePort;
 import com.example.auth_service.application.port.out.storage.StoredFileRollbackPort;
 import com.example.auth_service.application.service.DeleteStoredFilesService;
 import com.example.auth_service.application.service.ShopProfileService;
+import com.example.auth_service.application.service.UserAddressService;
 import com.example.auth_service.application.strategy.outbox.StoredFilesDeleteOutboxHandler;
 import com.example.auth_service.application.port.out.OrderActivityPort;
 import com.example.auth_service.application.strategy.outbox.UserDeletedOutboxHandler;
@@ -74,8 +75,10 @@ public class AuthConfig {
     @Bean(name = {"userService", "getUsersUseCase", "getUserOverviewUseCase", "toggleUserLockUseCase", "toggleShopLockUseCase",
             "deleteUserUseCase"})
     UserService userService(UserRepositoryPort userRepositoryPort, CachePort cachePort,
-                            OrderActivityPort orderActivityPort, OutboxEventPort outboxEventPort, Clock clock) {
-        return new UserService(userRepositoryPort, cachePort, orderActivityPort, outboxEventPort, clock);
+                            OrderActivityPort orderActivityPort, OutboxEventPort outboxEventPort,
+                            UserAddressRepositoryPort userAddressRepositoryPort, Clock clock) {
+        return new UserService(userRepositoryPort, cachePort, orderActivityPort, outboxEventPort,
+                userAddressRepositoryPort, clock);
     }
 
     @Bean
@@ -167,5 +170,12 @@ public class AuthConfig {
                                           AuthServiceInternal authServiceInternal) {
         return new ShopProfileService(userRepositoryPort, tokenServicePort, fileStoragePort, storedFileRollbackPort,
                 outboxEventPort, clock, authServiceInternal);
+    }
+
+    @Bean(name = {"userAddressService", "getMyAddressesUseCase", "createMyAddressUseCase", "deleteMyAddressUseCase",
+            "setDefaultAddressUseCase"})
+    UserAddressService userAddressService(UserAddressRepositoryPort userAddressRepositoryPort,
+                                          UserRepositoryPort userRepositoryPort, TokenServicePort tokenServicePort) {
+        return new UserAddressService(userAddressRepositoryPort, userRepositoryPort, tokenServicePort);
     }
 }

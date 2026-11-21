@@ -9,6 +9,7 @@ public enum AuthError implements ErrorCode {
     ORDER_SERVICE_UNAVAILABLE("ORDER_SERVICE_UNAVAILABLE", "Tạm thời không kiểm tra được đơn hàng của tài khoản", 503),
     SHOP_NOT_FOUND("SHOP_NOT_FOUND", "Không tìm thấy shop", 404),
     ROLE_NOT_FOUND("ROLE_NOT_FOUND", "Role not found", 404),
+    ADDRESS_NOT_FOUND("ADDRESS_NOT_FOUND", "Không tìm thấy địa chỉ", 404),
     EMAIL_ALREADY_REGISTERED("EMAIL_ALREADY_REGISTERED", "The email has already been registered.", 409),
     INVALID_CREDENTIALS("INVALID_CREDENTIALS", "Email or password is incorrect", 401),
     REFRESH_TOKEN_INVALID("REFRESH_TOKEN_INVALID","Invalid refresh token",401),

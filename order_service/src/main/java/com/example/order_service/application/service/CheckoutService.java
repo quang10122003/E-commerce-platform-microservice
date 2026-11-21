@@ -154,7 +154,7 @@ public class CheckoutService implements CreateCheckoutUseCase, GetCheckoutUseCas
                 CheckoutSucceededPayload.EVENT_TYPE, checkout.getId(), checkout.getUserId(), checkout.getStatus(),
                 paymentMethod, orderIds, checkout.getTotalAmount(),
                 now.atZone(clock.getZone()).toOffsetDateTime(),
-                checkout.getBuyerEmailSnapshot(), checkout.getBuyerFullNameSnapshot(), paymentUrl, event.eventId());
+                checkout.getBuyerEmailSnapshot(), checkout.getRecipientNameSnapshot(), paymentUrl, event.eventId());
 
         outbox.save(new OutboxEventDto(eventId, Constant.CHECKOUT, checkout.getId().toString(),
                 payload.eventType(), payload, now));
@@ -291,5 +291,4 @@ public class CheckoutService implements CreateCheckoutUseCase, GetCheckoutUseCas
         String paymentUrl = payments.findByCheckoutId(checkout.getId()).map(Payment::getPaymentUrl).orElse(null);
         return new CreateCheckoutResponse(checkout.getId(), checkout.getStatus(), null, List.of(), paymentUrl, null);
     }
-
 }

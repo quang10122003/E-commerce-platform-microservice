@@ -17,7 +17,7 @@ public record OrderStatusChangedPayload(
     // Dùng chung cho API shop và job để hai luồng phát event cùng một dạng.
     public static OrderStatusChangedPayload of(Order order, Checkout checkout, ZoneId zone) {
         return new OrderStatusChangedPayload(UUID.randomUUID(), EVENT_TYPE, order.getId(), order.getCheckoutId(),
-                order.getShopNameSnapshot(), checkout.getBuyerEmailSnapshot(), checkout.getBuyerFullNameSnapshot(),
+                order.getShopNameSnapshot(), checkout.getBuyerEmailSnapshot(), checkout.getRecipientNameSnapshot(),
                 order.getStatus(), order.getUpdatedAt().atZone(zone).toOffsetDateTime());
     }
 }

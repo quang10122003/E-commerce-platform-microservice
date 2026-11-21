@@ -14,7 +14,8 @@ public interface CheckoutMapper {
     default Checkout toDomain(CheckoutEntity entity) {
         return Checkout.reconstitute(entity.getId(), entity.getUserId(),
                 entity.getBuyerFullNameSnapshot(), entity.getBuyerEmailSnapshot(),
-                entity.getIdempotencyKey(), entity.getShippingAddressSnapshot(), entity.getClientIp(),
+                entity.getIdempotencyKey(), entity.getShippingAddressSnapshot(), entity.getRecipientNameSnapshot(),
+                entity.getPhoneSnapshot(), entity.getClientIp(),
                 entity.getNote(), entity.getTotalAmount(), entity.getStatus(), entity.getCancellationReason(),
                 entity.getCreatedAt(), entity.getUpdatedAt());
     }

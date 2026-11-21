@@ -33,7 +33,7 @@ public class CheckoutCreationService {
                            UserInternalInfoResponse buyer) {
         LocalDateTime now = LocalDateTime.now(clock);
         Checkout checkout = Checkout.create(buyer.userId(), buyer.fullName(), buyer.email(),
-                idempotencyKey, request.shippingAddress(), clientIp, request.note(), request.totalAmount(), now);
+                idempotencyKey, request.shippingAddress(), request.recipientName().trim(), request.phone(), clientIp, request.note(), request.totalAmount(), now);
         Checkout saved = checkoutRepoPort.save(checkout);
         if (request.paymentMethod() == CheckoutPaymentMethod.VNPAY) {
             paymentRepoPort.save(Payment.create(saved.getId(), request.totalAmount(), now));

@@ -166,7 +166,7 @@ public class UserOrderService implements GetMyOrdersUseCase, CancelMyOrderUseCas
         UUID eventId = UUID.randomUUID();
         OrderCancelledByShopPayload event = new OrderCancelledByShopPayload(eventId, OrderCancelledByShopPayload.EVENT_TYPE,
                 order.getId(), order.getCheckoutId(), order.getShopNameSnapshot(), checkout.getBuyerEmailSnapshot(),
-                checkout.getBuyerFullNameSnapshot(), order.getCancelReason(), order.getTotalAmount(),
+                checkout.getRecipientNameSnapshot(), order.getCancelReason(), order.getTotalAmount(),
                 order.getCancelledAt().atZone(clock.getZone()).toOffsetDateTime());
         outboxPort.save(new OutboxEventDto(eventId, Constant.ORDER, order.getId().toString(), event.eventType(), event, now));
         return eventId;

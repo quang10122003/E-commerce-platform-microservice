@@ -18,6 +18,8 @@ public final class Checkout {
     private final String buyerEmailSnapshot;
     private final String idempotencyKey;
     private final String shippingAddressSnapshot;
+    private final String recipientNameSnapshot;
+    private final String phoneSnapshot;
     private final String clientIp;
     private final String note;
     private final BigDecimal totalAmount;
@@ -27,8 +29,8 @@ public final class Checkout {
     private LocalDateTime updatedAt;
 
     private Checkout(Long id, Long userId, String buyerFullNameSnapshot, String buyerEmailSnapshot,
-                     String idempotencyKey, String shippingAddressSnapshot, String clientIp, String note,
-                     BigDecimal totalAmount, CheckoutStatus status, String cancellationReason,
+                     String idempotencyKey, String shippingAddressSnapshot, String recipientNameSnapshot,
+                     String phoneSnapshot, String clientIp, String note, BigDecimal totalAmount, CheckoutStatus status, String cancellationReason,
                      LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = validateOptionalId(id);
         this.userId = validateOptionalId(userId);
@@ -36,6 +38,9 @@ public final class Checkout {
         this.buyerEmailSnapshot = requireText(buyerEmailSnapshot, 255);
         this.idempotencyKey = requireText(idempotencyKey, 100);
         this.shippingAddressSnapshot = requireText(shippingAddressSnapshot, 1000);
+        // Checkout cũ chưa có tên và số điện thoại người nhận nên chỉ bắt buộc khi tạo mới.
+        this.recipientNameSnapshot = validateOptionalText(recipientNameSnapshot, 50);
+        this.phoneSnapshot = validateOptionalText(phoneSnapshot, 15);
         this.clientIp = validateOptionalText(clientIp, 45);
         this.note = validateOptionalText(note, 1000);
         this.totalAmount = validateAmount(totalAmount);
@@ -46,22 +51,26 @@ public final class Checkout {
     }
 
     public static Checkout create(Long userId, String buyerFullNameSnapshot, String buyerEmailSnapshot,
-                                  String idempotencyKey, String shippingAddressSnapshot, String clientIp,
-                                  String note, BigDecimal totalAmount, LocalDateTime now) {
+                                  String idempotencyKey, String shippingAddressSnapshot, String recipientNameSnapshot,
+                                  String phoneSnapshot, String clientIp, String note, BigDecimal totalAmount,
+                                  LocalDateTime now) {
         requireId(userId);
+        requireText(recipientNameSnapshot, 50);
+        requireText(phoneSnapshot, 15);
         return new Checkout(null, userId, buyerFullNameSnapshot, buyerEmailSnapshot, idempotencyKey,
-                shippingAddressSnapshot, clientIp, note, totalAmount, CheckoutStatus.PROCESSING,
+                shippingAddressSnapshot, recipientNameSnapshot, phoneSnapshot, clientIp, note, totalAmount,
+                CheckoutStatus.PROCESSING,
                 null, now, now);
     }
 
     public static Checkout reconstitute(Long id, Long userId, String buyerFullNameSnapshot,
                                         String buyerEmailSnapshot, String idempotencyKey,
-                                        String shippingAddressSnapshot, String clientIp, String note,
-                                        BigDecimal totalAmount, CheckoutStatus status, String cancellationReason,
-                                        LocalDateTime createdAt, LocalDateTime updatedAt) {
+                                        String shippingAddressSnapshot, String recipientNameSnapshot,
+                                        String phoneSnapshot, String clientIp, String note, BigDecimal totalAmount, CheckoutStatus status,
+                                        String cancellationReason, LocalDateTime createdAt, LocalDateTime updatedAt) {
         requireId(id);
         return new Checkout(id, userId, buyerFullNameSnapshot, buyerEmailSnapshot, idempotencyKey,
-                shippingAddressSnapshot, clientIp, note, totalAmount, status, cancellationReason,
+                shippingAddressSnapshot, recipientNameSnapshot, phoneSnapshot, clientIp, note, totalAmount, status, cancellationReason,
                 createdAt, updatedAt);
     }
 
@@ -117,6 +126,14 @@ public final class Checkout {
 
     public String getShippingAddressSnapshot() {
         return shippingAddressSnapshot;
+    }
+
+    public String getRecipientNameSnapshot() {
+        return recipientNameSnapshot;
+    }
+
+    public String getPhoneSnapshot() {
+        return phoneSnapshot;
     }
 
     public String getClientIp() {

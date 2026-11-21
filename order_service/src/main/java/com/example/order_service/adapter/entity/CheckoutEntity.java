@@ -40,6 +40,12 @@ public class CheckoutEntity {
     @Column(name = "shipping_address_snapshot", nullable = false, length = 1000)
     private String shippingAddressSnapshot;
 
+    @Column(name = "recipient_name_snapshot", length = 50)
+    private String recipientNameSnapshot;
+
+    @Column(name = "phone_snapshot", length = 15)
+    private String phoneSnapshot;
+
     @Column(name = "client_ip", length = 45)
     private String clientIp;
 

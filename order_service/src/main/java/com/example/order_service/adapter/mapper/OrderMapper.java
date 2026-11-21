@@ -40,8 +40,8 @@ public interface OrderMapper {
     UserOrderView toUserOrderView(UserOrderProjection order);
 
     default ShopOrderView toShopOrderView(ShopOrderProjection order) {
-        return new ShopOrderView(toUserOrderView(order), new ShopOrderResponse.Buyer(order.getBuyerFullName(),
-                order.getBuyerEmail(), order.getShippingAddress(), order.getNote()));
+        return new ShopOrderView(toUserOrderView(order), new ShopOrderResponse.Buyer(order.getRecipientName(),
+                order.getBuyerEmail(), order.getShippingAddress(), order.getPhone(), order.getNote()));
     }
 
     UserOrderResponse.Item toUserOrderItem(UserOrderItemProjection item);

@@ -62,6 +62,9 @@ CREATE TABLE IF NOT EXISTS checkout (
     buyer_email_snapshot VARCHAR(255) NOT NULL,
     idempotency_key VARCHAR(100) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     shipping_address_snapshot VARCHAR(1000) NOT NULL,
+    -- Tên và số điện thoại người nhận trên địa chỉ giao hàng; NULL với checkout tạo trước khi lưu hai cột này.
+    recipient_name_snapshot VARCHAR(50) NULL,
+    phone_snapshot VARCHAR(15) NULL,
     -- Worker cần IP khách từ request gốc để dựng URL VNPay sau khi xử lý hàng chờ.
     client_ip VARCHAR(45) NULL,
     note VARCHAR(1000) NULL,
