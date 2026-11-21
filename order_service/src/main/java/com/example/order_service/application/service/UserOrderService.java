@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.example.common.response.PageResponse;
+import com.example.common.response.PageQuery;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -56,15 +58,18 @@ public class UserOrderService implements GetMyOrdersUseCase, CancelMyOrderUseCas
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserOrderResponse> getMyOrders(OrderStatus status) {
+    public PageResponse<UserOrderResponse> getMyOrders(OrderStatus status, String keyword, PageQuery pageQuery) {
         Long userId = currentUserPort.getInfo().userId();
-        List<UserOrderView> orders = orderRepoPort.findUserOrders(userId, status);
-        Map<Long, List<UserOrderResponse.Item>> itemsByOrder = findItemsByOrder(orders);
+        String normalized = normalizeKeyword(keyword);
+        PageResponse<UserOrderView> page = orderRepoPort.findUserOrders(userId, status, normalized,
+                orderIdOf(normalized), pageQuery);
+        Map<Long, List<UserOrderResponse.Item>> itemsByOrder = findItemsByOrder(page.items());
         LocalDateTime now = LocalDateTime.now(clock);
-        return orders.stream()
+        List<UserOrderResponse> items = page.items().stream()
                 .map((UserOrderView order) -> UserOrderResponseMapper.toResponse(order,
                         itemsByOrder.getOrDefault(order.orderId(), List.of()), now, clock.getZone()))
                 .toList();
+        return new PageResponse<>(items, page.page(), page.pageSize(), page.totalItems(), page.totalPages());
     }
 
     // Shop dùng userId của chủ shop làm shop_id; xem được cả đơn của shop đang bị khóa.
@@ -75,10 +80,8 @@ public class UserOrderService implements GetMyOrdersUseCase, CancelMyOrderUseCas
             throw new BusinessException(OrderError.INVALID_DATE_RANGE);
         }
         Long shopId = currentUserPort.getInfo().userId();
-        // Bỏ dấu # khi shop dán mã đơn; từ khóa toàn số thì khớp thêm theo mã đơn.
-        String keyword = filter.keyword() == null ? null : filter.keyword().trim().replaceFirst("^#", "");
-        keyword = keyword == null || keyword.isEmpty() ? null : keyword;
-        Long orderId = keyword != null && keyword.matches("\\d{1,18}") ? Long.valueOf(keyword) : null;
+        String keyword = normalizeKeyword(filter.keyword());
+        Long orderId = orderIdOf(keyword);
         // DB lưu LocalDateTime theo múi giờ của Clock nên đổi mốc có offset về cùng múi giờ trước khi so sánh.
         List<ShopOrderView> orders = orderRepoPort.findShopOrders(new ShopOrderSearch(shopId, filter.status(),
                 filter.paymentMethod(), keyword, orderId, toZone(filter.from()), toZone(filter.to())));
@@ -197,5 +200,16 @@ public class UserOrderService implements GetMyOrdersUseCase, CancelMyOrderUseCas
         List<Long> orderIds = orders.stream().map(UserOrderView::orderId).toList();
         return orderRepoPort.findUserOrderItems(orderIds).stream().collect(Collectors.groupingBy(
                 UserOrderItemView::orderId, Collectors.mapping(UserOrderItemView::item, Collectors.toList())));
+    }
+
+    // Bỏ dấu # khi dán mã đơn; chuỗi rỗng coi như không lọc.
+    private static String normalizeKeyword(String keyword) {
+        String trimmed = keyword == null ? null : keyword.trim().replaceFirst("^#", "");
+        return trimmed == null || trimmed.isEmpty() ? null : trimmed;
+    }
+
+    // Từ khóa toàn số thì khớp thêm theo mã đơn.
+    private static Long orderIdOf(String keyword) {
+        return keyword != null && keyword.matches("\\d{1,18}") ? Long.valueOf(keyword) : null;
     }
 }

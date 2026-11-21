@@ -19,6 +19,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
 
 public interface OrderJpaRepo extends JpaRepository<OrderEntity, Long> {
     @Query("""
@@ -64,9 +65,22 @@ public interface OrderJpaRepo extends JpaRepository<OrderEntity, Long> {
                    p.paymentUrl as paymentUrl, p.expiresAt as paymentExpiresAt, p.paidAt as paymentPaidAt
             from OrderEntity o join o.checkout c left join PaymentEntity p on p.checkout = c
             where c.userId = :userId and (:status is null or o.status = :status)
+              and (:keyword is null or o.id = :orderId
+                   or lower(o.shopNameSnapshot) like lower(concat('%', :keyword, '%')) escape '!'
+                   or exists (select 1 from OrderItemEntity i where i.order = o
+                              and lower(i.productName) like lower(concat('%', :keyword, '%')) escape '!'))
             order by o.createdAt desc, o.id desc
+            """, countQuery = """
+            select count(o) from OrderEntity o join o.checkout c
+            where c.userId = :userId and (:status is null or o.status = :status)
+              and (:keyword is null or o.id = :orderId
+                   or lower(o.shopNameSnapshot) like lower(concat('%', :keyword, '%')) escape '!'
+                   or exists (select 1 from OrderItemEntity i where i.order = o
+                              and lower(i.productName) like lower(concat('%', :keyword, '%')) escape '!'))
             """)
-    List<UserOrderProjection> findUserOrders(@Param("userId") Long userId, @Param("status") OrderStatus status);
+    Page<UserOrderProjection> findUserOrders(@Param("userId") Long userId, @Param("status") OrderStatus status,
+                                             @Param("keyword") String keyword, @Param("orderId") Long orderId,
+                                             Pageable pageable);
 
     // shop_id là userId của chủ shop; người mua lấy từ snapshot checkout, không gọi Auth Service.
     @Query(value = """

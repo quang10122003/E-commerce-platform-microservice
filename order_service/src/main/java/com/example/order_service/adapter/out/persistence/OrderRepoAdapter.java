@@ -1,10 +1,5 @@
 package com.example.order_service.adapter.out.persistence;
 
-import com.example.order_service.application.port.out.repo.OrderOverviewQueryPort;
-import com.example.order_service.application.dto.order.RecentOrderView;
-import com.example.order_service.adapter.out.persistence.projection.StatusCountProjection;
-import java.util.Map;
-import java.util.stream.Collectors;
 import com.example.order_service.adapter.entity.OrderEntity;
 import com.example.order_service.adapter.entity.OrderItemEntity;
 import com.example.order_service.adapter.mapper.OrderMapper;
@@ -18,6 +13,11 @@ import com.example.order_service.application.dto.response.AdminAnalyticsResponse
 import com.example.order_service.application.dto.response.ShopAnalyticsResponse;
 import com.example.order_service.application.port.out.repo.OrderRepoPort;
 import com.example.order_service.application.port.out.repo.ShopAnalyticsQueryPort;
+import com.example.order_service.application.port.out.repo.OrderOverviewQueryPort;
+import com.example.order_service.application.dto.order.RecentOrderView;
+import com.example.order_service.adapter.out.persistence.projection.StatusCountProjection;
+import java.util.Map;
+import java.util.stream.Collectors;
 import com.example.order_service.domain.model.Order;
 import com.example.order_service.domain.model.OrderItem;
 import com.example.order_service.domain.model.OrderStatus;
@@ -31,6 +31,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import com.example.order_service.adapter.out.persistence.projection.UserOrderProjection;
+import com.example.common.response.PageResponse;
+import com.example.common.response.PageQuery;
 
 @Repository
 @RequiredArgsConstructor
@@ -41,16 +45,17 @@ public class OrderRepoAdapter implements OrderRepoPort, ShopAnalyticsQueryPort, 
     private final OrderMapper mapper;
 
     @Override
-    public List<UserOrderView> findUserOrders(Long userId, OrderStatus status) {
-        return orders.findUserOrders(userId, status).stream().map(mapper::toUserOrderView).toList();
+    public PageResponse<UserOrderView> findUserOrders(Long userId, OrderStatus status, String keyword, Long orderId,
+                                                     PageQuery pageQuery) {
+        Page<UserOrderProjection> page = orders.findUserOrders(userId, status, escapeLike(keyword), orderId,
+                PageRequest.of(pageQuery.pageIndex(), pageQuery.size()));
+        return new PageResponse<>(page.getContent().stream().map(mapper::toUserOrderView).toList(),
+                pageQuery.page(), pageQuery.size(), page.getTotalElements(), page.getTotalPages());
     }
 
     @Override
     public List<ShopOrderView> findShopOrders(ShopOrderSearch search) {
-        // Escape ký tự đặc biệt của LIKE bằng '!' giống query tìm kiếm của Product Service.
-        String keyword = search.keyword() == null ? null
-                : search.keyword().replace("!", "!!").replace("%", "!%").replace("_", "!_");
-        return orders.findShopOrders(search.shopId(), search.status(), search.paymentMethod(), keyword,
+        return orders.findShopOrders(search.shopId(), search.status(), search.paymentMethod(), escapeLike(search.keyword()),
                         search.orderId(), search.from(), search.to())
                 .stream().map(mapper::toShopOrderView).toList();
     }
@@ -182,5 +187,10 @@ public class OrderRepoAdapter implements OrderRepoPort, ShopAnalyticsQueryPort, 
                         order.getRecipientName(), order.getTotalAmount(), order.getStatus(), order.getPaymentMethod(),
                         order.getCreatedAt()))
                 .toList();
+    }
+
+    // Escape ký tự đặc biệt của LIKE bằng '!' giống query tìm kiếm của Product Service.
+    private static String escapeLike(String keyword) {
+        return keyword == null ? null : keyword.replace("!", "!!").replace("%", "!%").replace("_", "!_");
     }
 }

@@ -17,7 +17,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Max;
+import com.example.common.response.PageResponse;
+import com.example.common.response.PageQuery;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -29,8 +33,13 @@ public class OrderController {
     private final CancelMyOrderUseCase cancelMyOrderUseCase;
 
     @GetMapping
-    public ResponseEntity<List<UserOrderResponse>> getMyOrders(@RequestParam(required = false) OrderStatus status) {
-        return ResponseEntity.ok(getMyOrdersUseCase.getMyOrders(status));
+    public ResponseEntity<PageResponse<UserOrderResponse>> getMyOrders(
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(required = false) @Size(max = 100) String keyword,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size) {
+        return ResponseEntity.ok(getMyOrdersUseCase.getMyOrders(status, keyword,
+                PageQuery.builder().page(page).size(size).build()));
     }
 
     @PostMapping("/{orderId}/cancel")

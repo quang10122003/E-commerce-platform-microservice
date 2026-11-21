@@ -1,9 +1,10 @@
 package com.example.order_service.application.port.in;
 
-import java.util.List;
 import com.example.order_service.application.dto.response.UserOrderResponse;
 import com.example.order_service.domain.model.OrderStatus;
+import com.example.common.response.PageResponse;
+import com.example.common.response.PageQuery;
 
 public interface GetMyOrdersUseCase {
-    List<UserOrderResponse> getMyOrders(OrderStatus status);
+    PageResponse<UserOrderResponse> getMyOrders(OrderStatus status, String keyword, PageQuery pageQuery);
 }

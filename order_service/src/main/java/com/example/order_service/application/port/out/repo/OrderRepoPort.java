@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import com.example.common.response.PageResponse;
+import com.example.common.response.PageQuery;
 
 public interface OrderRepoPort {
     List<Long> saveAll(List<Order> orders);
@@ -20,7 +22,8 @@ public interface OrderRepoPort {
     List<Long> findShippingOrderIdsDueBefore(LocalDateTime cutoff, int limit);
     Optional<Order> findByIdForUpdate(Long orderId);
     void saveStatus(List<Order> orders);
-    List<UserOrderView> findUserOrders(Long userId, OrderStatus status);
+    // keyword null là không lọc; orderId chỉ có khi keyword là mã đơn.
+    PageResponse<UserOrderView> findUserOrders(Long userId, OrderStatus status, String keyword, Long orderId, PageQuery pageQuery);
     List<ShopOrderView> findShopOrders(ShopOrderSearch search);
     List<UserOrderItemView> findUserOrderItems(Collection<Long> orderIds);
 
