@@ -32,7 +32,6 @@ import com.example.producr_service.application.port.out.repo.FlashSaleItemReposi
 import java.time.Clock;
 
 import com.example.producr_service.application.port.in.ProcessFlashSaleCampaignStatusUseCase;
-import com.example.producr_service.application.service.ProcessFlashSaleCampaignStatuService;
 import com.example.producr_service.application.registry.FlashSaleCampaignStatuRegistry;
 import com.example.producr_service.application.strategy.FlashSaleCampaign.FlashSaleCampaignStatuHandler;
 import com.example.producr_service.application.strategy.FlashSaleCampaign.FlashSaleCampaignDraftHandler;
@@ -121,9 +120,11 @@ public class FlashSaleConfig {
     FlashSaleCampaignService flashSaleCampaignService(
             CurrentUserPort currentUserPort,
             FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort,
-            Clock clock, ShopAccessService shopAccessService
+            Clock clock, ShopAccessService shopAccessService,
+            FlashSaleCampaignStatuRegistry flashSaleCampaignStatuRegistry
     ) {
-        return new FlashSaleCampaignService(currentUserPort, flashSaleCampaignRepositoryPort, clock, shopAccessService);
+        return new FlashSaleCampaignService(currentUserPort, flashSaleCampaignRepositoryPort, clock, shopAccessService,
+                flashSaleCampaignStatuRegistry);
     }
 
     @Bean
@@ -177,7 +178,7 @@ public class FlashSaleConfig {
 
     @Bean
     ProcessFlashSaleCampaignStatusUseCase processFlashSaleCampaignStatusUseCase(
-            FlashSaleCampaignRepositoryPort campaigns, FlashSaleCampaignStatuRegistry registry, Clock clock) {
-        return new ProcessFlashSaleCampaignStatuService(campaigns, registry, clock);
+            FlashSaleCampaignService flashSaleCampaignService) {
+        return flashSaleCampaignService;
     }
 }

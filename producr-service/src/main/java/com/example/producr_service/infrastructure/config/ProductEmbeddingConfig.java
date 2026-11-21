@@ -7,7 +7,6 @@ import com.example.producr_service.application.port.out.embedding.HtmlTextExtrac
 import com.example.producr_service.application.port.out.embedding.ProductEmbeddingRepositoryPort;
 import com.example.producr_service.application.port.out.embedding.TextEmbeddingPort;
 import com.example.producr_service.application.port.out.repo.ProductRepositoryPort;
-import com.example.producr_service.application.service.ProductEmbeddingContentBuilderService;
 import com.example.producr_service.application.service.ProductEmbeddingService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -25,9 +24,9 @@ public class ProductEmbeddingConfig {
             ProductEmbeddingRepositoryPort productEmbeddingRepositoryPort,
             TextEmbeddingPort textEmbeddingPort,
             ProductRepositoryPort productRepositoryPort,
-            ProductEmbeddingContentBuilderService productEmbeddingContentBuilderService) {
+            HtmlTextExtractorPort htmlTextExtractorPort) {
         return new ProductEmbeddingService(productEmbeddingRepositoryPort, textEmbeddingPort,
-                productRepositoryPort, productEmbeddingContentBuilderService);
+                productRepositoryPort, htmlTextExtractorPort);
     }
 
     @Bean
@@ -61,11 +60,5 @@ public class ProductEmbeddingConfig {
     @Bean
     HtmlTextExtractorPort htmlTextExtractorPort() {
         return new JsoupHtmlTextExtractorAdapter();
-    }
-
-    @Bean
-    ProductEmbeddingContentBuilderService productEmbeddingContentBuilderService(
-            HtmlTextExtractorPort htmlTextExtractorPort) {
-        return new ProductEmbeddingContentBuilderService(htmlTextExtractorPort);
     }
 }

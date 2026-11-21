@@ -6,6 +6,11 @@ import com.example.order_service.application.port.out.client.ProductClientPort;
 import com.example.order_service.application.dto.request.CheckoutItemsRequest;
 import com.example.order_service.application.dto.response.CheckoutItemsResponse;
 import com.example.order_service.application.port.in.GetCheckoutItemsUseCase;
+import com.example.order_service.application.port.in.GetCheckoutQuoteUseCase;
+import com.example.order_service.application.dto.request.CheckoutQuoteRequest;
+import com.example.order_service.application.dto.request.ProductQuoteRequest;
+import com.example.order_service.application.dto.response.CheckoutQuoteResponse;
+import com.example.order_service.application.dto.response.ProductQuoteResponse;
 import com.example.order_service.domain.error.OrderDomainError;
 import com.example.order_service.application.error.OrderError;
 import com.example.order_service.application.error.ProductQuoteError;
@@ -19,9 +24,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-public class CheckoutItemsService implements GetCheckoutItemsUseCase {
+// Dữ liệu trang checkout trước khi đặt hàng: danh sách sản phẩm và tổng tiền tạm tính.
+public class CheckoutItemsService implements GetCheckoutItemsUseCase, GetCheckoutQuoteUseCase {
     private final ProductClientPort productClientPort;
     private final Clock clock;
+    private final ShopAvailabilityService shopAvailabilityService;
 
     @Override
     public CheckoutItemsResponse getCheckoutItems(CheckoutItemsRequest request) {
@@ -55,5 +62,16 @@ public class CheckoutItemsService implements GetCheckoutItemsUseCase {
                     : new CheckoutItemsResponse.Sale(sale.salePrice(),
                             sale.endsAt().atZoneSameInstant(clock.getZone()).toOffsetDateTime()));
         }).toList());
+    }
+
+    @Override
+    public CheckoutQuoteResponse getCheckoutQuote(CheckoutQuoteRequest request) {
+        shopAvailabilityService.requireAvailableVariants(request.items().stream()
+                .map(CheckoutQuoteRequest.Item::variantId).distinct().toList());
+        ProductQuoteRequest pricingRequest = new ProductQuoteRequest(request.items().stream()
+                .map(item -> new ProductQuoteRequest.Item(item.variantId(), item.quantity()))
+                .toList());
+        ProductQuoteResponse quote = productClientPort.getProductQuote(pricingRequest);
+        return new CheckoutQuoteResponse(quote.totalAmount());
     }
 }

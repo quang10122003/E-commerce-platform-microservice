@@ -1,11 +1,9 @@
 package com.example.producr_service.infrastructure.config;
 
 import com.example.producr_service.application.port.out.storage.FileStoragePort;
-import com.example.producr_service.application.port.in.DeleteStoredFilesUseCase;
 import com.example.producr_service.application.registry.UploadStrategyRegistry;
 import com.example.producr_service.application.service.FileUploader;
 import com.example.producr_service.application.service.StoredFileCleaner;
-import com.example.producr_service.application.service.DeleteStoredFilesService;
 import com.example.producr_service.application.strategy.upload.CategoryImageUploadStrategy;
 import com.example.producr_service.application.strategy.upload.ProductImageUploadStrategy;
 import com.example.producr_service.application.strategy.upload.ProductVariantImageUploadStrategy;
@@ -43,16 +41,10 @@ public class FileStorageConfig {
         return new UploadStrategyRegistry(strategies);
     }
 
-    // Dùng chung logic dọn file cho rollback, upload lỗi và outbox.
-    @Bean
+    // Dùng chung logic dọn file cho rollback, upload lỗi và outbox; listener sau rollback gọi qua DeleteStoredFilesUseCase.
+    @Bean(name = {"storedFileCleaner", "deleteStoredFilesUseCase"})
     StoredFileCleaner storedFileCleaner(FileStoragePort fileStoragePort) {
         return new StoredFileCleaner(fileStoragePort);
-    }
-
-    // Cung cấp use case dọn file cho listener sau rollback.
-    @Bean
-    DeleteStoredFilesUseCase deleteStoredFilesUseCase(StoredFileCleaner storedFileCleaner) {
-        return new DeleteStoredFilesService(storedFileCleaner);
     }
 
     // Cung cấp component upload file cho xử lý nội bộ.

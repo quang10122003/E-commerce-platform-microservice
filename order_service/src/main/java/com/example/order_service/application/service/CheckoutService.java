@@ -13,6 +13,7 @@ import com.example.order_service.application.dto.request.CreateCheckoutRequest;
 import com.example.order_service.application.error.OrderError;
 import com.example.order_service.application.port.in.CreateCheckoutUseCase;
 import com.example.order_service.application.port.in.GetCheckoutUseCase;
+import com.example.order_service.application.port.in.CheckCheckoutAccessUseCase;
 import com.example.order_service.application.dto.event.CheckoutFailedPayload;
 import com.example.order_service.application.port.out.repo.CheckoutRepoPort;
 import com.example.order_service.application.port.out.repo.PaymentRepoPort;
@@ -60,7 +61,7 @@ import java.util.Set;
 
 @RequiredArgsConstructor
 @Slf4j
-public class CheckoutService implements CreateCheckoutUseCase, GetCheckoutUseCase {
+public class CheckoutService implements CreateCheckoutUseCase, GetCheckoutUseCase, CheckCheckoutAccessUseCase {
 
     private final CurrentUserPort currentUserPort;
     private final CheckoutRepoPort checkoutRepoPort;
@@ -270,11 +271,18 @@ public class CheckoutService implements CreateCheckoutUseCase, GetCheckoutUseCas
         return responseForOwner(checkout, currentUserPort.getInfo().userId());
     }
 
+    // Checkout không tồn tại cũng trả ACCESS_DENIED để không lộ checkout id nào đang có.
+    @Override
+    @Transactional(readOnly = true)
+    public void checkAccess(Long checkoutId) {
+        Checkout checkout = checkoutRepoPort.findById(checkoutId)
+                .orElseThrow(() -> new BusinessException(AuthorizationError.ACCESS_DENIED));
+        requireOwner(checkout, currentUserPort.getInfo().userId());
+    }
+
     // Lấy kết quả từ event đã ghi outbox để trả đúng dữ liệu như SSE, kể cả khi SSE đã hết hạn replay.
     private CreateCheckoutResponse responseForOwner(Checkout checkout, Long userId) {
-        if (userId == null || !Objects.equals(checkout.getUserId(), userId)) {
-            throw new BusinessException(AuthorizationError.ACCESS_DENIED);
-        }
+        requireOwner(checkout, userId);
         if (checkout.getStatus() == CheckoutStatus.DONE) {
             Optional<CheckoutSucceededPayload> succeeded = outbox.findCheckoutSucceeded(checkout.getId());
             if (succeeded.isPresent()) {
@@ -290,5 +298,11 @@ public class CheckoutService implements CreateCheckoutUseCase, GetCheckoutUseCas
         }
         String paymentUrl = payments.findByCheckoutId(checkout.getId()).map(Payment::getPaymentUrl).orElse(null);
         return new CreateCheckoutResponse(checkout.getId(), checkout.getStatus(), null, List.of(), paymentUrl, null);
+    }
+
+    private void requireOwner(Checkout checkout, Long userId) {
+        if (userId == null || !Objects.equals(checkout.getUserId(), userId)) {
+            throw new BusinessException(AuthorizationError.ACCESS_DENIED);
+        }
     }
 }

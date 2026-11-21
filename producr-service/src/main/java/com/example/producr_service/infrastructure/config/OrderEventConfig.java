@@ -1,7 +1,6 @@
 package com.example.producr_service.infrastructure.config;
 
-import com.example.producr_service.application.port.in.ProcessAuthEventUseCase;
-import com.example.producr_service.application.service.AuthEventApplicationService;
+import com.example.producr_service.application.service.KafkaEventApplicationService;
 import com.example.producr_service.application.service.ProductRecommendationService;
 import com.example.producr_service.application.strategy.eventKafka.UserDeletedEventHandler;
 import com.example.producr_service.application.strategy.eventKafka.ShopLockChangedEventHandler;
@@ -9,10 +8,8 @@ import com.example.producr_service.application.service.ProductShopLockService;
 import com.example.producr_service.application.port.out.cache.CachePort;
 
 import com.example.producr_service.application.strategy.EventHandler;
-import com.example.producr_service.application.port.in.ProcessOrderEventUseCase;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.registry.KafkaEventHandlerRegistry;
-import com.example.producr_service.application.service.OrderEventApplicationService;
 import com.example.producr_service.application.service.ProductRecommendationService;
 import com.example.producr_service.application.strategy.eventKafka.CartItemAddedEventHandler;
 import com.example.producr_service.application.strategy.eventKafka.CheckoutInventoryRequestedHandler;
@@ -91,14 +88,9 @@ public class OrderEventConfig {
         return new KafkaEventHandlerRegistry(eventHandlers);
     }
 
-    @Bean
-    ProcessOrderEventUseCase processOrderEventUseCase(KafkaEventHandlerRegistry registry) {
-        return new OrderEventApplicationService(registry);
-    }
-
-    @Bean
-    ProcessAuthEventUseCase processAuthEventUseCase(KafkaEventHandlerRegistry registry) {
-        return new AuthEventApplicationService(registry);
+    @Bean(name = {"kafkaEventApplicationService", "processOrderEventUseCase", "processAuthEventUseCase"})
+    KafkaEventApplicationService kafkaEventApplicationService(KafkaEventHandlerRegistry registry) {
+        return new KafkaEventApplicationService(registry);
     }
 
     @Bean

@@ -1,12 +1,13 @@
 package com.example.producr_service.application.service;
 
+import com.example.producr_service.application.port.in.DeleteStoredFilesUseCase;
 import com.example.producr_service.application.port.out.storage.FileStoragePort;
 import com.example.producr_service.application.port.out.storage.StoredFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class StoredFileCleaner {
+public class StoredFileCleaner implements DeleteStoredFilesUseCase {
     private final FileStoragePort fileStoragePort;
 
     public StoredFileCleaner(FileStoragePort fileStoragePort) {
@@ -14,6 +15,7 @@ public class StoredFileCleaner {
     }
 
     // Xóa các file theo bucket để dọn storage sau rollback hoặc xử lý outbox.
+    @Override
     public void deleteStoredFiles(List<StoredFile> storedFiles) {
         if (storedFiles.isEmpty()) {
             return;

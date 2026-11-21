@@ -14,18 +14,15 @@ import com.example.order_service.application.port.out.client.ProductClientPort;
 import com.example.order_service.application.port.out.repo.CartRepoPort;
 import com.example.order_service.application.service.CartService;
 import com.example.order_service.application.port.out.outbox.OutboxPort;
-import com.example.order_service.application.port.in.ProcessProductEventUseCase;
 import com.example.order_service.application.port.out.serialization.ObjectMapperPort;
 import com.example.order_service.application.registry.KafkaEventHandlerRegistry;
-import com.example.order_service.application.service.ProductEventApplicationService;
+import com.example.order_service.application.service.KafkaEventApplicationService;
 import com.example.order_service.application.port.out.repo.OrderRepoPort;
 import com.example.order_service.application.port.out.repo.ProductReviewRepoPort;
 import com.example.order_service.application.service.OrderItemReferenceService;
 import com.example.order_service.application.strategy.eventKafka.ProductDeleteEventHandler;
 import com.example.order_service.application.strategy.eventKafka.UserDeletedEventHandler;
 import com.example.order_service.application.service.UserAccountService;
-import com.example.order_service.application.service.AuthEventApplicationService;
-import com.example.order_service.application.port.in.ProcessAuthEventUseCase;
 import com.example.order_service.application.port.in.CheckUserActiveOrdersUseCase;
 import com.example.order_service.application.port.out.repo.CartRepoPort;
 import com.example.order_service.application.port.out.repo.CheckoutRepoPort;
@@ -77,11 +74,6 @@ public class CartConfig {
     }
 
     @Bean
-    ProcessAuthEventUseCase processAuthEventUseCase(KafkaEventHandlerRegistry eventHandlerRegistry) {
-        return new AuthEventApplicationService(eventHandlerRegistry);
-    }
-
-    @Bean
     OrderItemReferenceService orderItemReferenceService(OrderRepoPort orderRepoPort,
                                                         ProductReviewRepoPort productReviewRepoPort) {
         return new OrderItemReferenceService(orderRepoPort, productReviewRepoPort);
@@ -92,9 +84,10 @@ public class CartConfig {
         return new KafkaEventHandlerRegistry(eventHandlers);
     }
 
-    @Bean
-    ProcessProductEventUseCase processProductEventUseCase(KafkaEventHandlerRegistry eventHandlerRegistry) {
-        return new ProductEventApplicationService(eventHandlerRegistry);
+    @Bean(name = {"kafkaEventApplicationService", "processAuthEventUseCase", "processCheckoutEventUseCase",
+            "processProductEventUseCase"})
+    KafkaEventApplicationService kafkaEventApplicationService(KafkaEventHandlerRegistry eventHandlerRegistry) {
+        return new KafkaEventApplicationService(eventHandlerRegistry);
     }
 
     @Bean

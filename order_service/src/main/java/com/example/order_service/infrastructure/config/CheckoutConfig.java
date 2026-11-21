@@ -8,19 +8,14 @@ import com.example.order_service.application.strategy.EventHandler;
 import com.example.order_service.application.port.out.client.CurrentUserPort;
 import com.example.order_service.application.port.out.client.ProductClientPort;
 import com.example.order_service.application.service.CheckoutItemsService;
-import com.example.order_service.application.service.CheckoutQuoteService;
 import com.example.order_service.application.port.out.kafka.OrderEventPublisherPort;
 import com.example.order_service.application.port.out.outbox.OutboxPort;
 import com.example.order_service.application.port.out.serialization.ObjectMapperPort;
-import com.example.order_service.application.port.in.ProcessCheckoutEventUseCase;
-import com.example.order_service.application.registry.KafkaEventHandlerRegistry;
 import com.example.order_service.application.registry.CheckoutPaymentHandlerRegistry;
 import com.example.order_service.application.port.out.repo.CheckoutRepoPort;
 import com.example.order_service.application.port.out.repo.PaymentRepoPort;
 import com.example.order_service.application.service.CheckoutCreationService;
 import com.example.order_service.application.service.CheckoutService;
-import com.example.order_service.application.service.CheckoutInternalService;
-import com.example.order_service.application.service.CheckoutEventApplicationService;
 import com.example.order_service.application.service.CheckoutProcessingService;
 import com.example.order_service.application.service.CheckoutCancellationService;
 import com.example.order_service.application.strategy.eventKafka.CheckoutRequestedEventHandler;
@@ -77,20 +72,9 @@ public class CheckoutConfig {
     }
 
     @Bean
-    CheckoutQuoteService checkoutQuoteService(ProductClientPort productClientPort,
+    CheckoutItemsService checkoutItemsService(ProductClientPort productClientPort, Clock clock,
             ShopAvailabilityService shopAvailabilityService) {
-        return new CheckoutQuoteService(productClientPort, shopAvailabilityService);
-    }
-
-    @Bean
-    CheckoutItemsService checkoutItemsService(ProductClientPort productClientPort, Clock clock) {
-        return new CheckoutItemsService(productClientPort, clock);
-    }
-
-    @Bean
-    CheckoutInternalService checkoutInternalService(CurrentUserPort currentUserPort,
-            CheckoutRepoPort checkoutRepoPort) {
-        return new CheckoutInternalService(currentUserPort, checkoutRepoPort);
+        return new CheckoutItemsService(productClientPort, clock, shopAvailabilityService);
     }
 
     @Bean
@@ -202,11 +186,6 @@ public class CheckoutConfig {
     EventHandler<String> checkoutRequestedEventHandler(ObjectMapperPort objectMapperPort,
             CheckoutProcessingService checkoutProcessingService) {
         return new CheckoutRequestedEventHandler(objectMapperPort, checkoutProcessingService);
-    }
-
-    @Bean
-    ProcessCheckoutEventUseCase processCheckoutEventUseCase(KafkaEventHandlerRegistry registry) {
-        return new CheckoutEventApplicationService(registry);
     }
 
     @Bean
