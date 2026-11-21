@@ -46,11 +46,13 @@ public class ProductVariantRepoAdapter implements ProductVariantRepoPort {
     }
 
     private CheckoutVariantDto toCheckoutVariant(ProductVariantEntity variant) {
+        // Cần ảnh phân loại để snapshot của đơn hiển thị giống giỏ hàng.
+        ProductVariant domain = productVariantMapper.toDomain(variant);
         return new CheckoutVariantDto(variant.getProduct().getId(), variant.getProduct().getUserId(),
                 variant.getProduct().isShopLock(),
                 variant.getProduct().getName(), variant.getProduct().getStatus(),
-                json.toJson(saleMapper.toSnapshot(variant).attributes()), variant.getProduct().getImageUrl(),
-                productVariantMapper.toSellerDomain(variant));
+                json.toJson(saleMapper.toSnapshot(variant).attributes()),
+                domain.resolveDisplayImageUrl(variant.getProduct().getImageUrl()), domain);
     }
 
     @Override

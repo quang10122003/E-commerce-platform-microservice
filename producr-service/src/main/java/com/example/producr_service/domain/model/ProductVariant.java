@@ -131,6 +131,12 @@ public class ProductVariant {
                 .orElse(images.isEmpty() ? null : images.get(0));
     }
 
+    // Phân loại có thuộc tính dùng ảnh của chính nó; sản phẩm không phân loại hoặc phân loại chưa có ảnh dùng ảnh gốc.
+    public String resolveDisplayImageUrl(String productImageUrl) {
+        VariantImage primary = attributeValues.isEmpty() ? null : getPrimaryImage();
+        return primary == null ? productImageUrl : primary.getImageUrl();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

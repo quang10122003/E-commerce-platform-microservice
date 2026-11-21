@@ -22,3 +22,6 @@ target/
 *.[mM][dD]
 !/README.md
 !/MUC_1_4_CONG_NGHE_LY_DO_LUA_CHON.md
+
+# Dữ liệu seed chứa hash mật khẩu và email thật
+database-seed/
