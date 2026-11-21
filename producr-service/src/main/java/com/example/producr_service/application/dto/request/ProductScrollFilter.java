@@ -11,19 +11,17 @@ public record ProductScrollFilter(
         BigDecimal minPrice,
         BigDecimal maxPrice,
         String cursor,
-        List<String> locations,
+        List<Integer> locationCodes,
         int size,
         ProductSortOption sortOption
 ) {
 
     public ProductScrollFilter {
         sortOption = sortOption == null ? ProductSortOption.RELEVANCE : sortOption;
-        locations = locations == null
+        locationCodes = locationCodes == null
                 ? List.of()
-                : locations.stream()
+                : locationCodes.stream()
                         .filter(Objects::nonNull)
-                        .map(String::trim)
-                        .filter(location -> !location.isBlank())
                         .distinct()
                         .toList();
         brandIds = brandIds == null

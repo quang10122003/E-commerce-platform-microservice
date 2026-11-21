@@ -60,6 +60,17 @@ public class ProductEntity {
     @Column(name = "location_snapshot", length = 255)
     private String locationSnapshot;
 
+    @Column(name = "location_code")
+    private Integer locationCode;
+
+    // Bản sao trạng thái khóa shop từ event của auth-service để lọc mà không gọi auth.
+    @Builder.Default
+    @Column(name = "shop_lock", nullable = false)
+    private boolean shopLock = false;
+
+    @Column(name = "shop_lock_changed_at")
+    private LocalDateTime shopLockChangedAt;
+
     @Column(name = "object_path", nullable = false, length = 500)
     private String objectPath;
 

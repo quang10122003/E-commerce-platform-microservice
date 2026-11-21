@@ -5,6 +5,7 @@ import com.example.auth_service.application.port.out.storage.StoredFile;
 import com.example.auth_service.application.DTO.repone.UserLockResponse;
 import com.example.auth_service.application.DTO.repone.UserOverviewResponse;
 import com.example.auth_service.application.DTO.repone.UserListResponse;
+import com.example.auth_service.application.DTO.event.ShopLockChangedEventDto;
 import com.example.auth_service.application.DTO.event.UserDeletedEventDto;
 import com.example.auth_service.application.constant.Constant;
 import com.example.auth_service.application.port.in.DeleteUserUseCase;
@@ -53,6 +54,7 @@ public class UserService implements GetUsersUseCase, GetUserOverviewUseCase, Tog
         user.toggleShopLock();
         userRepositoryPort.save(user);
         boolean locked = user.isShopLock();
+        saveShopLockChangedEvent(userId, locked);
         log.info("Thay đổi trạng thái khóa shop: shop_id={}, locked={}", userId, locked);
         return new ShopStatusResponse(userId, locked);
     }
@@ -62,9 +64,13 @@ public class UserService implements GetUsersUseCase, GetUserOverviewUseCase, Tog
     public UserLockResponse toggleUserLock(Long userId) {
         User user = userRepositoryPort.findByIdForUpdate(userId)
                 .orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND));
+        boolean shopWasLocked = user.isShopLock();
         user.toggleUserLock();
         userRepositoryPort.save(user);
         boolean locked = user.isLocked();
+        if (user.isShopLock() && !shopWasLocked) {
+            saveShopLockChangedEvent(userId, true);
+        }
         String key = AccessControlCacheKeys.userLocked(userId.toString());
         if (locked) {
             cachePort.set(key, "1");
@@ -98,6 +104,7 @@ public class UserService implements GetUsersUseCase, GetUserOverviewUseCase, Tog
         String logoUrl = user.getShopLogoUrl();
         String avatarObjectPath = user.getAvatarObjectPath();
         String avatarUrl = user.getAvatarUrl();
+        boolean shopWasLocked = user.isShopLock();
         // Domain chặn admin và tài khoản đã xóa trước khi gọi sang order-service.
         user.anonymize(clock.instant());
         if (orderActivityPort.hasActiveOrders(userId)) {
@@ -116,11 +123,23 @@ public class UserService implements GetUsersUseCase, GetUserOverviewUseCase, Tog
             ShopProfileService.saveDeleteFilesEvent(userId,
                     new StoredFile(StorageBucket.USER_AVATAR, avatarObjectPath, avatarUrl), outboxEventPort, clock);
         }
+        // Ẩn danh khóa luôn shop nên product-service cần biết để ẩn sản phẩm.
+        if (user.isShop() && !shopWasLocked) {
+            saveShopLockChangedEvent(userId, true);
+        }
         UUID eventId = UUID.randomUUID();
         LocalDateTime now = LocalDateTime.now(clock);
         outboxEventPort.save(new OutboxEvent(eventId, Constant.USER, String.valueOf(userId),
                 UserDeletedEventDto.EVENT_TYPE,
                 new UserDeletedEventDto(eventId, UserDeletedEventDto.EVENT_TYPE, userId, now), now));
         log.info("Xóa mềm tài khoản: user_id={}, removed_addresses={}", userId, removedAddresses);
+    }
+// tạo event outbox khóa shop
+    private void saveShopLockChangedEvent(Long shopId, boolean locked) {
+        UUID eventId = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.now(clock);
+        outboxEventPort.save(new OutboxEvent(eventId, Constant.USER, String.valueOf(shopId),
+                ShopLockChangedEventDto.EVENT_TYPE,
+                new ShopLockChangedEventDto(eventId, ShopLockChangedEventDto.EVENT_TYPE, shopId, locked, now), now));
     }
 }

@@ -158,7 +158,7 @@ public class ProductInternalService implements GetVariantInfoUseCase, CheckProdu
         VariantInfoResponse.Sale sale = applicableSale == null ? null
                 : new VariantInfoResponse.Sale(applicableSale.salePrice(), applicableSale.endsAt(), remainingQuantity);
         return  new VariantInfoResponse(
-                view.variantId(), view.productId(), view.shopId(),
+                view.variantId(), view.productId(), view.shopId(), view.shopLocked(),
                 shopInfo == null ? null : shopInfo.shopName(), view.productName(),
                 imgUrl, hasOption, options, view.price(), view.stockQuantity(),
                 view.status(), sale);

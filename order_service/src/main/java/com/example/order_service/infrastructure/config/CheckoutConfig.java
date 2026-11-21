@@ -83,9 +83,8 @@ public class CheckoutConfig {
     }
 
     @Bean
-    CheckoutItemsService checkoutItemsService(ProductClientPort productClientPort, Clock clock,
-            ShopAvailabilityService shopAvailabilityService) {
-        return new CheckoutItemsService(productClientPort, clock, shopAvailabilityService);
+    CheckoutItemsService checkoutItemsService(ProductClientPort productClientPort, Clock clock) {
+        return new CheckoutItemsService(productClientPort, clock);
     }
 
     @Bean

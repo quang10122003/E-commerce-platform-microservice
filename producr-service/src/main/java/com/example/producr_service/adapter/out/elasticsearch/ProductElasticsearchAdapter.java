@@ -1,6 +1,5 @@
 package com.example.producr_service.adapter.out.elasticsearch;
 
-import java.util.Set;
 
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregation;
@@ -72,7 +71,7 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
 
 //    hàm tìm kiếm của trang tìm kiếm user
     @Override
-    public ProductCatalogSearchResult search(ProductScrollFilter filter, Set<Long> excludedShopIds) {
+    public ProductCatalogSearchResult search(ProductScrollFilter filter) {
         // Lấy dư một item để xác định còn batch kế tiếp hay không.
         Pageable pageable = PageRequest.of(
                 0,
@@ -82,11 +81,8 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
         NativeQueryBuilder queryBuilder = NativeQuery.builder()
                 .withQuery(boolQueryBuilder -> {
                     BoolQuery.Builder bool = buildProductQuery(filter.keyword(), filter.categoryId());
-                    if (!excludedShopIds.isEmpty()) {
-                        bool.mustNot(query -> query.terms(terms -> terms
-                                .field(ProductSearchDocumentFields.USER_ID)
-                                .terms(values -> values.value(excludedShopIds.stream().map(FieldValue::of).toList()))));
-                    }
+                    bool.mustNot(query -> query.term(term -> term
+                            .field(ProductSearchDocumentFields.SHOP_LOCKED).value(true)));
                     if (filter.minPrice() != null) {
                         bool.filter(range -> range.range(rangeQuery -> rangeQuery
                                 .number(numberRange -> numberRange
@@ -105,10 +101,10 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
                         ));
                     }
 
-                    if (!filter.locations().isEmpty()) {
+                    if (!filter.locationCodes().isEmpty()) {
                         bool.filter(terms -> terms.terms(termsQuery -> termsQuery
-                                .field(ProductSearchDocumentFields.LOCATION)
-                                .terms(values -> values.value(filter.locations().stream()
+                                .field(ProductSearchDocumentFields.LOCATION_CODE)
+                                .terms(values -> values.value(filter.locationCodes().stream()
                                         .map(FieldValue::of)
                                         .toList()))
                         ));

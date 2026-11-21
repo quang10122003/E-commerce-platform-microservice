@@ -16,12 +16,16 @@ final class ProductSyncEvents {
     }
 
     static void save(OutboxPort outboxPort, Clock clock, Long productId) {
-        String aggregateId = String.valueOf(productId);
-        outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT, aggregateId,
-                ProductUpdatedOutboxPayload.EVENT_TYPE, new ProductUpdatedOutboxPayload(productId),
-                LocalDateTime.now(clock)));
-        outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT, aggregateId,
+        saveSearchIndexSync(outboxPort, clock, productId);
+        outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT, String.valueOf(productId),
                 ProductEmbeddingSyncOutboxPayload.EVENT_TYPE, new ProductEmbeddingSyncOutboxPayload(productId),
+                LocalDateTime.now(clock)));
+    }
+
+    // Chỉ đồng bộ document tìm kiếm khi thay đổi không ảnh hưởng nội dung dùng để tạo embedding.
+    static void saveSearchIndexSync(OutboxPort outboxPort, Clock clock, Long productId) {
+        outboxPort.save(new OutboxEventDto(UUID.randomUUID(), Constant.PRODUCT, String.valueOf(productId),
+                ProductUpdatedOutboxPayload.EVENT_TYPE, new ProductUpdatedOutboxPayload(productId),
                 LocalDateTime.now(clock)));
     }
 }

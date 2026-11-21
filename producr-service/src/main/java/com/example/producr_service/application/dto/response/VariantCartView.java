@@ -9,6 +9,7 @@ public record VariantCartView(
         Long variantId,
         Long productId,
         Long shopId,
+        boolean shopLocked,
         String productName,
         String productImageUrl,
         ProductStatus status,

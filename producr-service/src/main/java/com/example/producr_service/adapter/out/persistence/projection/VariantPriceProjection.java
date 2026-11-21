@@ -9,5 +9,6 @@ public interface VariantPriceProjection {
     BigDecimal getPrice();
     int getStockQuantity();
     ProductStatus getProductStatus();
+    boolean getShopLocked();
 }
 

@@ -36,6 +36,8 @@ public class Product {
     private String description;
     private String imageUrl;
     private final String locationSnapshot;
+    // Mã tỉnh theo Provinces API để lọc ổn định; locationSnapshot chỉ dùng hiển thị.
+    private final Integer locationCode;
     // Lưu đường dẫn ảnh bìa trên storage.
     private String objectPath;
     private ProductStatus status;
@@ -43,6 +45,7 @@ public class Product {
     private long totalSold;
     // Số đánh giá và điểm trung bình do Order Service tính rồi gửi qua event; chưa có đánh giá thì là 5 sao.
     private int reviewCount;
+    private boolean shopLocked;
     private BigDecimal ratingAverage = BigDecimal.valueOf(500, 2);
     private final LocalDateTime createdAt;
 
@@ -79,13 +82,13 @@ public class Product {
                    String description, String imageUrl, LocalDateTime createdAt,
                    long totalSold, String objectPath) {
         this(id, userId, categoryId, categoryName, brandId, brandName, name,
-                description, imageUrl, createdAt, totalSold, objectPath, null);
+                description, imageUrl, createdAt, totalSold, objectPath, null, null);
     }
 
     public Product(Long id, Long userId, Long categoryId, String categoryName,
                    Long brandId, String brandName, String name,
                    String description, String imageUrl, LocalDateTime createdAt,
-                   long totalSold, String objectPath, String locationSnapshot) {
+                   long totalSold, String objectPath, String locationSnapshot, Integer locationCode) {
         if (userId == null) {
             throw new BusinessException(DomainProductError.PRODUCT_USER_REQUIRED);
         }
@@ -120,6 +123,7 @@ public class Product {
         this.description = description;
         this.imageUrl = imageUrl;
         this.locationSnapshot = locationSnapshot;
+        this.locationCode = locationCode;
         this.objectPath = objectPath;
         this.createdAt = createdAt;
         this.totalSold = totalSold;
@@ -167,6 +171,10 @@ public class Product {
         return locationSnapshot;
     }
 
+    public Integer getLocationCode() {
+        return locationCode;
+    }
+
     public String getObjectPath() {
         return objectPath;
     }
@@ -187,6 +195,14 @@ public class Product {
         }
         this.reviewCount = reviewCount;
         this.ratingAverage = ratingAverage;
+    }
+
+    public void restoreShopLock(boolean shopLocked) {
+        this.shopLocked = shopLocked;
+    }
+
+    public boolean isShopLocked() {
+        return shopLocked;
     }
 
     public int getReviewCount() {

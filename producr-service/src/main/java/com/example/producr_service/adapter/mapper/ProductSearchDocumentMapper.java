@@ -36,6 +36,8 @@ public class ProductSearchDocumentMapper {
                 .attributes(toAttributeDocuments(product))
                 .variants(toVariantDocuments(product))
                 .location(product.getLocationSnapshot())
+                .locationCode(product.getLocationCode())
+                .shopLocked(product.isShopLocked())
                 .build();
     }
 

@@ -114,6 +114,7 @@ public interface FlashSaleItemJpa extends JpaRepository<FlashSaleItemEntity, Lon
               and c.endsAt > :now
               and i.status = :itemStatus
               and p.status = :productStatus
+              and p.shopLock = false
               and (:categoryId is null or p.category.id = :categoryId)
             order by i.id asc
             """)

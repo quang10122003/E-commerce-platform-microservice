@@ -4,4 +4,4 @@ import com.example.producr_service.domain.model.ProductStatus;
 import java.math.BigDecimal;
 
 public record VariantPriceView(Long variantId, BigDecimal price, int stockQuantity, ProductStatus productStatus,
-                               Long shopId) {}
+                               Long shopId, boolean shopLocked) {}

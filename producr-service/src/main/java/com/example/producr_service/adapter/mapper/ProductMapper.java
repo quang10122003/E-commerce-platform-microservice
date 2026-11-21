@@ -74,6 +74,7 @@ public class ProductMapper {
         entity.setDescription(product.getDescription());
         entity.setImageUrl(product.getImageUrl());
         entity.setLocationSnapshot(product.getLocationSnapshot());
+        entity.setLocationCode(product.getLocationCode());
         entity.setObjectPath(product.getObjectPath());
         entity.setUpdatedAt(LocalDateTime.now(clock));
 
@@ -164,6 +165,7 @@ public class ProductMapper {
                 .description(product.getDescription())
                 .imageUrl(product.getImageUrl())
                 .locationSnapshot(product.getLocationSnapshot())
+                .locationCode(product.getLocationCode())
                 .objectPath(product.getObjectPath())
                 .storageBucket(StorageBucket.PRODUCT_IMAGES)
                 .totalSold(product.getTotalSold())
@@ -244,9 +246,10 @@ public class ProductMapper {
                 productEntity.getBrand() != null ? productEntity.getBrand().getName() : null,
                 productEntity.getName(), productEntity.getDescription(), productEntity.getImageUrl(),
                 productEntity.getCreatedAt(), productEntity.getTotalSold(),
-                productEntity.getObjectPath(), productEntity.getLocationSnapshot()
+                productEntity.getObjectPath(), productEntity.getLocationSnapshot(), productEntity.getLocationCode()
         );
         product.restoreReviewSummary(productEntity.getReviewCount(), productEntity.getRatingAverage());
+        product.restoreShopLock(productEntity.isShopLock());
         // Đồng bộ trạng thái đã lưu từ persistence về domain aggregate.
         if (productEntity.getStatus() == ProductStatus.INACTIVE) {
             product.deactivate();

@@ -79,6 +79,9 @@ public class UserEntity implements UserDetails {
     @Column(name = "shop_address", columnDefinition = "TEXT")
     String shopAddress;
 
+    @Column(name = "shop_province_code")
+    Integer shopProvinceCode;
+
     @Column(name = "shop_created_at", columnDefinition = "TIMESTAMP")
     Instant shopCreatedAt;
 

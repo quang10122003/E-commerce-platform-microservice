@@ -50,7 +50,7 @@ public class ProductCreationService {
                 brand == null ? null : brand.getId(), brand == null ? null : brand.getName(),
                 request.getName(), request.getDescription(), request.getImageUrl(),
                 null, 0L, request.getObjectPath(),
-                locationSnapshot
+                locationSnapshot, userInternaInfoRespone.shopProvinceCode()
         );
 
         //list  TẤT CẢ các valuesOfThisAttribute lại, theo đúng thứ tự attribute

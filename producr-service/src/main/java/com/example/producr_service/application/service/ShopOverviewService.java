@@ -31,14 +31,14 @@ public class ShopOverviewService implements GetShopOverviewUseCase, GetShopProdu
 
     @Override
     public PageResponse<ProductSearchResponse> getShopProducts(Long shopId, ShopProductFilter filter) {
-        shopAccessService.requireAvailableShops(List.of(shopId));
+        shopAccessService.requireAvailableShop(shopId);
         return productService.getShopProducts(shopId, filter);
     }
 
     // 10 sản phẩm nổi bật của shop: bán chạy nhất, cùng số bán thì điểm cao hơn, rồi nhiều đánh giá hơn.
     @Override
     public List<ProductSearchResponse> getShopTopProducts(Long shopId) {
-        shopAccessService.requireAvailableShops(List.of(shopId));
+        shopAccessService.requireAvailableShop(shopId);
         return productRepositoryPort.findTopSellingProducts(shopId, Constant.SHOP_TOP_PRODUCTS_LIMIT);
     }
 

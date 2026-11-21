@@ -1,6 +1,5 @@
 package com.example.producr_service.application.service;
 
-import java.util.Set;
 
 import com.example.producr_service.domain.model.FlashSaleCampaign;
 import com.example.producr_service.domain.model.FlashSaleItem;
@@ -92,7 +91,9 @@ public class FlashSaleItemService implements UpdateFlashSaleItemStatusUseCase, R
     public VariantSaleResponse getVariantSale(Long productId, Long variantId) {
         VariantPriceView variant = productVariantRepoPort.findPriceView(productId, variantId)
                 .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_VARIANT_NOT_FOUND));
-        shopAccessService.requireAvailableShops(List.of(variant.shopId()));
+        if (variant.shopLocked()) {
+            throw new BusinessException(ProductError.PRODUCT_UNAVAILABLE);
+        }
         // Không hoạt động và không tồn tại là hai lỗi khác nhau, không gộp chung khi tra ưu đãi.
         if (variant.productStatus() != ProductStatus.ACTIVE) {
             throw new BusinessException(ProductError.PRODUCT_INACTIVE);
@@ -184,9 +185,6 @@ public class FlashSaleItemService implements UpdateFlashSaleItemStatusUseCase, R
     private UserFlashSaleResponse getSaleItems(Long categoryId, boolean topSellingOnly) {
         LocalDateTime now = LocalDateTime.now(clock);
         List<UserFlashSaleItemView> items = flashSaleItemRepositoryPort.findItemsInOngoingCampaigns(categoryId, now);
-        Set<Long> availableShopIds = shopAccessService.findAvailableShopIdsForDisplay(
-                items.stream().map(item -> item.variant().shopId()).toList());
-        items = items.stream().filter(item -> availableShopIds.contains(item.variant().shopId())).toList();
         if (items.isEmpty()) {
             return new UserFlashSaleResponse(null, List.of());
         }

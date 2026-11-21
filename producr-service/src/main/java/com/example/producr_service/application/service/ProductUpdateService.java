@@ -92,7 +92,9 @@ public class ProductUpdateService {
                 request.name(), request.description(),
                 newCover == null ? current.getImageUrl() : newCover.publicUrl(),
                 current.getCreatedAt(), current.getTotalSold(),
-                newCover == null ? current.getObjectPath() : newCover.objectPath(), current.getLocationSnapshot());
+                newCover == null ? current.getObjectPath() : newCover.objectPath(), current.getLocationSnapshot(),
+                current.getLocationCode());
+        updated.restoreShopLock(current.isShopLocked());
         // Constructor mặc định ACTIVE nên phải giữ trạng thái tạm ẩn của sản phẩm cũ.
         if (current.getStatus() == ProductStatus.INACTIVE) updated.deactivate();
 

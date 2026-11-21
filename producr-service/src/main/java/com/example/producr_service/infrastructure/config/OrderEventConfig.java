@@ -4,7 +4,9 @@ import com.example.producr_service.application.port.in.ProcessAuthEventUseCase;
 import com.example.producr_service.application.service.AuthEventApplicationService;
 import com.example.producr_service.application.service.ProductRecommendationService;
 import com.example.producr_service.application.strategy.eventKafka.UserDeletedEventHandler;
-import com.example.producr_service.application.service.ShopAccessService;
+import com.example.producr_service.application.strategy.eventKafka.ShopLockChangedEventHandler;
+import com.example.producr_service.application.service.ProductShopLockService;
+import com.example.producr_service.application.port.out.cache.CachePort;
 
 import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.port.in.ProcessOrderEventUseCase;
@@ -57,9 +59,9 @@ public class OrderEventConfig {
             FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort,
             FlashSaleItemRepositoryPort flashSaleItemRepositoryPort,
             OutboxPort outbox, MapJsonToObjPort json, Clock clock,
-            ShopAccessService shopAccessService, ProductBehaviorRepositoryPort productBehaviorRepositoryPort) {
+            ProductBehaviorRepositoryPort productBehaviorRepositoryPort) {
         return new CheckoutInventoryService(inbox, productRepositoryPort, productVariantRepoPort,
-                flashSaleCampaignRepositoryPort, flashSaleItemRepositoryPort, outbox, json, clock, shopAccessService,
+                flashSaleCampaignRepositoryPort, flashSaleItemRepositoryPort, outbox, json, clock,
                 productBehaviorRepositoryPort);
     }
 
@@ -97,6 +99,18 @@ public class OrderEventConfig {
     @Bean
     ProcessAuthEventUseCase processAuthEventUseCase(KafkaEventHandlerRegistry registry) {
         return new AuthEventApplicationService(registry);
+    }
+
+    @Bean
+    ProductShopLockService productShopLockService(ProductRepositoryPort productRepositoryPort, OutboxPort outbox,
+                                                  CachePort cachePort, Clock clock) {
+        return new ProductShopLockService(productRepositoryPort, outbox, cachePort, clock);
+    }
+
+    @Bean
+    ShopLockChangedEventHandler shopLockChangedEventHandler(MapJsonToObjPort mapJsonToObjPort,
+                                                            ProductShopLockService productShopLockService) {
+        return new ShopLockChangedEventHandler(mapJsonToObjPort, productShopLockService);
     }
 
     @Bean

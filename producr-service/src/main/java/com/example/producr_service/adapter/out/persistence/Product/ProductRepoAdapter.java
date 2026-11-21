@@ -223,6 +223,12 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     }
 
     @Override
+    public List<Long> updateShopLock(Long shopId, boolean locked, LocalDateTime changedAt) {
+        return productJpa.updateShopLock(shopId, locked, changedAt) == 0
+                ? List.of() : productJpa.findIdsByShopLockChangedAt(shopId, changedAt);
+    }
+
+    @Override
     public List<Long> findIdsByBrandId(Long brandId) {
         return productJpa.findIdsByBrandId(brandId);
     }

@@ -81,17 +81,12 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                         ProductVariantInfoResponse::productVariantId,
                         productInfo -> productInfo,
                         (existing, duplicate) -> existing));
-        Map<Long, Boolean> shopLocks = shopAvailabilityService.getShopLocks(productInfoByVariantId.values().stream()
-                .map(ProductVariantInfoResponse::shopId).toList());
-
         Instant now = clock.instant();
         // Thiếu metadata sản phẩm chỉ ẩn item khỏi response, không xóa dữ liệu giỏ đã lưu.
         List<CartResponse.CartItemInfo> responseItems = cart.getItems().stream()
                 .filter(cartItem -> productInfoByVariantId.containsKey(cartItem.getProductVariantId()))
                 .map(cartItem -> toCartItemInfo(
-                        cartItem,
-                        productInfoByVariantId.get(cartItem.getProductVariantId()),
-                        shopLocks.get(productInfoByVariantId.get(cartItem.getProductVariantId()).shopId()), now))
+                        cartItem, productInfoByVariantId.get(cartItem.getProductVariantId()), now))
                 .toList();
 
         log.debug("Đã lấy giỏ hàng: user_id={}, cart_id={}, total_items={}",
@@ -105,7 +100,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
     }
 
     private CartResponse.CartItemInfo toCartItemInfo(CartItem cartItem, ProductVariantInfoResponse productInfo,
-                                                   Boolean shopLock, Instant now) {
+                                                   Instant now) {
         List<CartResponse.VariantOptions> variantOptions = productInfo.variantOptions().stream()
                 .map(option -> new CartResponse.VariantOptions(option.name(), option.value()))
                 .toList();
@@ -123,7 +118,7 @@ public class CartService implements GetCartUseCase, AddCartItemUseCase,
                 .productVariantId(productInfo.productVariantId())
                 .shopId(productInfo.shopId())
                 .shopName(productInfo.shopName())
-                .shopLock(shopLock)
+                .shopLock(productInfo.shopLocked())
                 .productName(productInfo.productName())
                 .imageUrl(productInfo.imageUrl())
                 .hasOption(productInfo.hasOption())

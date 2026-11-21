@@ -9,6 +9,7 @@ import com.example.auth_service.application.service.ShopProfileService;
 import com.example.auth_service.application.service.UserAddressService;
 import com.example.auth_service.application.strategy.outbox.StoredFilesDeleteOutboxHandler;
 import com.example.auth_service.application.port.out.OrderActivityPort;
+import com.example.auth_service.application.strategy.outbox.ShopLockChangedOutboxHandler;
 import com.example.auth_service.application.strategy.outbox.UserDeletedOutboxHandler;
 import com.example.auth_service.application.port.in.ChecktokenUseCase;
 import com.example.auth_service.application.port.in.LoginUseCase;
@@ -84,6 +85,11 @@ public class AuthConfig {
     @Bean
     EventHandler<OutboxEventDto> userDeletedOutboxHandler(AuthEventPublisherPort authEventPublisherPort) {
         return new UserDeletedOutboxHandler(authEventPublisherPort);
+    }
+
+    @Bean
+    EventHandler<OutboxEventDto> shopLockChangedOutboxHandler(AuthEventPublisherPort authEventPublisherPort) {
+        return new ShopLockChangedOutboxHandler(authEventPublisherPort);
     }
 
     @Bean(name = {"authServiceInternal", "getPublicShopInfoUseCase", "internalGetUserInfoUseCase"})

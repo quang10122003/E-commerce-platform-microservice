@@ -21,6 +21,8 @@ public final class ProductSearchDocumentFields {
     public static final String ATTRIBUTES = "attributes";
     public static final String VARIANTS = "variants";
     public static final String LOCATION = "location";
+    public static final String LOCATION_CODE = "locationCode";
+    public static final String SHOP_LOCKED = "shopLocked";
 
     private ProductSearchDocumentFields() {
     }

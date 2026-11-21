@@ -25,7 +25,8 @@ public class ProductVariantMapper {
 
     public VariantPriceView toPriceView(VariantPriceProjection projection) {
         return new VariantPriceView(projection.getVariantId(), projection.getPrice(),
-                projection.getStockQuantity(), projection.getProductStatus(), projection.getShopId());
+                projection.getStockQuantity(), projection.getProductStatus(), projection.getShopId(),
+                projection.getShopLocked());
     }
 
     // Chuyển phân loại persistence cùng thuộc tính và ảnh sang domain model.
@@ -78,6 +79,7 @@ public class ProductVariantMapper {
                 variant.getId(),
                 variant.getProduct().getId(),
                 variant.getProduct().getUserId(),
+                variant.getProduct().isShopLock(),
                 variant.getProduct().getName(),
                 variant.getProduct().getImageUrl(),
                 variant.getProduct().getStatus(),

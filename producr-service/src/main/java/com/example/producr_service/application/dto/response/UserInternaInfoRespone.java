@@ -10,6 +10,7 @@ public record UserInternaInfoRespone(
         String shopName,
         String shopPhone,
         String shopAddress,
+        Integer shopProvinceCode,
         boolean isShopLock
 ) {
 }

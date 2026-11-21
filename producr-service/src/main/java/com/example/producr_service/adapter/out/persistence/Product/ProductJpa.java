@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +28,18 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
 
     @Query("select p.id from ProductEntity p where p.category.id = :categoryId")
     List<Long> findIdsByCategoryId(@Param("categoryId") Long categoryId);
+
+    // So sánh mốc thời gian ngay trong lệnh update để event cũ đến sau không ghi đè trạng thái mới.
+    @Modifying
+    @Query("""
+            update ProductEntity p set p.shopLock = :locked, p.shopLockChangedAt = :changedAt
+            where p.userId = :shopId and (p.shopLockChangedAt is null or p.shopLockChangedAt < :changedAt)
+            """)
+    int updateShopLock(@Param("shopId") Long shopId, @Param("locked") boolean locked,
+                       @Param("changedAt") LocalDateTime changedAt);
+
+    @Query("select p.id from ProductEntity p where p.userId = :shopId and p.shopLockChangedAt = :changedAt")
+    List<Long> findIdsByShopLockChangedAt(@Param("shopId") Long shopId, @Param("changedAt") LocalDateTime changedAt);
 
     @Query("select p.id from ProductEntity p where p.brand.id = :brandId")
     List<Long> findIdsByBrandId(@Param("brandId") Long brandId);
@@ -98,7 +111,7 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
             join p.category c
             left join p.brand b
             join p.variants v
-            where p.id in :productIds and p.status = :status
+            where p.id in :productIds and p.status = :status and p.shopLock = false
               and exists (select available.id from ProductVariantEntity available
                           where available.product = p and available.stockQuantity > 0)
             group by p.id, p.name, p.locationSnapshot, p.userId, p.description,
@@ -117,7 +130,7 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
             JOIN p.category c
             LEFT JOIN p.brand b
             LEFT JOIN p.variants v
-            WHERE p.status = :status AND (:shopId IS NULL OR p.userId = :shopId)
+            WHERE p.status = :status AND p.shopLock = false AND (:shopId IS NULL OR p.userId = :shopId)
             GROUP BY p.id, p.name, p.locationSnapshot, p.userId, p.description, c.id, c.name,
                      b.id, b.name, p.status, p.imageUrl, p.totalSold, p.ratingAverage, p.reviewCount
             ORDER BY p.totalSold DESC, p.ratingAverage DESC, p.reviewCount DESC, p.id DESC

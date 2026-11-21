@@ -111,8 +111,7 @@ public class ProductRecommendationService implements RecordProductViewUseCase, G
         int pageSize = pageQuery.size();
         Long userId = currentUserPort.getUserInfo().userId();
         List<Long> validIds = filterEligibleIds(userId, getOrBuildIds(userId), clock.instant());
-        Set<Long> displayableIds = productService.filterAvailableShopProducts(
-                productRepositoryPort.findAvailableSearchItemsByIds(validIds)).stream()
+        Set<Long> displayableIds = productRepositoryPort.findAvailableSearchItemsByIds(validIds).stream()
                 .map(ProductSearchResponse::id).collect(Collectors.toSet());
         validIds = validIds.stream().filter(displayableIds::contains).toList();
 
@@ -264,8 +263,7 @@ public class ProductRecommendationService implements RecordProductViewUseCase, G
         }
 
         // chỉ lấy sản phẩm active
-        Set<Long> availableIds = productService.filterAvailableShopProducts(
-                productRepositoryPort.findAvailableSearchItemsByIds(candidateIds)).stream()
+        Set<Long> availableIds = productRepositoryPort.findAvailableSearchItemsByIds(candidateIds).stream()
                 .map(ProductSearchResponse::id).collect(Collectors.toSet());
         List<Long> selectedIds = candidateIds.stream()
                 .filter(availableIds::contains)

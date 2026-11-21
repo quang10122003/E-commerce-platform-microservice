@@ -10,6 +10,7 @@ public record ProductVariantInfoResponse(
         Long productVariantId,
         Long productId,
         Long shopId,
+        boolean shopLocked,
         String shopName,
         String productName,
         String imageUrl,

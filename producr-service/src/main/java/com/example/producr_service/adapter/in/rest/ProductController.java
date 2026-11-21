@@ -160,7 +160,7 @@ public class ProductController {
             @RequestParam(required = false) @DecimalMin("0") BigDecimal minPrice,
             @RequestParam(required = false) @DecimalMin("0") BigDecimal maxPrice,
             @RequestParam(required = false) String cursor,
-            @RequestParam(required = false) List<String> locations,
+            @RequestParam(required = false) List<Integer> locationCodes,
             @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size,
             @RequestParam(name = "sort", defaultValue = "RELEVANCE") ProductSortOption sortOption
     ) {
@@ -171,7 +171,7 @@ public class ProductController {
                 minPrice,
                 maxPrice,
                 cursor,
-                locations,
+                locationCodes,
                 size,
                 sortOption
         );

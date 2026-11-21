@@ -24,6 +24,8 @@ create table users(
 	shop_description text null,
 	shop_phone varchar(32) null,
 	shop_address text null,
+	-- Mã tỉnh theo Provinces API (provinces.open-api.vn), dùng để lọc sản phẩm theo tỉnh.
+	shop_province_code int null,
 	shop_created_at TIMESTAMP NULL DEFAULT NULL,
 	is_shop_lock boolean not null default false,
 	is_locked boolean not null default false,

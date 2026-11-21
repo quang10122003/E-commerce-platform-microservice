@@ -20,6 +20,7 @@ public final class UserInternalInfoResponseMapper {
                 .shopName(user.getShopName())
                 .shopPhone(user.getShopPhone())
                 .shopAddress(user.getShopAddress())
+                .shopProvinceCode(user.getShopProvinceCode())
                 .isShopLock(user.isShopLock())
                 .build();
     }

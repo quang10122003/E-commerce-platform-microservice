@@ -1,6 +1,5 @@
 package com.example.producr_service.application.port.out.ES;
 
-import java.util.Set;
 
 import com.example.producr_service.application.dto.request.ProductScrollFilter;
 import com.example.common.response.PageResponse;
@@ -14,7 +13,7 @@ public interface ProductSearchIndexPort {
 
     void deleteById(Long productId);
 
-    ProductCatalogSearchResult search(ProductScrollFilter filter, Set<Long> excludedShopIds);
+    ProductCatalogSearchResult search(ProductScrollFilter filter);
 
     PageResponse<ProductSearchResponse> searchShopProducts(Long shopId, ShopProductFilter filter);
 }

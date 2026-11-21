@@ -47,6 +47,7 @@ public class ProductVariantRepoAdapter implements ProductVariantRepoPort {
 
     private CheckoutVariantDto toCheckoutVariant(ProductVariantEntity variant) {
         return new CheckoutVariantDto(variant.getProduct().getId(), variant.getProduct().getUserId(),
+                variant.getProduct().isShopLock(),
                 variant.getProduct().getName(), variant.getProduct().getStatus(),
                 json.toJson(saleMapper.toSnapshot(variant).attributes()), variant.getProduct().getImageUrl(),
                 productVariantMapper.toSellerDomain(variant));

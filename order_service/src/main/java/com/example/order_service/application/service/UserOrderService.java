@@ -146,8 +146,7 @@ public class UserOrderService implements GetMyOrdersUseCase, CancelMyOrderUseCas
     // Kiểm tra khóa shop trước khi lock đơn để không giữ khóa DB trong lúc gọi Auth Service.
     private Order lockOrderOfUnlockedShop(Long orderId) {
         Long shopId = currentUserPort.getInfo().userId();
-        // Không có trạng thái shop cũng coi như bị khóa, giống kiểm tra shop khi thêm giỏ hàng.
-        if (!Boolean.FALSE.equals(shopAvailabilityService.getShopLocks(List.of(shopId)).get(shopId))) {
+        if (shopAvailabilityService.isShopLocked(shopId)) {
             throw new BusinessException(OrderError.SHOP_LOCKED);
         }
         return orderRepoPort.findShopOrderForUpdate(orderId, shopId)

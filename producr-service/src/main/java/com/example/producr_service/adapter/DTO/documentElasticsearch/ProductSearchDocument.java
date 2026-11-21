@@ -40,6 +40,12 @@ public class ProductSearchDocument {
     @Field(name = ProductSearchDocumentFields.LOCATION, type = FieldType.Keyword)
     private String location;
 
+    @Field(name = ProductSearchDocumentFields.LOCATION_CODE, type = FieldType.Integer)
+    private Integer locationCode;
+
+    @Field(name = ProductSearchDocumentFields.SHOP_LOCKED, type = FieldType.Boolean)
+    private boolean shopLocked;
+
     @Field(name = ProductSearchDocumentFields.CATEGORY_ID, type = FieldType.Long)
     private Long categoryId;
 

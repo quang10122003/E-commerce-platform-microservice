@@ -123,7 +123,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
             Optional<List<ProductSearchResponse>> cached = cachePort.getList(
                     ProductCacheKeys.TOP_SELLING_PRODUCTS, ProductSearchResponse.class);
             if (cached.isPresent()) {
-                return filterAvailableShopProducts(cached.get());
+                return cached.get();
             }
         } catch (CacheAccessException exception) {
             // Cache không phải nguồn dữ liệu gốc nên Redis lỗi vẫn cho phép đọc MySQL.
@@ -143,7 +143,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
         } catch (CacheAccessException exception) {
             log.warn("Không thể lưu cache sản phẩm bán chạy, vẫn trả kết quả từ database");
         }
-        return filterAvailableShopProducts(products);
+        return products;
     }
 
     // Đọc lại sản phẩm sau commit để chỉ mục không dùng dữ liệu cũ từ event.
@@ -171,7 +171,9 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     public ProductPriceRangeResponse getProductPriceRange(Long productId) {
         Product product = productRepositoryPort.findById(productId)
                 .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
-        shopAccessService.requireAvailableShops(List.of(product.getUserId()));
+        if (product.isShopLocked()) {
+            throw new BusinessException(ProductError.PRODUCT_UNAVAILABLE);
+        }
         Product.PriceRange priceRange = product.getPriceRange();
         return new ProductPriceRangeResponse(product.getId(), priceRange.getMin().getAmount(), priceRange.getMax().getAmount());
     }
@@ -182,13 +184,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
     public UserProductDetailResponse getUserProductDetail(Long productId) {
         Product product = productRepositoryPort.findById(productId)
                 .orElseThrow(() -> new BusinessException(ProductError.PRODUCT_NOT_FOUND));
-        boolean shopLocked = false;
-        try {
-            shopAccessService.requireAvailableShops(List.of(product.getUserId()));
-        } catch (BusinessException exception) {
-            shopLocked = exception.getErrorCode() != ProductError.SHOP_INFO_UNAVAILABLE;
-        }
-        return UserProductDetailMapper.toResponse(product, shopLocked);
+        return UserProductDetailMapper.toResponse(product, product.isShopLocked());
     }
 
     // Chỉ đọc sản phẩm của Shop đang đăng nhập, không nhận shopId từ client.
@@ -287,17 +283,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
             productHelper.validateSearchKeyword(filter.keyword());
         }
         productHelper.validatePriceRange(filter.minPrice(), filter.maxPrice());
-        Set<Long> lockedShopIds;
-        try {
-            lockedShopIds = shopAccessService.findLockedShopIds();
-        } catch (BusinessException exception) {
-            if (exception.getErrorCode() != ProductError.SHOP_INFO_UNAVAILABLE) {
-                throw exception;
-            }
-            log.warn("Không lọc shop khóa khỏi catalog do không kiểm tra được trạng thái shop");
-            lockedShopIds = Set.of();
-        }
-        ProductCatalogSearchResult result = productSearchIndexPort.search(filter, lockedShopIds);
+        ProductCatalogSearchResult result = productSearchIndexPort.search(filter);
         List<ProductSearchResponse> items = applyCatalogDiscounts(result.items());
         Map<Long, ProductBrandOption> brandsById = brandRepositoryPort.findAllById(result.brandIds()).stream()
                 .collect(Collectors.toMap(Brand::getId,
@@ -322,14 +308,7 @@ public class ProductService implements CreateProductUseCase, GetProductsCatalogU
 
     @Transactional(readOnly = true)
     public List<ProductSearchResponse> getAvailableSearchItemsByIds(Collection<Long> productIds) {
-        return applyCatalogDiscounts(filterAvailableShopProducts(
-                productRepositoryPort.findAvailableSearchItemsByIds(productIds)));
-    }
-
-    public List<ProductSearchResponse> filterAvailableShopProducts(List<ProductSearchResponse> items) {
-        Set<Long> available = shopAccessService.findAvailableShopIdsForDisplay(
-                items.stream().map(ProductSearchResponse::UserId).toList());
-        return items.stream().filter(item -> available.contains(item.UserId())).toList();
+        return applyCatalogDiscounts(productRepositoryPort.findAvailableSearchItemsByIds(productIds));
     }
 
     private List<ProductSearchResponse> applyCatalogDiscounts(List<ProductSearchResponse> items) {

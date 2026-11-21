@@ -21,6 +21,8 @@ public class User {
     private String shopDescription;
     private String shopPhone;
     private String shopAddress;
+    // Mã tỉnh theo Provinces API, product-service lưu kèm sản phẩm để lọc theo tỉnh.
+    private Integer shopProvinceCode;
     private Instant shopCreatedAt;
     private boolean shopLock;
     private Set<Role> roles;
@@ -36,7 +38,7 @@ public class User {
 
     public User(Long id, String email, String password, String fullName, String shopName,
                 String shopLogoUrl, String shopDescription, String shopPhone, String shopAddress,
-                Instant shopCreatedAt, boolean shopLock, Set<Role> roles, boolean locked,
+                Integer shopProvinceCode, Instant shopCreatedAt, boolean shopLock, Set<Role> roles, boolean locked,
                 Instant createdAt, Instant updatedAt, Instant deletedAt, String shopLogoObjectPath,
                 String avatarUrl, String avatarObjectPath, AuthProvider provider, String providerId) {
         this.id = id;
@@ -48,6 +50,7 @@ public class User {
         this.shopDescription = shopDescription;
         this.shopPhone = shopPhone;
         this.shopAddress = shopAddress;
+        this.shopProvinceCode = shopProvinceCode;
         this.shopCreatedAt = shopCreatedAt;
         this.shopLock = shopLock;
         this.roles = roles;
@@ -69,7 +72,7 @@ public class User {
             String fullName,
             Set<Role> roles) {
         return new User(null, email, password, fullName, null, null, null, null, null,
-                null, false, roles, false, null, null, null, null, null, null, AuthProvider.LOCAL, null);
+                null, null, false, roles, false, null, null, null, null, null, null, AuthProvider.LOCAL, null);
     }
 
     // Tài khoản tạo qua OAuth không có mật khẩu, chỉ đăng nhập được bằng provider.
@@ -80,7 +83,7 @@ public class User {
             String providerId,
             Set<Role> roles) {
         return new User(null, email, null, fullName, null, null, null, null, null,
-                null, false, roles, false, null, null, null, null, null, null, provider, providerId);
+                null, null, false, roles, false, null, null, null, null, null, null, provider, providerId);
     }
 
     public Long getId() {
@@ -119,6 +122,10 @@ public class User {
         return shopAddress;
     }
 
+    public Integer getShopProvinceCode() {
+        return shopProvinceCode;
+    }
+
     public Instant getShopCreatedAt() {
         return shopCreatedAt;
     }
@@ -129,6 +136,10 @@ public class User {
 
     public Set<Role> getRoles() {
         return roles;
+    }
+
+    public boolean isShop() {
+        return roles.stream().anyMatch(role -> role.getName() == RoleEnum.ROLE_SHOP);
     }
 
     public boolean isLocked() {
@@ -186,7 +197,7 @@ public class User {
     // Chỉ shop còn hoạt động mới được sửa hồ sơ shop.
     public void assertCanEditShop() {
         assertNotDeleted();
-        if (roles.stream().noneMatch(role -> role.getName() == RoleEnum.ROLE_SHOP)) {
+        if (!isShop()) {
             throw new BusinessException(DomainAuthError.SHOP_NOT_FOUND);
         }
         if (shopLock) {
@@ -256,11 +267,15 @@ public class User {
             throw new BusinessException(DomainAuthError.ADMIN_LOCK_FORBIDDEN);
         }
         locked = !locked;
+        // Tài khoản bị khóa thì shop của nó cũng không được bán; mở khóa tài khoản không tự mở shop.
+        if (locked && isShop()) {
+            shopLock = true;
+        }
     }
 
     public void toggleShopLock() {
         assertNotDeleted();
-        if (roles.stream().noneMatch(role -> role.getName() == RoleEnum.ROLE_SHOP)) {
+        if (!isShop()) {
             throw new BusinessException(DomainAuthError.SHOP_NOT_FOUND);
         }
         shopLock = !shopLock;
@@ -272,7 +287,7 @@ public class User {
         if (roles.stream().anyMatch(role -> role.getName() == RoleEnum.ROLE_ADMIN)) {
             throw new BusinessException(DomainAuthError.ADMIN_DELETE_FORBIDDEN);
         }
-        boolean shop = roles.stream().anyMatch(role -> role.getName() == RoleEnum.ROLE_SHOP);
+        boolean shop = isShop();
         email = "deleted-" + id + "@deleted.local";
         password = null;
         fullName = "Người dùng đã xóa";
@@ -286,6 +301,7 @@ public class User {
         shopDescription = null;
         shopPhone = null;
         shopAddress = null;
+        shopProvinceCode = null;
         locked = true;
         shopLock = shop || shopLock;
         deletedAt = now;
