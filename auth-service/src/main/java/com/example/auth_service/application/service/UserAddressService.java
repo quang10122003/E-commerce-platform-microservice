@@ -85,7 +85,9 @@ public class UserAddressService implements GetMyAddressesUseCase, CreateMyAddres
     // Khóa dòng user để các thao tác đổi địa chỉ mặc định cùng lúc không tạo ra hai địa chỉ mặc định.
     private Long lockCurrentUser(String authorizationHeader) {
         Long userId = currentUserId(authorizationHeader);
-        userRepositoryPort.findByIdForUpdate(userId).orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND));
+        userRepositoryPort.findByIdForUpdate(userId)
+                .orElseThrow(() -> new BusinessException(AuthError.USER_NOT_FOUND))
+                .assertUserNotLocked();
         return userId;
     }
 

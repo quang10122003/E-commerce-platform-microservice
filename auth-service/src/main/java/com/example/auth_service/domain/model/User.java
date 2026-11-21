@@ -1,6 +1,7 @@
 package com.example.auth_service.domain.model;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.example.auth_service.domain.error.DomainAuthError;
@@ -271,6 +272,28 @@ public class User {
         if (locked && isShop()) {
             shopLock = true;
         }
+    }
+
+    // Thông tin shop lấy từ đơn đã được admin duyệt; tài khoản bị khóa thì phải mở khóa trước khi lên shop.
+    public void becomeShop(Role shopRole, String shopName, String shopDescription, String shopPhone,
+                           String shopAddress, Integer shopProvinceCode, Instant now) {
+        assertNotDeleted();
+        if (locked) {
+            throw new BusinessException(DomainAuthError.USER_LOCKED);
+        }
+        if (isShop()) {
+            throw new BusinessException(DomainAuthError.ALREADY_SHOP);
+        }
+        this.shopName = shopName;
+        this.shopDescription = shopDescription;
+        this.shopPhone = shopPhone;
+        this.shopAddress = shopAddress;
+        this.shopProvinceCode = shopProvinceCode;
+        this.shopCreatedAt = now;
+        this.shopLock = false;
+        Set<Role> updatedRoles = new HashSet<>(roles);
+        updatedRoles.add(shopRole);
+        this.roles = updatedRoles;
     }
 
     public void toggleShopLock() {

@@ -7,6 +7,7 @@ import com.example.auth_service.application.port.out.storage.StoredFileRollbackP
 import com.example.auth_service.application.service.DeleteStoredFilesService;
 import com.example.auth_service.application.service.ShopProfileService;
 import com.example.auth_service.application.service.UserAddressService;
+import com.example.auth_service.application.service.ShopRequestService;
 import com.example.auth_service.application.strategy.outbox.StoredFilesDeleteOutboxHandler;
 import com.example.auth_service.application.port.out.OrderActivityPort;
 import com.example.auth_service.application.strategy.outbox.ShopLockChangedOutboxHandler;
@@ -183,5 +184,14 @@ public class AuthConfig {
     UserAddressService userAddressService(UserAddressRepositoryPort userAddressRepositoryPort,
                                           UserRepositoryPort userRepositoryPort, TokenServicePort tokenServicePort) {
         return new UserAddressService(userAddressRepositoryPort, userRepositoryPort, tokenServicePort);
+    }
+
+    @Bean(name = {"shopRequestService", "createShopRequestUseCase", "getMyShopRequestUseCase", "cancelShopRequestUseCase",
+            "getShopRequestsUseCase", "approveShopRequestUseCase", "rejectShopRequestUseCase"})
+    ShopRequestService shopRequestService(ShopRequestRepositoryPort shopRequestRepositoryPort,
+                                          UserRepositoryPort userRepositoryPort, TokenServicePort tokenServicePort,
+                                          RoleRepositoryPort roleRepositoryPort, Clock clock) {
+        return new ShopRequestService(shopRequestRepositoryPort, userRepositoryPort, tokenServicePort,
+                roleRepositoryPort, clock);
     }
 }

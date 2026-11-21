@@ -90,3 +90,29 @@ CREATE TABLE user_addresses (
     CONSTRAINT fk_user_addresses_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_user_addresses_user (user_id)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Đơn xin mở shop; giữ lại cả đơn bị từ chối hoặc đã hủy để admin xem lịch sử.
+CREATE TABLE shop_requests (
+    id                BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id           BIGINT        NOT NULL,
+    shop_name         VARCHAR(100)  NOT NULL,
+    shop_description  VARCHAR(2000) NULL,
+    shop_phone        VARCHAR(15)   NOT NULL,
+    -- Địa chỉ tách cột để lúc duyệt ghép đúng dạng "chi tiết, xã, tỉnh" cho product cắt tỉnh.
+    province_code     INT           NOT NULL,
+    province_name     VARCHAR(100)  NOT NULL,
+    ward              VARCHAR(100)  NOT NULL,
+    address_detail    VARCHAR(255)  NOT NULL,
+    status            ENUM('PENDING','APPROVED','REJECTED','CANCELLED') NOT NULL DEFAULT 'PENDING',
+    reject_reason     VARCHAR(500)  NULL,
+    reviewed_by       BIGINT        NULL,
+    reviewed_at       DATETIME(6)   NULL,
+    created_at        DATETIME(6)   NOT NULL,
+    updated_at        DATETIME(6)   NOT NULL,
+    -- Chỉ đơn PENDING có khóa; MySQL cho trùng NULL nên đơn REJECTED/CANCELLED không bị chặn.
+    UNIQUE INDEX uk_shop_requests_pending_user ((CASE WHEN status = 'PENDING' THEN user_id END)),
+    CONSTRAINT fk_shop_requests_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_shop_requests_reviewer FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_shop_requests_status_created (status, created_at),
+    INDEX idx_shop_requests_user (user_id, created_at)
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

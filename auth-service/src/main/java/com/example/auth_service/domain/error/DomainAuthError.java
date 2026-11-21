@@ -12,7 +12,9 @@ public enum DomainAuthError implements ErrorCode {
     PASSWORD_NOT_SUPPORTED("PASSWORD_NOT_SUPPORTED", "Tài khoản đăng nhập bằng Google không dùng mật khẩu", 400),
     INVALID_FULL_NAME("INVALID_FULL_NAME", "Họ và tên không được để trống và tối đa 30 ký tự", 400),
     INVALID_SHOP_NAME("INVALID_SHOP_NAME", "Tên shop không được để trống và tối đa 100 ký tự", 400),
-    INVALID_SHOP_DESCRIPTION("INVALID_SHOP_DESCRIPTION", "Mô tả shop tối đa 2000 ký tự", 400);
+    INVALID_SHOP_DESCRIPTION("INVALID_SHOP_DESCRIPTION", "Mô tả shop tối đa 2000 ký tự", 400),
+    ALREADY_SHOP("ALREADY_SHOP", "Tài khoản đã có quyền shop", 409),
+    SHOP_REQUEST_NOT_PENDING("SHOP_REQUEST_NOT_PENDING", "Đơn đăng ký mở shop không còn ở trạng thái chờ duyệt", 409);
 
     private final String code;
     private final String message;

@@ -4,19 +4,6 @@ CREATE DATABASE notifiservice_db
 
 USE notifiservice_db;
 
-CREATE TABLE notifications (
-                               id BIGINT NOT NULL AUTO_INCREMENT,
-                               user_id BIGINT NOT NULL,
-                               type VARCHAR(50) NOT NULL,
-                               title VARCHAR(255) NOT NULL,
-                               content TEXT NULL,
-                               reference_id BIGINT NULL,
-                               is_read BOOLEAN NOT NULL DEFAULT FALSE,
-                               created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-
-                               PRIMARY KEY (id)
-) ENGINE = InnoDB;
-
 CREATE TABLE banners (
                          id BIGINT NOT NULL AUTO_INCREMENT,
                          name_banner VARCHAR(255) NOT NULL,
