@@ -6,6 +6,7 @@ import com.example.producr_service.domain.model.OutboxStatus;
 import com.example.common.untill.JsonUtils;
 import org.springframework.stereotype.Component;
 
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Component
@@ -31,7 +32,8 @@ public class OutboxEventMapper {
         entity.setRetryCount(event.retryCount());
         entity.setMaxRetry(event.maxRetry());
         entity.setCreatedAt(event.createdAt());
-        entity.setNextAttemptAt(event.nextAttemptAt());
+        // Cột datetime không lưu mili giây nên MySQL làm tròn lên giây kế tiếp; cắt xuống để luồng gửi ngay sau commit khóa được event.
+        entity.setNextAttemptAt(event.nextAttemptAt() == null ? null : event.nextAttemptAt().truncatedTo(ChronoUnit.SECONDS));
         entity.setPublishedAt(event.publishedAt());
         entity.setErrorMessage(event.errorMessage());
         return entity;
