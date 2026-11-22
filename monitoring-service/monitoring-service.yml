@@ -1,0 +1,30 @@
+# Chạy riêng service: docker compose -f monitoring-service/monitoring-service.yml up -d --build
+services:
+  monitoring-service:
+    build:
+      # Context là gốc repo để Dockerfile copy được module common.
+      context: ..
+      dockerfile: monitoring-service/Dockerfile
+    image: ecommerce/monitoring-service:latest
+    container_name: ecom-monitoring-service
+    env_file: .env
+    environment:
+      # Ghi đè giá trị local trong .env để service dùng địa chỉ container trong application-docker.yaml.
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8085:8085"
+    networks:
+      - ecommerce-net
+    # Tự khởi động lại khi bật lên lúc MySQL, Kafka hay Eureka chưa sẵn sàng.
+    deploy:
+      resources:
+        limits:
+          # Chặn một JVM chiếm quá nhiều RAM khi chạy cả hệ thống trên máy dev.
+          memory: 768m
+    restart: on-failure
+
+networks:
+  # Khai báo giống infra: chạy chung thì gộp một mạng, chạy riêng thì dùng lại mạng đã có hoặc tự tạo.
+  ecommerce-net:
+    name: ecommerce-net
+    driver: bridge

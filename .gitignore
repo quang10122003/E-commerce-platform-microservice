@@ -25,3 +25,4 @@ target/
 
 # Dữ liệu seed chứa hash mật khẩu và email thật
 database-seed/
+infra/mysql/init/init.sql

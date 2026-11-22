@@ -1,0 +1,19 @@
+# Hạ tầng dùng chung cho các service; mỗi thành phần khai báo trong <tên thành phần>.yml của thư mục riêng.
+# Chạy: cd infra && docker compose up -d
+name: ecommerce-infra
+
+include:
+  - path: mysql/mysql.yml
+    env_file: .env
+  - redis/redis.yml
+  - kafka/kafka.yml
+  - kafka-ui/kafka-ui.yml
+  - elasticsearch/elasticsearch.yml
+  - elasticvue/elasticvue.yml
+  - path: ngrok/ngrok.yml
+    env_file: .env
+  # prometheus.yml là file compose; cấu hình scrape của Prometheus nằm ở prometheus-config.yml.
+  - path: monitoring/prometheus/prometheus.yml
+    env_file: .env
+  - path: monitoring/grafana/grafana.yml
+    env_file: .env

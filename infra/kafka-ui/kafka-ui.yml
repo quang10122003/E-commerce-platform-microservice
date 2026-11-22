@@ -1,0 +1,18 @@
+services:
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: ecom-kafka-ui
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    ports:
+      - "9000:8080"
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+networks:
+  # Mọi file thành phần khai báo giống nhau để compose gộp thành một mạng chung.
+  ecommerce-net:
+    name: ecommerce-net
+    driver: bridge

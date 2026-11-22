@@ -1,31 +1,32 @@
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
+services:
+  prometheus:
+    image: prom/prometheus:v3.13.5
+    container_name: ecom-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      # Cho phép nạp lại cấu hình bằng POST /-/reload mà không cần restart container.
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus-config.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    # Docker Desktop đã có sẵn host.docker.internal; dòng này để Linux cũng gọi được Eureka và service chạy trên máy thật.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
 
-scrape_configs:
-  - job_name: prometheus
-    static_configs:
-      - targets: ["localhost:9090"]
+volumes:
+  # Giữ tên volume cũ của project ecommerce-monitoring để không mất số liệu đã thu thập.
+  prometheus-data:
+    name: ecommerce-monitoring_prometheus-data
 
-  # Lấy danh sách instance từ Eureka nên thêm, bớt hay đổi cổng service không phải sửa file này.
-  - job_name: eureka-services
-    # Service đã tự gắn nhãn application qua management.metrics.tags; giữ nhãn đó thay vì đổi thành exported_application.
-    honor_labels: true
-    eureka_sd_configs:
-      - server: http://host.docker.internal:8761/eureka
-        refresh_interval: 15s
-    relabel_configs:
-      # Chỉ lấy instance khai báo metadata prometheus.path trong eureka.instance.metadata-map.
-      - source_labels: [__meta_eureka_app_instance_metadata_prometheus_path]
-        regex: .+
-        action: keep
-      - source_labels: [__meta_eureka_app_instance_metadata_prometheus_path]
-        target_label: __metrics_path__
-      - source_labels: [__meta_eureka_app_name]
-        target_label: application
-        action: lowercase
-      # Service đang chạy trên máy thật, IP đăng ký Eureka có thể không gọi được từ container.
-      # Bỏ rule này khi các service cũng chạy trong cùng mạng Docker với Prometheus.
-      - source_labels: [__meta_eureka_app_instance_port]
-        target_label: __address__
-        replacement: host.docker.internal:$1
+networks:
+  # Mọi file thành phần khai báo giống nhau để compose gộp thành một mạng chung.
+  ecommerce-net:
+    name: ecommerce-net
+    driver: bridge

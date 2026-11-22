@@ -1,0 +1,32 @@
+# Bí mật và cấu hình theo máy: truyền vào container bằng biến môi trường lúc chạy, không đóng vào image.
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.jks
+**/*.keystore
+**/*credentials*
+**/*secret*
+
+# Dữ liệu thật (hash mật khẩu, email) và hạ tầng chỉ dùng cho docker compose.
+database-seed/
+infra/
+**/*.sql
+
+# Kết quả build và file của IDE, công cụ cục bộ.
+**/target/
+**/node_modules/
+**/logs/
+**/*.log
+.git/
+.github/
+.idea/
+.vscode/
+.claude/
+.playwright-mcp/
+**/*.iml
+
+# Tài liệu không cần cho build.
+**/*.md
+**/*.docx

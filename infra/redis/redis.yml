@@ -1,0 +1,25 @@
+services:
+  redis:
+    image: redis:7
+    container_name: ecom-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - ecommerce-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+
+networks:
+  # Mọi file thành phần khai báo giống nhau để compose gộp thành một mạng chung.
+  ecommerce-net:
+    name: ecommerce-net
+    driver: bridge

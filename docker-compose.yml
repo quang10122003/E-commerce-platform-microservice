@@ -1,0 +1,85 @@
+# Bật toàn bộ hệ thống (hạ tầng + 7 service) trong mạng ecommerce-net.
+# Chạy: docker compose up -d --build · Một service: docker compose up -d --build auth-service
+name: ecommerce
+
+include:
+  - infra/docker-compose.yml
+  - discovery-server/discovery-server.yml
+  - getway/gateway.yml
+  - auth-service/auth-service.yml
+  - producr-service/product-service.yml
+  - order_service/order-service.yml
+  - notification-service/notification-service.yml
+  - monitoring-service/monitoring-service.yml
+
+# Thứ tự khởi động khi chạy cả hệ thống
+services:
+  gateway:
+    depends_on:
+      redis:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+
+  auth-service:
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+
+  product-service:
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+
+  order-service:
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+
+  notification-service:
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+
+  monitoring-service:
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+
+  kafka-ui:
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  elasticvue:
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  grafana:
+    depends_on:
+      - prometheus

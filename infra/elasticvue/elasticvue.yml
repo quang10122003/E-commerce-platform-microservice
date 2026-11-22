@@ -1,0 +1,15 @@
+services:
+  elasticvue:
+    image: cars10/elasticvue:latest
+    container_name: ecom-elasticvue
+    ports:
+      - "8090:8080"
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+networks:
+  # Mọi file thành phần khai báo giống nhau để compose gộp thành một mạng chung.
+  ecommerce-net:
+    name: ecommerce-net
+    driver: bridge

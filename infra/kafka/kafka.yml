@@ -1,0 +1,40 @@
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: ecom-kafka
+    environment:
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # kafka:29092 cho container trong mạng compose, localhost:9092 cho service chạy trên máy thật.
+      KAFKA_LISTENERS: PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      # Mặc định Kafka lấy heap 1GB; giới hạn lại để chạy chung với các service trên máy dev.
+      KAFKA_HEAP_OPTS: -Xms256m -Xmx512m
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - ecommerce-net
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server kafka:29092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  kafka-data:
+
+networks:
+  # Mọi file thành phần khai báo giống nhau để compose gộp thành một mạng chung.
+  ecommerce-net:
+    name: ecommerce-net
+    driver: bridge
