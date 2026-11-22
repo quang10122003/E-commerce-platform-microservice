@@ -145,8 +145,11 @@ public class AuthApplicationService implements LoginUseCase, RegisterUseCase , R
         if(!tokenServicePort.isRefreshTokenValid(refreshTokenRequest,user)){
            throw  new BusinessException(AuthError.REFRESH_TOKEN_INVALID);
         }
-        Duration ttlRefreshToken = tokenServicePort.getRefreshTokenTtl();
-        blacklistToken(request.refreshToken(), ttlRefreshToken);
+        // SETNX vừa kiểm tra vừa đánh dấu đã dùng: token đã đăng xuất hoặc hai request làm mới đồng thời đều bị từ chối.
+        if (!cachePort.setIfAbsent(AccessControlCacheKeys.blacklistJwt(refreshTokenRequest), "1",
+                tokenServicePort.getRefreshTokenTtl())) {
+            throw new BusinessException(AuthError.REFRESH_TOKEN_INVALID);
+        }
 
         String accessToken = tokenServicePort.generateAccessToken(user);
         String refreshToken = tokenServicePort.generateRefreshToken(user);
