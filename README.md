@@ -67,7 +67,7 @@ Container MySQL chạy các file trong `infra/mysql/init/` **chỉ khi volume d�
 - `infra/mysql/init/init.sql` (tạo database, bảng và dữ liệu mẫu) không được commit vì chứa dữ liệu thật; xin file này từ người quản lý dự án.
 - Nếu không có, chạy lần lượt file schema ở gốc từng service để tạo database và bảng trống: `auth-service/auth-service-db.sql`, `producr-service/product-service-db.sql`, `order_service/order_service-db.sql`, `notification-service/notificartion_db.sql`.
 
-Sau khi nạp lại dữ liệu sản phẩm cần đồng bộ lại index Elasticsearch (`product_search`, `product_embedding`).
+Sau khi nạp lại dữ liệu sản phẩm cần đồng bộ lại index Elasticsearch (`product_search`, `product_embedding`), xem mục [Đồng bộ dữ liệu tìm kiếm](#đồng-bộ-dữ-liệu-tìm-kiếm-elasticsearch).
 
 ---
 
@@ -90,6 +90,28 @@ docker compose down
 ```
 
 Mọi container nằm chung mạng `ecommerce-net`, service tự dùng profile `docker`. Lần đầu build mất vài phút vì tải image Maven/JRE và dependency; các lần sau dùng cache.
+
+### Đồng bộ dữ liệu tìm kiếm (Elasticsearch)
+
+Elasticsearch chỉ tự cập nhật khi sản phẩm được tạo hoặc sửa qua API. Sau khi build và chạy lần đầu, hoặc sau khi nạp lại dữ liệu MySQL hay xóa volume Elasticsearch, chỉ mục tìm kiếm còn trống hoặc thiếu sản phẩm. Khi đó trang tìm kiếm không ra kết quả, và cần gọi API đồng bộ lại từ MySQL.
+
+1. Chờ các service lên đủ: mở `http://localhost:8761`, Eureka phải hiện đủ 7 service `UP`.
+2. Gọi API đồng bộ qua Gateway:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/products/search-index/sync -TimeoutSec 900
+```
+
+Kết quả trả về số sản phẩm đã đồng bộ và danh sách sản phẩm lỗi:
+
+```json
+{ "totalProducts": 500, "syncedProducts": 500, "failedProductIds": [] }
+```
+
+- API tạo lại hai index `product_search` và `product_embedding` theo đúng mapping nếu chưa có, rồi đồng bộ toàn bộ sản phẩm từ MySQL.
+- Embedding được tạo bằng Gemini nên lần đầu có thể mất vài phút. Gemini giới hạn số lần gọi (lỗi 429) nên có thể có sản phẩm nằm trong `failedProductIds`; gọi lại API thì chỉ những sản phẩm này được tạo embedding lại, sản phẩm không đổi nội dung sẽ được bỏ qua.
+- Nếu nhận lỗi 503 hoặc 500 ngay sau khi khởi động, Gateway có thể chưa nhận ra product-service; chờ thêm khoảng 30 giây rồi gọi lại.
+- Kiểm tra số tài liệu trong index: `Invoke-RestMethod http://localhost:9200/product_search/_count`.
 
 ## 2. Chạy local (service trên máy, hạ tầng bằng Docker)
 
