@@ -2,7 +2,6 @@ package com.example.order_service.infrastructure.config;
 
 import com.example.order_service.application.dto.outbox.OutboxEventDto;
 import com.example.order_service.application.strategy.EventHandler;
-import com.example.order_service.application.port.in.ProcessOrderOutboxUseCase;
 import com.example.order_service.application.port.out.kafka.OrderEventPublisherPort;
 import com.example.order_service.application.port.out.outbox.OutboxPort;
 import com.example.order_service.application.registry.OutboxEventHandlerRegistry;
@@ -17,9 +16,10 @@ import java.util.List;
 @Configuration
 @EnableScheduling
 public class OrderOutboxConfig {
+    // Khai báo kiểu cụ thể để một bean phục vụ cả bộ quét outbox lẫn luồng gửi ngay sau commit.
     @Bean
-    ProcessOrderOutboxUseCase processOrderOutboxUseCase(OutboxPort outboxPort,
-                                                       OutboxEventHandlerRegistry registry) {
+    OrderOutboxStatusService processOrderOutboxUseCase(OutboxPort outboxPort,
+                                                      OutboxEventHandlerRegistry registry) {
         return new OrderOutboxStatusService(outboxPort, registry);
     }
 

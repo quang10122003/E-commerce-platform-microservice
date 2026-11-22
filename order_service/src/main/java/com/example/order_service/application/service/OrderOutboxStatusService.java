@@ -2,7 +2,9 @@ package com.example.order_service.application.service;
 
 import com.example.order_service.application.strategy.EventHandler;
 import com.example.order_service.application.dto.outbox.OutboxEventDto;
+import com.example.order_service.application.constant.Constant;
 import com.example.order_service.application.port.in.ProcessOrderOutboxUseCase;
+import com.example.order_service.application.port.in.PublishCheckoutOutboxUseCase;
 import com.example.order_service.application.port.out.outbox.OutboxPort;
 import com.example.order_service.application.registry.OutboxEventHandlerRegistry;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public class OrderOutboxStatusService implements ProcessOrderOutboxUseCase {
+public class OrderOutboxStatusService implements ProcessOrderOutboxUseCase, PublishCheckoutOutboxUseCase {
 
     private final OutboxPort outboxPort;
     private final OutboxEventHandlerRegistry outboxEventHandlerRegistry;
@@ -34,7 +36,20 @@ public class OrderOutboxStatusService implements ProcessOrderOutboxUseCase {
     @Override
     @Transactional
     public boolean processEvent(OutboxEventDto candidate) {
-        // Danh sách đã đọc có thể cũ; chỉ instance giữ khóa mới được chạy handler.
+        return lockAndPublish(candidate);
+    }
+
+    // Chỉ đẩy ngay sự kiện checkout để rút ngắn saga; sự kiện khác vẫn chờ bộ quét như cũ.
+    @Override
+    @Transactional
+    public void publishCheckoutEvent(OutboxEventDto event) {
+        if (Constant.CHECKOUT.equals(event.aggregateType())) {
+            lockAndPublish(event);
+        }
+    }
+
+    private boolean lockAndPublish(OutboxEventDto candidate) {
+        // Danh sách đã đọc có thể cũ; chỉ instance giữ khóa mới được chạy handler, nên gửi ngay và bộ quét không gửi trùng.
         Optional<OutboxEventDto> lockedEvent = outboxPort.lockPendingEvent(candidate.eventId());
         if (lockedEvent.isEmpty()) {
             return false;

@@ -11,6 +11,7 @@ import com.example.order_service.application.port.out.outbox.OutboxPort;
 import com.example.order_service.domain.model.OutboxEvent;
 import com.example.order_service.domain.model.OutboxStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
@@ -27,6 +28,7 @@ public class OutboxEventRepoAdapter implements OutboxPort {
     private final OutboxEventMapper outboxEventMapper;
     private final ObjectMapperPort objectMapperPort;
     private final Clock clock;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public Optional<CheckoutSucceededPayload> findCheckoutSucceeded(Long checkoutId) {
@@ -47,6 +49,8 @@ public class OutboxEventRepoAdapter implements OutboxPort {
     @Override
     public void save(OutboxEventDto event) {
         outboxEventJpa.save(outboxEventMapper.toEntity(event));
+        // Listener chỉ nhận event này sau khi transaction commit, nên không gửi Kafka cho dữ liệu có thể bị rollback.
+        applicationEventPublisher.publishEvent(event);
     }
 
     @Override

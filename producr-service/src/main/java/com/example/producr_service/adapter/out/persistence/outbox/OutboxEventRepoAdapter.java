@@ -7,6 +7,7 @@ import com.example.producr_service.application.constant.Constant;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.common.untill.JsonUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.PageRequest;
 
@@ -24,6 +25,7 @@ public class OutboxEventRepoAdapter implements OutboxPort {
     private final OutboxEventMapper outboxEventMapper;
     private final JsonUtils jsonUtils;
     private final Clock clock;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public Optional<OutboxEventDto> findByEventId(UUID eventId) {
@@ -33,6 +35,8 @@ public class OutboxEventRepoAdapter implements OutboxPort {
     @Override
     public void save(OutboxEventDto event) {
         outboxEventJpa.save(outboxEventMapper.toEntity(event, jsonUtils.toJson(event.payload())));
+        // Listener chỉ nhận event này sau khi transaction commit, nên không gửi Kafka cho dữ liệu có thể bị rollback.
+        applicationEventPublisher.publishEvent(event);
     }
 
     @Override

@@ -3,7 +3,6 @@ package com.example.producr_service.infrastructure.config;
 import com.example.producr_service.application.dto.outbox.OutboxEventDto;
 import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
-import com.example.producr_service.application.port.in.ProcessProductOutboxUseCase;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
 import com.example.producr_service.application.registry.OutboxEventHandlerRegistry;
 import com.example.producr_service.application.service.StoredFileCleaner;
@@ -50,9 +49,9 @@ public class ProductOutboxConfig {
     }
 
 
-    // Cung cấp service quản lý transaction khi job cập nhật trạng thái outbox.
+    // Khai báo kiểu cụ thể để một bean phục vụ cả bộ quét outbox lẫn luồng gửi ngay sau commit.
     @Bean
-    ProcessProductOutboxUseCase processProductOutboxUseCase(
+    ProductOutboxStatusService processProductOutboxUseCase(
             OutboxPort outboxPort,
             OutboxEventHandlerRegistry outboxEventHandlerRegistry
     ) {
