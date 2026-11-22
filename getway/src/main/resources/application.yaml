@@ -54,6 +54,21 @@ spring:
               filters:
                 - name: ApiResponse
 
+            # Đăng nhập và đăng ký giới hạn theo IP để chống dò mật khẩu; route này phải đứng trước route auth-service chung.
+            - id: auth-service-rate-limited
+              uri: lb://auth-service
+              predicates:
+                - Path=/api/auth/login,/api/auth/register
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@clientIpKeyResolver}"
+                    # Mỗi request tốn 6 token, nạp lại 1 token/giây: tối đa 10 lần liên tiếp, sau đó 10 lần mỗi phút.
+                    redis-rate-limiter.replenishRate: 1
+                    redis-rate-limiter.burstCapacity: 60
+                    redis-rate-limiter.requestedTokens: 6
+                - name: ApiResponse
+
             # Auth Service
             - id: auth-service
               uri: lb://auth-service
