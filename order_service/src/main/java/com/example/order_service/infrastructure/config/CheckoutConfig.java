@@ -6,6 +6,7 @@ import com.example.order_service.application.service.ShopAvailabilityService;
 import com.example.order_service.application.dto.outbox.OutboxEventDto;
 import com.example.order_service.application.strategy.EventHandler;
 import com.example.order_service.application.port.out.client.CurrentUserPort;
+import com.example.order_service.application.port.out.flashsale.FlashSaleSlotPort;
 import com.example.order_service.application.port.out.client.ProductClientPort;
 import com.example.order_service.application.service.CheckoutItemsService;
 import com.example.order_service.application.port.out.kafka.OrderEventPublisherPort;
@@ -91,9 +92,10 @@ public class CheckoutConfig {
             CheckoutRepoPort checkoutRepoPort, CheckoutCreationService checkoutCreationService,
             InboxEventPort inbox, OutboxPort outbox, OrderRepoPort orders,
             ShopSnapshotPort shops, ObjectMapperPort json, CheckoutCancellationService cancellation,
-            PaymentRepoPort payments, VnpayPaymentService paymentUrls, Clock clock) {
+            PaymentRepoPort payments, VnpayPaymentService paymentUrls, FlashSaleSlotPort flashSaleSlotPort,
+            Clock clock) {
         return new CheckoutService(currentUserPort, checkoutRepoPort, checkoutCreationService,
-                inbox, outbox, orders, shops, json, cancellation, payments, paymentUrls, clock);
+                inbox, outbox, orders, shops, json, cancellation, payments, paymentUrls, flashSaleSlotPort, clock);
     }
 
     @Bean
@@ -182,8 +184,8 @@ public class CheckoutConfig {
 
     @Bean
     CheckoutCancellationService checkoutCancellationService(CheckoutRepoPort checkoutRepoPort,
-            PaymentRepoPort paymentRepoPort, Clock clock, OutboxPort outbox) {
-        return new CheckoutCancellationService(checkoutRepoPort, paymentRepoPort, clock, outbox);
+            PaymentRepoPort paymentRepoPort, Clock clock, OutboxPort outbox, FlashSaleSlotPort flashSaleSlotPort) {
+        return new CheckoutCancellationService(checkoutRepoPort, paymentRepoPort, clock, outbox, flashSaleSlotPort);
     }
 
     @Bean

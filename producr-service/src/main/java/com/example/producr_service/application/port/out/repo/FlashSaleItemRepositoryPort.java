@@ -31,6 +31,8 @@ public interface FlashSaleItemRepositoryPort {
 
     List<FlashSaleOfferView> findOngoingOffers(Long productId, Long variantId, LocalDateTime now);
 
+    List<FlashSaleOfferView> findAllOngoingOffers(LocalDateTime now);
+
     // Đọc ưu đãi theo lô để không truy vấn riêng cho từng item giỏ hàng.
     List<FlashSaleOfferView> findOngoingOffersByVariantIds(List<Long> variantIds, LocalDateTime now);
 

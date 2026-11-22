@@ -38,6 +38,7 @@ import com.example.order_service.application.port.out.repo.InboxEventPort;
 import com.example.order_service.application.port.out.repo.OrderRepoPort;
 import com.example.order_service.application.dto.outbox.OutboxEventDto;
 import com.example.order_service.application.port.out.outbox.OutboxPort;
+import com.example.order_service.application.port.out.flashsale.FlashSaleSlotPort;
 import com.example.order_service.application.port.out.serialization.ObjectMapperPort;
 import com.example.order_service.application.constant.Constant;
 import lombok.RequiredArgsConstructor;
@@ -74,6 +75,7 @@ public class CheckoutService implements CreateCheckoutUseCase, GetCheckoutUseCas
     private final CheckoutCancellationService cancellation;
     private final PaymentRepoPort payments;
     private final VnpayPaymentService vnpayPaymentService;
+    private final FlashSaleSlotPort flashSaleSlotPort;
     private final Clock clock;
 
     @Override
@@ -95,16 +97,44 @@ public class CheckoutService implements CreateCheckoutUseCase, GetCheckoutUseCas
             }
         }
 
+        Map<Long, Integer> saleQuantities = sumSaleQuantitiesByVariant(request.items());
+        // Trả lời hết suất ngay tại đây để người không còn suất không phải chờ cả hàng đợi saga; DB vẫn là nơi quyết định cuối cùng.
+        if (!saleQuantities.isEmpty() && !flashSaleSlotPort.reserve(idempotencyKey, saleQuantities)) {
+            log.info("Từ chối checkout vì hết suất flash sale: user_id={}, variant_ids={}",
+                    buyer.userId(), saleQuantities.keySet());
+            throw new BusinessException(OrderError.FLASH_SALE_SOLD_OUT);
+        }
         try {
             Checkout checkout = checkoutCreationService.create(request, idempotencyKey, clientIp, buyer);
             return new CreateCheckoutResponse(checkout.getId(), checkout.getStatus(), null, List.of(), null, null);
         } catch (BusinessException exception) {
             if (exception.getErrorCode() != OrderError.CHECKOUT_IDEMPOTENCY_CONFLICT) {
+                releaseSlots(idempotencyKey, saleQuantities);
                 throw exception;
             }
             // Transaction thua tranh chấp phải rollback xong trước khi đọc checkout của request thắng.
             return responseForOwner(checkoutRepoPort.findByIdempotencyKey(idempotencyKey)
                     .orElseThrow(() -> exception), buyer.userId());
+        } catch (RuntimeException exception) {
+            releaseSlots(idempotencyKey, saleQuantities);
+            throw exception;
+        }
+    }
+
+    // Mua sale và mua thường cùng biến thể là hai dòng riêng, chỉ dòng sale tốn suất.
+    private Map<Long, Integer> sumSaleQuantitiesByVariant(List<CheckoutItemDto> items) {
+        Map<Long, Integer> quantities = new TreeMap<>();
+        for (CheckoutItemDto item : items) {
+            if (Boolean.TRUE.equals(item.sale())) {
+                quantities.merge(item.variantId(), item.quantity(), Integer::sum);
+            }
+        }
+        return quantities;
+    }
+
+    private void releaseSlots(String idempotencyKey, Map<Long, Integer> saleQuantities) {
+        if (!saleQuantities.isEmpty()) {
+            flashSaleSlotPort.release(idempotencyKey);
         }
     }
 // phát event yêu cầu prodcut service kiểm tra trừ tồn kho v.v

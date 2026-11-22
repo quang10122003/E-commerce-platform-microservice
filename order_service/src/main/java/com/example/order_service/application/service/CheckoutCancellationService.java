@@ -8,6 +8,7 @@ import com.example.order_service.domain.model.CheckoutStatus;
 import com.example.order_service.domain.model.Payment;
 import com.example.order_service.domain.model.PaymentStatus;
 import com.example.order_service.application.port.out.outbox.OutboxPort;
+import com.example.order_service.application.port.out.flashsale.FlashSaleSlotPort;
 import com.example.order_service.application.dto.outbox.OutboxEventDto;
 import com.example.order_service.application.constant.Constant;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class CheckoutCancellationService {
     private final PaymentRepoPort paymentRepoPort;
     private final Clock clock;
     private final OutboxPort outbox;
+    private final FlashSaleSlotPort flashSaleSlotPort;
 
     @Transactional
     public void cancelInvalidRequest(Long checkoutId, String reason) {
@@ -74,6 +76,8 @@ public class CheckoutCancellationService {
                 now.atZone(clock.getZone()).toOffsetDateTime());
         outbox.save(new OutboxEventDto(eventId, Constant.CHECKOUT, checkoutId.toString(),
                 payload.eventType(), payload, now));
+        // Mọi đường hủy checkout chưa thành đơn đều qua đây, nên trả suất flash sale tại đây; DB đã được Product hoàn trước đó.
+        flashSaleSlotPort.release(checkout.getIdempotencyKey());
         log.info("Đã ghi hủy checkout: checkout_id={}, reason_code={}, reason={}", checkoutId, reasonCode, reason);
     }
 }

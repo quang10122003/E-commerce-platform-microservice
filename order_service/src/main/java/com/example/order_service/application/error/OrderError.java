@@ -14,6 +14,7 @@ public enum OrderError implements ErrorCode {
     ANALYTICS_RANGE_TOO_LONG("ORDER_ANALYTICS_RANGE_TOO_LONG", "Khoảng thời gian thống kê tối đa 366 ngày", 400),
     REVIEW_ORDER_ITEM_NOT_FOUND("REVIEW_ORDER_ITEM_NOT_FOUND", "Không tìm thấy sản phẩm đã mua để đánh giá", 404),
     REVIEW_ALREADY_EXISTS("REVIEW_ALREADY_EXISTS", "Sản phẩm này trong đơn đã được đánh giá", 409),
+    FLASH_SALE_SOLD_OUT("FLASH_SALE_SOLD_OUT", "Sản phẩm flash sale đã hết suất", 409),
     CHECKOUT_IDEMPOTENCY_CONFLICT("CHECKOUT_IDEMPOTENCY_CONFLICT", "Yêu cầu checkout đã được tiếp nhận", 409);
 
     private final String code;

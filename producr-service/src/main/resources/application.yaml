@@ -134,6 +134,8 @@ app:
     fixed-delay-ms: 2000
   flash-sale:
     status-fixed-delay-ms: 5000
+    # Chu kỳ tạo bộ đếm suất flash sale trên Redis cho chiến dịch vừa mở bán hoặc khi Redis mất dữ liệu.
+    slot-init-fixed-delay-ms: 5000
 supabase:
   url: ${SUPABASE_URL}
   service-role-key: ${SUPABASE_SERVICE_ROLE_SECRET_KEY}

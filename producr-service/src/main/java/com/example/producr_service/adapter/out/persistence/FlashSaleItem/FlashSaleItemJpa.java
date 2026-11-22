@@ -100,6 +100,20 @@ public interface FlashSaleItemJpa extends JpaRepository<FlashSaleItemEntity, Lon
             @Param("itemStatus") FlashSaleItemStatus itemStatus,
             @Param("campaignStatus") FlashSaleCampaignStatus campaignStatus);
 
+    @Query("""
+            select v.id as variantId, i.discountPercent as discountPercent,
+                i.registeredQuantity as registeredQuantity, i.soldQuantity as soldQuantity, c.endsAt as endsAt
+            from FlashSaleItemEntity i
+            join i.campaign c join i.variant v join v.product p
+            where p.status = :productStatus and i.status = :itemStatus
+              and c.status = :campaignStatus and c.startsAt <= :now and c.endsAt > :now
+            order by i.id asc
+            """)
+    List<FlashSaleOfferProjection> findAllOngoingOffers(
+            @Param("now") LocalDateTime now, @Param("productStatus") ProductStatus productStatus,
+            @Param("itemStatus") FlashSaleItemStatus itemStatus,
+            @Param("campaignStatus") FlashSaleCampaignStatus campaignStatus);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<FlashSaleItemEntity> findByCampaign_IdAndVariant_Id(Long campaignId, Long variantId);
 

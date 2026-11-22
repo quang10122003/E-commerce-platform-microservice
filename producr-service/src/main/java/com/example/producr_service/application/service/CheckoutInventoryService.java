@@ -18,6 +18,7 @@ import com.example.producr_service.application.dto.saga.CheckoutSucceededPayload
 import com.example.producr_service.application.error.ProductError;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
 import com.example.producr_service.application.port.out.outbox.OutboxPort;
+import com.example.producr_service.application.port.out.cache.FlashSaleSlotPort;
 import com.example.producr_service.application.port.out.repo.FlashSaleCampaignRepositoryPort;
 import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
 import com.example.producr_service.application.port.out.repo.InboxEventPort;
@@ -64,6 +65,7 @@ public class CheckoutInventoryService {
     private final MapJsonToObjPort json;
     private final Clock clock;
     private final ProductBehaviorRepositoryPort productBehaviorRepositoryPort;
+    private final FlashSaleSlotPort flashSaleSlotPort;
 
     // Đơn đã tạo thành công nên lỗi tại đây chỉ rollback cập nhật lượt mua và truyền về Kafka để xử lý DLT.
     @Transactional
@@ -313,6 +315,12 @@ public class CheckoutInventoryService {
         }
         restoreItems(event.eventId(), event.checkoutId(), items);
         decreaseTotalSold(event.eventId(), event.checkoutId(), items);
+        // Đơn đã thành công thì Order không còn giữ suất; Product hoàn quota trong DB nên cũng trả suất trên Redis tại đây.
+        for (CheckoutItemSnapshotDto item : items) {
+            if (item.sale()) {
+                flashSaleSlotPort.release(item.variantId(), item.quantity());
+            }
+        }
         log.info("Đã hoàn tồn kho order bị hủy: event_id={}, checkout_id={}, order_id={}, item_count={}",
                 event.eventId(), event.checkoutId(), event.orderId(), items.size());
     }

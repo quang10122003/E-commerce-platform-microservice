@@ -6,6 +6,7 @@ import com.example.producr_service.application.strategy.eventKafka.UserDeletedEv
 import com.example.producr_service.application.strategy.eventKafka.ShopLockChangedEventHandler;
 import com.example.producr_service.application.service.ProductShopLockService;
 import com.example.producr_service.application.port.out.cache.CachePort;
+import com.example.producr_service.application.port.out.cache.FlashSaleSlotPort;
 
 import com.example.producr_service.application.strategy.EventHandler;
 import com.example.producr_service.application.port.out.Json.MapJsonToObjPort;
@@ -56,10 +57,10 @@ public class OrderEventConfig {
             FlashSaleCampaignRepositoryPort flashSaleCampaignRepositoryPort,
             FlashSaleItemRepositoryPort flashSaleItemRepositoryPort,
             OutboxPort outbox, MapJsonToObjPort json, Clock clock,
-            ProductBehaviorRepositoryPort productBehaviorRepositoryPort) {
+            ProductBehaviorRepositoryPort productBehaviorRepositoryPort, FlashSaleSlotPort flashSaleSlotPort) {
         return new CheckoutInventoryService(inbox, productRepositoryPort, productVariantRepoPort,
                 flashSaleCampaignRepositoryPort, flashSaleItemRepositoryPort, outbox, json, clock,
-                productBehaviorRepositoryPort);
+                productBehaviorRepositoryPort, flashSaleSlotPort);
     }
 
     @Bean

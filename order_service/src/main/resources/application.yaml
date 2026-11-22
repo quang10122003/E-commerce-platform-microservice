@@ -7,6 +7,10 @@
     active: ${SPRING_PROFILES_ACTIVE:local}
   application:
     name: order-service
+  data:
+    redis:
+      # Redis chỉ dùng để giữ suất flash sale; quá thời gian này thì bỏ qua và để saga kiểm tra.
+      timeout: 2s
   servlet:
     multipart:
       # Tối đa 5 ảnh đánh giá, mỗi ảnh 15MB, cộng phần dữ liệu form.

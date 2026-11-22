@@ -111,6 +111,13 @@ public class FlashSaleItemRepoAdapter implements FlashSaleItemRepositoryPort {
     }
 
     @Override
+    public List<FlashSaleOfferView> findAllOngoingOffers(LocalDateTime now) {
+        return flashSaleItemJpa.findAllOngoingOffers(now, ProductStatus.ACTIVE,
+                FlashSaleItemStatus.REGISTERED, FlashSaleCampaignStatus.PUBLISHED).stream()
+                .map(flashSaleItemMapper::toOfferView).toList();
+    }
+
+    @Override
     public Optional<FlashSaleVariantSnapshot> findVariant(Long variantId) {
         return productVariantJpa.findSnapshotById(variantId).map(flashSaleItemMapper::toSnapshot);
     }

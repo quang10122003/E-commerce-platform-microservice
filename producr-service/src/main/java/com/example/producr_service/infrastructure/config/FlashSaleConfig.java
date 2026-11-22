@@ -29,6 +29,8 @@ import com.example.producr_service.application.port.in.PreviewFlashSalePriceUseC
 import com.example.producr_service.application.port.in.GetVariantSaleUseCase;
 import com.example.producr_service.application.port.out.repo.ProductVariantRepoPort;
 import com.example.producr_service.application.port.out.repo.FlashSaleItemRepositoryPort;
+import com.example.producr_service.application.port.out.cache.FlashSaleSlotPort;
+import com.example.producr_service.application.service.FlashSaleSlotService;
 import java.time.Clock;
 
 import com.example.producr_service.application.port.in.ProcessFlashSaleCampaignStatusUseCase;
@@ -46,6 +48,12 @@ public class FlashSaleConfig {
     GetAdminFlashSaleCampaignDetailUseCase getAdminFlashSaleCampaignDetailUseCase(
             FlashSaleCampaignService flashSaleCampaignService) {
         return flashSaleCampaignService;
+    }
+
+    @Bean
+    FlashSaleSlotService flashSaleSlotService(FlashSaleItemRepositoryPort flashSaleItemRepositoryPort,
+            FlashSaleSlotPort flashSaleSlotPort, Clock clock) {
+        return new FlashSaleSlotService(flashSaleItemRepositoryPort, flashSaleSlotPort, clock);
     }
 
     @Bean
