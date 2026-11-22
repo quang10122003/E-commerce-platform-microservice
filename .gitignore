@@ -21,7 +21,6 @@ target/
 # Bỏ qua tài liệu Markdown, ngoại trừ README; file hướng dẫn AI chỉ dùng cục bộ nên không đưa lên git.
 *.[mM][dD]
 !/README.md
-!/MUC_1_4_CONG_NGHE_LY_DO_LUA_CHON.md
 
 # Dữ liệu seed chứa hash mật khẩu và email thật
 database-seed/
