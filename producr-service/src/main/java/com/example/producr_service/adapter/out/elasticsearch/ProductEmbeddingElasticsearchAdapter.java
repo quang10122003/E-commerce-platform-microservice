@@ -11,6 +11,8 @@ import com.example.producr_service.application.constant.Constant;
 import com.example.producr_service.application.dto.embedding.ProductEmbeddingData;
 import com.example.producr_service.application.port.out.embedding.ProductEmbeddingRepositoryPort;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -29,6 +31,15 @@ public class ProductEmbeddingElasticsearchAdapter
     private final ProductEmbeddingRepository repository;
     private final ProductEmbeddingDocumentMapper mapper;
     private final ElasticsearchClient elasticsearchClient;
+    private final ElasticsearchOperations elasticsearchOperations;
+
+    @Override
+    public void ensureIndex() {
+        IndexOperations indexOperations = elasticsearchOperations.indexOps(ProductEmbeddingDocument.class);
+        if (!indexOperations.exists()) {
+            indexOperations.createWithMapping();
+        }
+    }
 
     // lấy các sản phẩm có vector giống vector user nhất dựa vào  chỉ số Cosine bằng thuật toán Cosine Similarity.
     @Override

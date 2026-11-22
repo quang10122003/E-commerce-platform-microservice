@@ -49,13 +49,13 @@ public class ProductSearchDocument {
     @Field(name = ProductSearchDocumentFields.CATEGORY_ID, type = FieldType.Long)
     private Long categoryId;
 
-    @Field(name = ProductSearchDocumentFields.CATEGORY_NAME, type = FieldType.Keyword)
+    @Field(name = ProductSearchDocumentFields.CATEGORY_NAME, type = FieldType.Text)
     private String categoryName;
 
     @Field(name = ProductSearchDocumentFields.BRAND_ID, type = FieldType.Long)
     private Long brandId;
 
-    @Field(name = ProductSearchDocumentFields.BRAND_NAME, type = FieldType.Keyword)
+    @Field(name = ProductSearchDocumentFields.BRAND_NAME, type = FieldType.Text)
     private String brandName;
 
     @Field(name = ProductSearchDocumentFields.STATUS, type = FieldType.Keyword)

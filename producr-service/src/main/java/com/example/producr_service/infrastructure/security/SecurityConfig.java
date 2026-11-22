@@ -40,7 +40,8 @@ public class SecurityConfig {
     };
 
     private static final String[] PUBLIC_POST_ENDPOINTS = {
-            "/api/internal/variants/info"
+            "/api/internal/variants/info",
+            "/api/products/search-index/sync"
     };
 
     public SecurityConfig(JwtAuthFilter jwtAuthFilter) {

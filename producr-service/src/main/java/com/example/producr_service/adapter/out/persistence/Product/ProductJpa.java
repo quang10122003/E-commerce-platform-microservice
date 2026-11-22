@@ -44,6 +44,9 @@ public interface ProductJpa extends JpaRepository<ProductEntity,Long> {
     @Query("select p.id from ProductEntity p where p.brand.id = :brandId")
     List<Long> findIdsByBrandId(@Param("brandId") Long brandId);
 
+    @Query("select p.id from ProductEntity p order by p.id")
+    List<Long> findAllIds();
+
     @Query("select p.category.id as catalogId, count(p.id) as productCount "
             + "from ProductEntity p where p.category.id in :categoryIds group by p.category.id")
     List<ProductCatalogCountProjection> countProductsByCategoryIds(@Param("categoryIds") Collection<Long> categoryIds);

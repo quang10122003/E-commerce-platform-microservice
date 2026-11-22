@@ -9,6 +9,9 @@ import com.example.producr_service.application.dto.response.ProductCatalogSearch
 import com.example.producr_service.domain.model.Product;
 
 public interface ProductSearchIndexPort {
+    // Tạo index theo mapping khai báo nếu chưa có; không gọi thì ES tự đoán kiểu khi nhận document đầu tiên.
+    void ensureIndex();
+
     void index(Product product);
 
     void deleteById(Long productId);

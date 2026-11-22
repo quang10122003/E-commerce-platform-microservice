@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductEmbeddingRepositoryPort {
+    // Tạo index theo mapping khai báo nếu chưa có; vector phải là dense_vector để tìm theo cosine.
+    void ensureIndex();
+
     List<Long> findSimilarProductIds(List<Float> vectorSrc, int limit);
 
     Optional<String> findContentHashByProductId(Long productId);

@@ -28,6 +28,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Component;
@@ -70,6 +71,14 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
     }
 
 //    hàm tìm kiếm của trang tìm kiếm user
+    @Override
+    public void ensureIndex() {
+        IndexOperations indexOperations = elasticsearchOperations.indexOps(ProductSearchDocument.class);
+        if (!indexOperations.exists()) {
+            indexOperations.createWithMapping();
+        }
+    }
+
     @Override
     public ProductCatalogSearchResult search(ProductScrollFilter filter) {
         // Lấy dư một item để xác định còn batch kế tiếp hay không.
@@ -222,7 +231,8 @@ public class ProductElasticsearchAdapter implements ProductSearchIndexPort {
         if (categoryId != null) {
             bool.filter(query -> query.term(term -> term.field(ProductSearchDocumentFields.CATEGORY_ID).value(categoryId)));
         }
-        bool.filter(query -> query.term(term -> term.field(ProductSearchDocumentFields.STATUS + ".keyword")
+        // status khai báo FieldType.Keyword trong ProductSearchDocument nên lọc thẳng, không có trường con .keyword.
+        bool.filter(query -> query.term(term -> term.field(ProductSearchDocumentFields.STATUS)
                 .value(ProductStatus.ACTIVE.name())));
         return bool;
     }

@@ -234,6 +234,11 @@ public class ProductRepoAdapter implements ProductRepositoryPort {
     }
 
     @Override
+    public List<Long> findAllIds() {
+        return productJpa.findAllIds();
+    }
+
+    @Override
     public Map<Long, Long> countProductsByCategoryIds(Collection<Long> categoryIds) {
         if (categoryIds.isEmpty()) {
             return Map.of();

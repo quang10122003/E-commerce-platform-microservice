@@ -72,6 +72,8 @@ public interface ProductRepositoryPort {
 
     List<Long> findIdsByBrandId(Long brandId);
 
+    List<Long> findAllIds();
+
     // Chỉ cập nhật khi event mới hơn lần đổi trước; trả ID sản phẩm đã đổi để đồng bộ chỉ mục.
     List<Long> updateShopLock(Long shopId, boolean locked, LocalDateTime changedAt);
 

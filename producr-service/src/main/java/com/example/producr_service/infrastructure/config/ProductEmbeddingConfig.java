@@ -16,6 +16,10 @@ import org.springframework.web.client.RestClient;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
+import com.example.producr_service.application.port.in.SyncProductSearchIndexUseCase;
+import com.example.producr_service.application.service.ProductSearchIndexSyncService;
+import com.example.producr_service.application.service.ProductService;
+import com.example.producr_service.application.port.out.ES.ProductSearchIndexPort;
 
 @Configuration
 public class ProductEmbeddingConfig {
@@ -27,6 +31,14 @@ public class ProductEmbeddingConfig {
             HtmlTextExtractorPort htmlTextExtractorPort) {
         return new ProductEmbeddingService(productEmbeddingRepositoryPort, textEmbeddingPort,
                 productRepositoryPort, htmlTextExtractorPort);
+    }
+
+    @Bean
+    SyncProductSearchIndexUseCase syncProductSearchIndexUseCase(ProductRepositoryPort productRepositoryPort,
+            ProductService productService, ProductEmbeddingService productEmbeddingService,
+            ProductSearchIndexPort productSearchIndexPort, ProductEmbeddingRepositoryPort productEmbeddingRepositoryPort) {
+        return new ProductSearchIndexSyncService(productRepositoryPort, productService, productEmbeddingService,
+                productSearchIndexPort, productEmbeddingRepositoryPort);
     }
 
     @Bean
