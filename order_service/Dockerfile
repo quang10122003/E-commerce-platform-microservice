@@ -24,6 +24,8 @@ USER spring
 
 ENV SPRING_PROFILES_ACTIVE=docker
 # Heap theo giới hạn bộ nhớ của container; mặc định JVM chỉ lấy 25% nên dễ thiếu heap.
-ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0"
+# JVM mặc định chạy UTC trong container; hibernate.jdbc.time_zone đổi giờ theo múi JVM nên phải cùng giờ Việt Nam, nếu không thời gian ghi DB lệch 7 giờ.
+ENV TZ=Asia/Ho_Chi_Minh
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0 -Duser.timezone=Asia/Ho_Chi_Minh"
 EXPOSE 8084
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
