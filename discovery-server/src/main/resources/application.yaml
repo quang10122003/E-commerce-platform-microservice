@@ -2,6 +2,9 @@ spring:
   config:
     import:
       - optional:file:.env[.properties]
+  profiles:
+    # Mặc định chạy local; Docker truyền SPRING_PROFILES_ACTIVE=docker.
+    active: ${SPRING_PROFILES_ACTIVE:local}
   application:
     name: discovery-server
 
@@ -13,15 +16,13 @@ eureka:
     # Tự đăng ký vào chính mình để monitoring-service thấy và kiểm tra health như các service khác.
     register-with-eureka: true
     fetch-registry: false
-    service-url:
-      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
   server:
-    # Mặc định tắt cho môi trường phát triển; production cần đặt EUREKA_SELF_PRESERVATION_ENABLED=true.
-    enable-self-preservation: ${EUREKA_SELF_PRESERVATION_ENABLED:false}
+    # Tắt self-preservation để Eureka gỡ nhanh instance đã chết khi phát triển; production nên bật.
+    enable-self-preservation: false
     eviction-interval-timer-in-ms: ${EUREKA_EVICTION_INTERVAL_MS:5000}
 
 management:

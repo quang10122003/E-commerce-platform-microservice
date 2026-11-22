@@ -5,13 +5,17 @@ spring:
   config:
     import:
       - optional:file:.env[.properties]
+  profiles:
+    # Mặc định chạy local; Docker truyền SPRING_PROFILES_ACTIVE=docker.
+    active: ${SPRING_PROFILES_ACTIVE:local}
 
   application:
     name: getway
 
   http:
     codecs:
-      max-in-memory-size: ${GATEWAY_MAX_IN_MEMORY_SIZE:32MB}
+      # Dung lượng body tối đa gateway giữ trong bộ nhớ khi chuyển tiếp, đủ cho ảnh upload và request lớn.
+      max-in-memory-size: 32MB
 
   cloud:
     loadbalancer:
@@ -81,15 +85,10 @@ spring:
                 - name: ApiResponse
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
       timeout: 2s
 
 eureka:
   client:
-    service-url:
-      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
 
     register-with-eureka: true
     fetch-registry: true

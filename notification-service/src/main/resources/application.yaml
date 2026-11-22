@@ -4,8 +4,10 @@ spring:
   config:
     import:
       - optional:file:.env[.properties]
+  profiles:
+    # Mặc định chạy local; Docker truyền SPRING_PROFILES_ACTIVE=docker.
+    active: ${SPRING_PROFILES_ACTIVE:local}
   datasource:
-    url: jdbc:mysql://localhost:3306/notifiservice_db
     username: ${USERNAME_DATABASE}
     password: ${PASSWORD_DATABASE}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -29,12 +31,8 @@ spring:
   # Dùng cùng cấu hình Redis và StringRedisTemplate như gateway.
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
       timeout: 2s
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -97,8 +95,6 @@ eureka:
       enabled: true
     # Lấy registry thường xuyên hơn để phía gọi sớm bỏ instance đã DOWN hoặc đã tắt.
     registry-fetch-interval-seconds: 10
-    service-url:
-      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
     metadata-map:

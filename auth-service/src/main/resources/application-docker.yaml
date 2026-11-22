@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:mysql://mysql:3306/auth_db
+  kafka:
+    bootstrap-servers: kafka:29092
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-server:8761/eureka/
+
+app:
+  oauth2:
+    # Trình duyệt gọi các URL này nên vẫn dùng cổng public của FE và gateway trên máy chạy Docker.
+    frontend-callback-url: http://localhost:3000/api/auth/oauth2/callback
+    google:
+      # Cố định URL gateway vì gateway không gửi X-Forwarded-* nên {baseUrl} sẽ là địa chỉ nội bộ của auth-service.
+      redirect-uri: http://localhost:8080/api/auth/login/oauth2/{registrationId}
